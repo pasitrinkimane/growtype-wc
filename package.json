@@ -1,0 +1,50 @@
+{
+  "name": "sage",
+  "version": "9.0.9",
+  "author": "Roots <team@roots.io>",
+  "homepage": "https://roots.io/sage/",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/roots/sage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/roots/sage/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "browserslist": [
+    "last 2 versions",
+    "android 4",
+    "opera 12"
+  ],
+  "scripts": {
+    "build": "mix",
+    "build:production": "mix --production",
+    "watch": "mix watch",
+    "watch-child": "MIX_BUILD=child mix watch",
+    "hot": "mix watch --hot",
+    "clear": "wp acorn optimize:clear",
+    "test": "npm run lint",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint resources/scripts",
+    "lint:css": "stylelint \"resources/**/*.{css,scss,vue}\"",
+    "translate": "npm run translate:pot && npm run translate:js",
+    "translate:pot": "wp i18n make-pot . ./resources/lang/sage.pot --ignore-domain --include=\"app,resources\"",
+    "translate:js": "wp i18n make-json ./resources/lang --pretty-print"
+  },
+  "engines": {
+    "node": ">= 8.0.0"
+  },
+  "devDependencies": {
+    "laravel-mix": "^6.0.11",
+    "resolve-url-loader": "^4.0.0",
+    "sass": "^1.43.4",
+    "sass-loader": "^12.1.0"
+  },
+  "dependencies": {}
+}
