@@ -1,0 +1,2 @@
+!function(n){"use strict";function u(){jQuery(".e-discount-trigger").click((function(){jQuery(this).fadeOut((function(){jQuery(".b-coupon").fadeIn()}))}))}u(),jQuery("body").on("applied_coupon",(function(n,t){setTimeout((function(){u()}),1e3)})),jQuery("body").on("updated_cart_totals",(function(){u()}))}(jQuery);
+//# sourceMappingURL=wc-coupon.js.map

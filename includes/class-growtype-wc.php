@@ -75,7 +75,7 @@ class Growtype_Wc
             $this->version = '1.0.0';
         }
 
-        $this->Growtype_Wc = 'growtype-wc';
+        $this->growtype_wc = 'growtype-wc';
 
         $this->load_dependencies();
         $this->set_locale();
@@ -101,34 +101,38 @@ class Growtype_Wc
      */
     private function load_dependencies()
     {
+        /**
+         * The helpers function
+         */
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/include.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/general.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/cart.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/email.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/wishlist.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/gallery.php';
 
         /**
          * The class responsible for orchestrating the actions and filters of the
          * core plugin.
          */
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-growtype-wc-loader.php';
+        require_once GROWTYPE_WC_PATH . 'includes/class-growtype-wc-loader.php';
 
         /**
          * The class responsible for defining internationalization functionality
          * of the plugin.
          */
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-growtype-wc-i18n.php';
+        require_once GROWTYPE_WC_PATH . 'includes/class-growtype-wc-i18n.php';
 
         /**
          * The class responsible for defining all actions that occur in the admin area.
          */
-        require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-growtype-wc-admin.php';
+        require_once GROWTYPE_WC_PATH . 'admin/class-growtype-wc-admin.php';
 
         /**
          * The class responsible for defining all actions that occur in the public-facing
          * side of the site.
          */
-        require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-growtype-wc-public.php';
-
-        /**
-         * The helper functions
-         */
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/helpers/template.php';
+        require_once GROWTYPE_WC_PATH . 'public/class-growtype-wc-public.php';
 
         $this->loader = new Growtype_Wc_Loader();
 
@@ -145,11 +149,8 @@ class Growtype_Wc
      */
     private function set_locale()
     {
-
         $plugin_i18n = new Growtype_Wc_i18n();
-
         $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
-
     }
 
     /**
@@ -161,7 +162,6 @@ class Growtype_Wc
      */
     private function define_admin_hooks()
     {
-
         $plugin_admin = new Growtype_Wc_Admin($this->get_growtype_wc(), $this->get_version());
 
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
@@ -177,13 +177,10 @@ class Growtype_Wc
      */
     private function define_public_hooks()
     {
-
         $plugin_public = new Growtype_Wc_Public($this->get_growtype_wc(), $this->get_version());
 
-        if (str_contains($_SERVER['REQUEST_URI'], 'signup') || str_contains($_SERVER['REQUEST_URI'], 'login') || str_contains($_SERVER['REQUEST_URI'], 'lostpassword')) {
-            $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
-            $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
-        }
+        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
+        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
     }
 
     /**
@@ -205,7 +202,7 @@ class Growtype_Wc
      */
     public function get_growtype_wc()
     {
-        return $this->Growtype_Wc;
+        return $this->growtype_wc;
     }
 
     /**

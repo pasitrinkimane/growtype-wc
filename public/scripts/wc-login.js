@@ -1,0 +1,2 @@
+jQuery,window.location.hash.length>0&&window.location.hash===jQuery(".u-column1 .e-register").attr("href")&&(jQuery(".u-column1").hide(),jQuery(".u-column2").fadeIn()),jQuery(".e-switchform").click((function(){jQuery(this).closest(".u-column1").length>0?jQuery(this).closest(".u-column1").fadeOut((function(){jQuery(".u-column2").fadeIn()})):jQuery(this).closest(".u-column2").fadeOut((function(){jQuery(".u-column1").fadeIn()}))}));
+//# sourceMappingURL=wc-login.js.map

@@ -53,6 +53,8 @@ class Growtype_Wc_Admin
         $this->Growtype_Wc = $growtype_wc;
         $this->version = $version;
 
+        $this->load_methods();
+
 //        add_action('admin_menu', array ($this, 'admin_menu'));
 //        add_action('admin_init', array ($this, 'growtype_wc_options_setting'));
     }
@@ -111,8 +113,8 @@ class Growtype_Wc_Admin
     function admin_menu()
     {
         add_options_page(
-            __('Growtype - Wc', 'growtype'),
-            __('Growtype - Wc', 'growtype'),
+            __('Growtype - Wc', 'growtype-wc'),
+            __('Growtype - Wc', 'growtype-wc'),
             'manage_options',
             'growtype-wc-options',
             array ($this, 'growtype_wc_options_content'),
@@ -136,5 +138,14 @@ class Growtype_Wc_Admin
     function growtype_wc_options_setting()
     {
 
+    }
+
+    function load_methods()
+    {
+        /**
+         * Customizer
+         */
+        require_once GROWTYPE_WC_PATH . '/admin/theme/index.php';
+        new Growtype_Wc_Theme_Settings();
     }
 }

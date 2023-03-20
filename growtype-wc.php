@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       Growtype - Wc
  * Plugin URI:        http://newcoolstudio.com/
- * Description:       Woocommerce extra functionality for "Growtype" theme
+ * Description:       Extended Woocommerce functionality.
  * Version:           1.0.0
  * Author:            Growtype
  * Author URI:        http://newcoolstudio.com/
@@ -26,8 +26,8 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die;
+if (!defined('WPINC')) {
+    die;
 }
 
 /**
@@ -35,34 +35,58 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'GROWTYPE_WC_VERSION', '1.0.0' );
+define('GROWTYPE_WC_VERSION', '1.0.1');
+
+//define('WC_TEMPLATE_DEBUG_MODE', true);
+
+/**
+ * Plugin text domain
+ */
+define('GROWTYPE_WC_TEXT_DOMAIN', 'growtype-wc');
+
+/**
+ * Plugin dir path
+ */
+define('GROWTYPE_WC_PATH', plugin_dir_path(__FILE__));
+
+/**
+ * Plugin url
+ */
+define('GROWTYPE_WC_URL', plugin_dir_url(__FILE__));
+
+/**
+ * Plugin url public
+ */
+define('GROWTYPE_WC_URL_PUBLIC', plugin_dir_url(__FILE__) . 'public/');
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-growtype-wc-activator.php
  */
-function activate_growtype_wc() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-growtype-wc-activator.php';
-	Growtype_Wc_Activator::activate();
+function activate_growtype_wc()
+{
+    require_once plugin_dir_path(__FILE__) . 'includes/class-growtype-wc-activator.php';
+    Growtype_Wc_Activator::activate();
 }
 
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-growtype-wc-deactivator.php
  */
-function deactivate_growtype_wc() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-growtype-wc-deactivator.php';
-	Growtype_Wc_Deactivator::deactivate();
+function deactivate_growtype_wc()
+{
+    require_once plugin_dir_path(__FILE__) . 'includes/class-growtype-wc-deactivator.php';
+    Growtype_Wc_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_growtype_wc' );
-register_deactivation_hook( __FILE__, 'deactivate_growtype_wc' );
+register_activation_hook(__FILE__, 'activate_growtype_wc');
+register_deactivation_hook(__FILE__, 'deactivate_growtype_wc');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-growtype-wc.php';
+require plugin_dir_path(__FILE__) . 'includes/class-growtype-wc.php';
 
 /**
  * Begins execution of the plugin.
@@ -73,10 +97,12 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-growtype-wc.php';
  *
  * @since    1.0.0
  */
-function run_growtype_wc() {
+function run_growtype_wc()
+{
 
-	$plugin = new Growtype_Wc();
-	$plugin->run();
+    $plugin = new Growtype_Wc();
+    $plugin->run();
 
 }
+
 run_growtype_wc();

@@ -1,4 +1,18 @@
 {
-    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=6fe95bdae38e7027ca14",
-    "/styles/growtype-wc-upload.css": "/styles/growtype-wc-upload.css?id=2ae536385a52a3f22cca"
+    "/scripts/wc-cart.js": "/scripts/wc-cart.js?id=c82d0849271051b462f3",
+    "/scripts/wc-widgets.js": "/scripts/wc-widgets.js?id=06a77c81a1197d3b240b",
+    "/scripts/wc-wishlist.js": "/scripts/wc-wishlist.js?id=64c8765d9b8007522bba",
+    "/scripts/wc-checkout.js": "/scripts/wc-checkout.js?id=fb15d74b781d52eef3a3",
+    "/scripts/wc-login.js": "/scripts/wc-login.js?id=413bbe0b72154d65023a",
+    "/scripts/wc-coupon.js": "/scripts/wc-coupon.js?id=7f6c223be47a302a90a7",
+    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=c83b868dbd865234762d",
+    "/styles/growtype-wc.css": "/styles/growtype-wc.css?id=232b89a79287ec28adaa",
+    "/styles/fonts/WooCommerce.eot": "/styles/fonts/WooCommerce.eot?id=97b9b3354d6b0c57fa26",
+    "/styles/fonts/WooCommerce.svg": "/styles/fonts/WooCommerce.svg?id=d9b7a6d9164deb672b46",
+    "/styles/fonts/WooCommerce.ttf": "/styles/fonts/WooCommerce.ttf?id=960a1d0007f9bd64cb36",
+    "/styles/fonts/WooCommerce.woff": "/styles/fonts/WooCommerce.woff?id=537667fbaa8e07c611d6",
+    "/styles/fonts/star.eot": "/styles/fonts/star.eot?id=46440f8fa7dbd7d2a076",
+    "/styles/fonts/star.svg": "/styles/fonts/star.svg?id=5e73470010dd7998b280",
+    "/styles/fonts/star.ttf": "/styles/fonts/star.ttf?id=233cd36eada50445a9c3",
+    "/styles/fonts/star.woff": "/styles/fonts/star.woff?id=7e6abd6110bc23e36d79"
 }

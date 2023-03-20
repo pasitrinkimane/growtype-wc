@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Register all actions and filters for the plugin
  *
@@ -53,11 +52,10 @@ class Growtype_Wc_Loader
      */
     public function __construct()
     {
-
         $this->actions = array ();
         $this->filters = array ();
 
-        $this->load_methods();
+        add_action('plugins_loaded', array ($this, 'load_wc_methods'));
     }
 
     /**
@@ -141,11 +139,22 @@ class Growtype_Wc_Loader
      * Load the required methods for this plugin.
      *
      */
-    private function load_methods()
+    function load_wc_methods()
     {
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/methods/templates.php';
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/methods/upload.php';
+        /**
+         * Methods
+         */
+        require_once GROWTYPE_WC_PATH . '/includes/methods/index.php';
 
-        new Growtype_Wc_Upload_Data();
+        /**
+         * Methods
+         */
+        require_once GROWTYPE_WC_PATH . '/includes/plugins/index.php';
+
+        /**
+         * Customizer
+         */
+        require_once GROWTYPE_WC_PATH . '/includes/customizer/index.php';
+        new Growtype_Wc_Customizer_Extend();
     }
 }

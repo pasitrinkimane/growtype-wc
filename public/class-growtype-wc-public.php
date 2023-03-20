@@ -20,80 +20,73 @@
  * @subpackage Growtype_Wc/public
  * @author     Your Name <email@example.com>
  */
-class Growtype_Wc_Public {
+class Growtype_Wc_Public
+{
 
-	/**
-	 * The ID of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $growtype_wc    The ID of this plugin.
-	 */
-	private $growtype_wc;
+    const AJAX_ACTION = 'growtype_wc';
 
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
-	 */
-	private $version;
+    /**
+     * The ID of this plugin.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      string $growtype_wc The ID of this plugin.
+     */
+    private $growtype_wc;
 
-	/**
-	 * Initialize the class and set its properties.
-	 *
-	 * @since    1.0.0
-	 * @param      string    $growtype_wc       The name of the plugin.
-	 * @param      string    $version    The version of this plugin.
-	 */
-	public function __construct( $growtype_wc, $version ) {
-		$this->Growtype_Wc = $growtype_wc;
-		$this->version = $version;
+    /**
+     * The version of this plugin.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      string $version The current version of this plugin.
+     */
+    private $version;
 
-	}
+    /**
+     * Initialize the class and set its properties.
+     *
+     * @param string $growtype_wc The name of the plugin.
+     * @param string $version The version of this plugin.
+     * @since    1.0.0
+     */
+    public function __construct($growtype_wc, $version)
+    {
+        $this->growtype_wc = $growtype_wc;
+        $this->version = $version;
 
-	/**
-	 * Register the stylesheets for the public-facing side of the site.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_styles() {
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Growtype_Wc_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Growtype_Wc_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-		wp_enqueue_style( $this->Growtype_Wc, plugin_dir_url( __FILE__ ) . 'styles/growtype-wc.css', array(), $this->version, 'all' );
-	}
+    }
 
-	/**
-	 * Register the JavaScript for the public-facing side of the site.
-	 *
-	 * @since    1.0.0
-	 */
-	public function enqueue_scripts() {
+    /**
+     * Register the stylesheets for the public-facing side of the site.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_styles()
+    {
+        wp_enqueue_style($this->growtype_wc, GROWTYPE_WC_URL_PUBLIC . 'styles/growtype-wc.css', array (), $this->version, 'all');
+    }
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Growtype_Wc_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Growtype_Wc_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
+    /**
+     * Register the JavaScript for the public-facing side of the site.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_scripts()
+    {
+        wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', array ('jquery'), $this->version, false);
 
-		wp_enqueue_script( $this->Growtype_Wc, plugin_dir_url( __FILE__ ) . 'scripts/growtype-wc.js', array( 'jquery' ), $this->version, false );
+        $ajax_url = admin_url('admin-ajax.php');
 
-	}
+        if (class_exists('QTX_Translator')) {
+            $ajax_url = admin_url('admin-ajax.php' . '?lang=' . qtranxf_getLanguage());
+        }
+
+        wp_localize_script($this->growtype_wc, 'growtype_wc_ajax', array (
+            'url' => $ajax_url,
+            'nonce' => wp_create_nonce('ajax-nonce'),
+            'action' => self::AJAX_ACTION
+        ));
+    }
 
 }
