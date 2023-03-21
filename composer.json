@@ -1,0 +1,8 @@
+{
+    "name": "newcool/growtype-wc",
+    "description": "growtype woocommerce extension",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": "^7.2"
+    }
+}
