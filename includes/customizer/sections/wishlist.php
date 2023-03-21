@@ -38,7 +38,7 @@ $wp_customize->add_setting('woocommerce_wishlist_page_icon',
 
 $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_wishlist_page_icon',
     array (
-        'label' => esc_html__('Wishlist'),
+        'label' => esc_html__('Icon', 'growtype-wc'),
         'description' => __('Enable/disable wishlist.', 'growtype-wc'),
         'section' => 'woocommerce_wishlist_page',
     )

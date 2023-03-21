@@ -1,7 +1,7 @@
 <?php
 
-add_action('growtype_header', 'growtype_wc_header');
-function growtype_wc_header()
+add_action('growtype_header_before_close', 'growtype_header_before_close_wc_extend');
+function growtype_header_before_close_wc_extend()
 {
     if (growtype_wc_cart_icon_is_active()) {
         echo growtype_wc_include_view('components.cart');

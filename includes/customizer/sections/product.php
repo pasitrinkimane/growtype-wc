@@ -430,18 +430,18 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
 /**
  * Breadcrumb status
  */
-$wp_customize->add_setting('woocommerce_product_page_related_products_disabled',
+$wp_customize->add_setting('woocommerce_product_page_related_products',
     array (
-        'default' => 0,
+        'default' => 1,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_related_products_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_related_products',
     array (
-        'label' => esc_html__('Products Disabled'),
+        'label' => esc_html__('Enabled'),
         'section' => 'woocommerce_product_page',
-        'description' => __('Related products are disabled.', 'growtype-wc'),
+        'description' => __('Related products are enabled.', 'growtype-wc'),
     )
 ));
 
