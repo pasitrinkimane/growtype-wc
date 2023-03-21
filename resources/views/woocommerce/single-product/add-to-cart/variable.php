@@ -53,8 +53,13 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                             <?php
                             $attribute_term = '';
                             $attribute_terms = get_terms($attribute_name);
-                            $product_attr_radio = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_radio");
-                            $product_attr_radio = isset($product_attr_radio[0]) && $product_attr_radio[0] === '1' ? true : false;
+
+                            $attr_radio = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_radio");
+                            $attr_radio = isset($attr_radio[0]) && $attr_radio[0] === '1' ? true : false;
+
+                            $attr_label_disabled = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_label");
+                            $attr_label_disabled = isset($attr_label_disabled[0]) && $attr_label_disabled[0] === '1' ? true : false;
+
                             if (is_array($attribute_terms) && isset($available_variations) && !empty($available_variations)) {
                                 $attribute_term_slug = $available_variations[0]['attributes']['attribute_' . strtolower($attribute_name)];
                                 $attribute_term = array_filter($attribute_terms, function ($object) use ($attribute_term_slug) {
@@ -74,11 +79,11 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                 }
                                 ?>
                                 <span class="e-type"><?php echo wc_attribute_label($attribute_name_formated) ?></span>:
-                                <span class="e-name"><?php echo $product_attr_radio ? isset($attribute_term) && !empty($attribute_term) ? $attribute_term->name : $options[0] : '' ?></span>
+                                <span class="e-name"></span>
                             </label>
                         </div>
-                        <div class="options" data-type="<?php echo $product_attr_radio ? 'radio' : 'select' ?>">
-                            <?php if ($product_attr_radio) {
+                        <div class="options" data-type="<?php echo $attr_radio ? 'radio' : 'select' ?>">
+                            <?php if ($attr_radio) {
 
                                 $existingAttributes = [];
 
@@ -101,7 +106,6 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                             }
 
                                             $termColor = isset(get_term_meta(array_values($termId)[0]->term_id)['color']) ? get_term_meta(array_values($termId)[0]->term_id)['color'][0] : null;
-                                            $termLabel = empty($termColor) ? $termName : null;
 
                                             ?>
                                             <div class="option <?php echo $variation_value === $default_value ? 'is-active' : '' ?>"
@@ -112,7 +116,7 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                                        data-term-name="<?php echo $termName ?>"
                                                        data-category="<?php echo $variation_value ?>"
                                                        name="attribute_<?php echo sanitize_title($attribute_name) ?>">
-                                                <?php if (!empty($termLabel)) { ?>
+                                                <?php if (!$attr_label_disabled) { ?>
                                                     <div class="e-label">
                                                         <span><?php echo $termName ?></span>
                                                     </div>

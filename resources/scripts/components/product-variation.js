@@ -78,7 +78,7 @@ function productVariation() {
             if (selectedVariation) {
                 variation_form.find('.variation_id').val(selectedVariation['variation_id']);
                 update_price(selectedVariation);
-                set_featured_image(selectedVariation);
+                update_featured_image(selectedVariation);
 
                 jQuery('.variations_form button[type="submit"]')
                     .removeClass('disabled')
@@ -111,11 +111,12 @@ function productVariation() {
     }
 
     let gallery_featured_image = null;
+    let gallery_current_image = gallery_featured_image;
 
-    function set_featured_image(variation) {
+    function update_featured_image(variation) {
         let img_full = variation['image']['full_src'];
-        let img_src = variation['image']['src'];
-        let img_srcset = variation['image']['srcset'];
+        let imgSrc = variation['image']['src'];
+        let imgSrcset = variation['image']['srcset'];
 
         var thumbnailExists = false;
         if (jQuery('.flex-control-nav img').length > 0) {
@@ -127,14 +128,45 @@ function productVariation() {
             });
         }
 
-        if (gallery_featured_image !== img_src) {
-            gallery_featured_image = img_src;
+        Object.entries(variation['attributes']).map(function (attribute, index,) {
+            $('.featured-img-wrapper').attr('data-' + attribute[0], attribute[1])
+        });
 
-            $('.woocommerce-product-gallery__image img')
-                .attr('data-large_image', img_full)
-                .attr('src', img_src)
-                .attr('srcset', img_srcset)
+        if (gallery_current_image !== imgSrc) {
+            gallery_current_image = imgSrc;
+
+            /**
+             * For custom gallery variation preview
+             */
+            if ($('body').hasClass('woocommerce-product-gallery-type-5')) {
+                populateWithVariationImage(variation)
+            } else {
+                $('.woocommerce-product-gallery__image .wp-post-image')
+                    .attr('data-large_image', img_full)
+                    .attr('src', imgSrc)
+                    .attr('srcset', imgSrcset)
+            }
         }
+    }
+
+    function populateWithVariationImage(variation) {
+        let imgSrc = variation['image']['src'];
+
+        $('.woocommerce-product-gallery__image .img-variation').remove();
+
+        if (gallery_featured_image !== gallery_current_image) {
+            let img_variation = '<img class="img-variation" src="' + imgSrc + '">'
+
+            $(img_variation).insertAfter('.woocommerce-product-gallery__image .wp-post-image');
+        }
+
+        $('.flex-control-nav .featured-img-wrapper').remove()
+
+        let mainImage = $('.woocommerce-product-gallery .featured-img-wrapper')
+
+        $('.woocommerce-product-gallery .flex-control-nav li').map(function (index, element) {
+            $(element).append(mainImage.clone())
+        });
     }
 }
 

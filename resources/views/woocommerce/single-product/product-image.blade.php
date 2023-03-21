@@ -51,11 +51,15 @@ $render_data = [
     'columns' => $columns,
 ];
 
+$gallery_type = get_theme_mod('woocommerce_product_page_gallery_type',
+    'woocommerce-product-gallery-type-2');
+
 ?>
 
-<?php if (get_theme_mod('woocommerce_product_page_gallery_type',
-        'woocommerce-product-gallery-type-2') === 'woocommerce-product-gallery-type-3') { ?>
+<?php if ($gallery_type === 'woocommerce-product-gallery-type-3') { ?>
     <?php echo growtype_wc_include_view('partials.single-product.gallery.type-3', $render_data) ?>
+<?php } elseif ($gallery_type === 'woocommerce-product-gallery-type-5') { ?>
+    <?php echo growtype_wc_include_view('partials.single-product.gallery.type-5', $render_data) ?>
 <?php } else { ?>
     <?php echo growtype_wc_include_view('partials.single-product.gallery.type-1', $render_data) ?>
 <?php }

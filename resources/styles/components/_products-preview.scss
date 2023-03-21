@@ -367,6 +367,14 @@
   }
 }
 
+.product {
+  .woocommerce-loop-product__title {
+    font-size: 16px;
+    padding-top: 20px;
+    font-weight: 400;
+  }
+}
+
 .woocommerce ul.products li.product a img {
   margin-bottom: 0;
 }

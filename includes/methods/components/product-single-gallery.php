@@ -44,6 +44,8 @@ add_filter('woocommerce_single_product_carousel_options', 'growtype_wc_single_pr
 function growtype_wc_single_product_carousel_options($options)
 {
     $options['directionNav'] = true;
+    $options['animation'] = get_theme_mod('woocommerce_product_page_gallery_animation', 'fade');
+
     if (wp_is_mobile()) {
         $options['controlNav'] = false; // Option 'thumbnails' by default
 //        $options['smoothHeight'] = true; // Already "true" by default
@@ -51,6 +53,7 @@ function growtype_wc_single_product_carousel_options($options)
 //        $options['slideshow'] = false; // Already "false" by default
 //        $options['touch'] = false; // Already "false" by default
     }
+
     return $options;
 }
 

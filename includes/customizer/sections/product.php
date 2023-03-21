@@ -175,7 +175,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_type',
     array (
-        'default' => 'woocommerce-product-gallery-type-1',
+        'default' => 'woocommerce-product-gallery-type-2',
         'transport' => 'refresh',
     )
 );
@@ -193,6 +193,32 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
             'woocommerce-product-gallery-type-2' => __('Vertical', 'growtype-wc'),
             'woocommerce-product-gallery-type-3' => __('Grid', 'growtype-wc'),
             'woocommerce-product-gallery-type-4' => __('Full width', 'growtype-wc'),
+            'woocommerce-product-gallery-type-5' => __('Main image constant', 'growtype-wc'),
+        )
+    )
+));
+
+/**
+ * Shop gallery type
+ */
+$wp_customize->add_setting('woocommerce_product_page_gallery_animation',
+    array (
+        'default' => 'fade',
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_product_page_gallery_animation',
+    array (
+        'label' => __('Gallery Animation', 'growtype-wc'),
+        'description' => esc_html__('Choose product gallery animation', 'growtype-wc'),
+        'section' => 'woocommerce_product_page',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => array (
+            'fade' => __('Fade', 'growtype-wc'),
+            'slide' => __('Slide', 'growtype-wc'),
         )
     )
 ));

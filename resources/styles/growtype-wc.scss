@@ -10,7 +10,6 @@
 @import "components/cart";
 @import "components/lightbox";
 @import "components/products-preview";
-@import "components/product-gallery";
 @import "components/notices";
 @import "components/loader";
 @import "components/wishlist";
@@ -41,3 +40,5 @@
 @import "pages/lost-password";
 
 @import "payments/reepay";
+
+@import "sections/product-gallery";
