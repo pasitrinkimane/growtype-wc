@@ -1,6 +1,19 @@
 <?php
 
 /**
+ * Render single product main content
+ */
+add_action('growtype_wc_single_product_main_content', 'growtype_wc_single_product_main_content_render');
+function growtype_wc_single_product_main_content_render()
+{
+    $content = growtype_wc_include_view('partials.content-single-product');
+
+    $content = apply_filters('growtype_wc_single_product_main_content_render', $content);
+
+    echo $content;
+}
+
+/**
  * Related products amount
  */
 add_filter('woocommerce_output_related_products_args', 'growtype_wc_output_related_products_args', 20);

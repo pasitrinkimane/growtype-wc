@@ -96,6 +96,12 @@ include('shortcodes/wishlist.php');
 include('layout/index.php');
 
 /**
+ * Crud
+ */
+include('crud/class-growtype-wc-crud.php');
+new Growtype_Wc_Crud();
+
+/**
  * Product
  */
 include('product/class-growtype-wc-product.php');

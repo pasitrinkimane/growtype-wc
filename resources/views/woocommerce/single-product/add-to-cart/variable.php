@@ -36,28 +36,32 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
         <?php else : ?>
             <div class="variations" data-variations-amount="<?php echo count($attributes) ?>">
                 <?php
+                $index = 0;
                 foreach ($attributes as $attribute_name => $options) {
                     $product_attributes = get_post_meta($product->get_id(), '_product_attributes', true);
                     $default_attributes = get_post_meta($product->get_id(), '_default_attributes', true);
 
                     $is_visible = $product_attributes[$attribute_name]['is_visible'];
-                    $default_value = $default_attributes[$attribute_name];
+                    $default_value = isset($default_attributes[$attribute_name]) ? $default_attributes[$attribute_name] : '';
 
                     if (!$is_visible) {
                         continue;
                     }
 
                     ?>
-                    <div class="variations-single <?php echo key($attributes) === $attribute_name ? 'variation-parent' : 'variation-child' ?>" data-type="<?php echo strtolower($attribute_name) ?>">
+                    <div class="variations-single <?php echo $index === 0 ? 'parent-variation' : 'child-variation' ?>"
+                         data-type="<?php echo strtolower($attribute_name) ?>"
+                         data-default-value="<?php echo $default_value ?>"
+                    >
                         <div class="label">
                             <?php
                             $attribute_term = '';
                             $attribute_terms = get_terms($attribute_name);
 
-                            $attr_radio = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_radio");
+                            $attr_radio = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_is_radio_select");
                             $attr_radio = isset($attr_radio[0]) && $attr_radio[0] === '1' ? true : false;
 
-                            $attr_label_disabled = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_label");
+                            $attr_label_disabled = get_post_meta($product->get_id(), "attribute_" . $attribute_name . "_is_label_hidden");
                             $attr_label_disabled = isset($attr_label_disabled[0]) && $attr_label_disabled[0] === '1' ? true : false;
 
                             if (is_array($attribute_terms) && isset($available_variations) && !empty($available_variations)) {
@@ -112,9 +116,9 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                                  style="<?php echo $isVisible ? 'display:block;' : 'display:none;' ?>;background: <?php echo $termColor ?>"
                                                  data-type="<?php echo $variation_value ?>">
                                                 <input type="radio"
-                                                       value="<?php echo $variation['variation_id'] ?>" <?php checked($variation_value === $default_value) ?>
+                                                       value="<?php echo $variation_value ?>" <?php checked($variation_value === $default_value) ?>
                                                        data-term-name="<?php echo $termName ?>"
-                                                       data-category="<?php echo $variation_value ?>"
+                                                       data-id="<?php echo $variation['variation_id'] ?>"
                                                        name="attribute_<?php echo sanitize_title($attribute_name) ?>">
                                                 <?php if (!$attr_label_disabled) { ?>
                                                     <div class="e-label">
@@ -132,13 +136,16 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                     array (
                                         'options' => $options,
                                         'attribute' => $attribute_name,
+                                        'selected' => $default_value,
                                         'product' => $product,
                                     )
                                 );
                             } ?>
                         </div>
                     </div>
-                <?php } ?>
+                    <?php
+                    $index++;
+                } ?>
                 <div class="variations-single-description" style="display: none;">
                     <div class="variations-single-description-content"></div>
                 </div>

@@ -9,20 +9,6 @@ class Growtype_Wc_Product
     const KEY_PRICE_PER_UNIT = 'price_per_unit';
     const META_KEY_PRICE_PER_UNIT = '_price_per_unit';
 
-    public function __construct()
-    {
-        add_action('growtype_wc_single_product_main_content', array ($this, 'single_product_main_content'), 10, 1);
-    }
-
-    function single_product_main_content()
-    {
-        $content = growtype_wc_include_view('partials.content-single-product');
-
-        $content = apply_filters('growtype_wc_single_product_main_content_render', $content);
-
-        echo $content;
-    }
-
     /**
      * @return mixed
      */
@@ -809,5 +795,109 @@ class Growtype_Wc_Product
         }
 
         return $display;
+    }
+
+    public function create($details)
+    {
+        $product = new WC_Product_Variable();
+
+        $product->set_name($details['post_title']);
+        $product->set_status('publish');
+        $product->set_sku($details['sku']);
+        $product->set_catalog_visibility('visible');
+
+        $product->set_image_id($details['image_id']);
+
+        $product->set_gallery_image_ids($details['gallery_image_ids']);
+
+        $product->set_default_attributes($details['default_attributes']);
+
+        $product_id = $product->save();
+
+        wp_set_object_terms($product_id, 'variable', 'product_type');
+
+        /**
+         * Add attributes existing
+         */
+        foreach ($details['taxonomies'] as $taxonomy => $values) {
+
+            $terms = get_terms($taxonomy, array ('hide_empty' => false));
+            $keywords = array_pluck($terms, 'slug');
+
+            wp_set_object_terms($product_id, $keywords, $taxonomy);
+
+            $product_attributes[$taxonomy] = array (
+                'name' => $taxonomy,
+                'value' => '',
+//                'position' => 1,
+                'is_visible' => isset($values['is_visible']) ? $values['is_visible'] : '1',
+                'is_variation' => isset($values['is_variation']) ? $values['is_variation'] : '1',
+                'is_taxonomy' => isset($values['is_taxonomy']) ? $values['is_taxonomy'] : '1',
+            );
+
+            if (isset($values['is_radio_select'])) {
+                $custom_attribute_key = growtype_wc_format_attribute_key($taxonomy, 'is_radio_select');
+                update_post_meta($product_id, $custom_attribute_key, $values['is_radio_select']);
+            }
+
+            if (isset($values['is_label_hidden'])) {
+                $custom_attribute_key = growtype_wc_format_attribute_key($taxonomy, 'is_label_hidden');
+                update_post_meta($product_id, $custom_attribute_key, $values['is_label_hidden']);
+            }
+
+            update_post_meta($product_id, '_product_attributes', $product_attributes);
+        }
+
+        /**
+         * Add attribute custom
+         */
+//        $attr_label = 'Orientation';
+//        $attr_slug = sanitize_title($attr_label);
+//
+//        $attributes_array[$attr_slug] = array (
+//            'name' => $attr_label,
+//            'value' => 'Horizontal | Vertical',
+//            'is_visible' => '1',
+//            'is_variation' => '1',
+//            'is_taxonomy' => '0' // for some reason, this is really important
+//        );
+//
+//        update_post_meta($post_id, '_product_attributes', $attributes_array);
+
+        /**
+         * Add variations
+         */
+
+        foreach ($details['variations'] as $variation_details) {
+            $variation = array (
+                'post_title' => $product->get_name(),
+                'post_name' => 'product-' . $product_id . '-variation',
+                'post_status' => 'publish',
+                'post_parent' => $product_id,
+                'post_type' => 'product_variation',
+                'guid' => $product->get_permalink()
+            );
+
+            $variation_id = wp_insert_post($variation);
+
+            $variation = new WC_Product_Variation($variation_id);
+
+            foreach ($variation_details['custom_variables'] as $custom_key => $custom_value) {
+                update_post_meta($variation_id, $custom_key, $custom_value);
+            }
+
+            $variation->set_regular_price($variation_details['regular_price']);
+            $variation->set_price($variation_details['price']);
+            $variation->set_sale_price($variation_details['sale_price']);
+            $variation->set_stock_quantity($variation_details['stock_qty']);
+            $variation->set_stock_status($variation_details['stock_status']);
+            $variation->set_description($variation_details['variation_description']);
+            $variation->set_sku($variation_details['sku']);
+            $variation->set_image_id($variation_details['image_id']);
+
+            $variation->save();
+        }
+
+        dd('done');
     }
 }

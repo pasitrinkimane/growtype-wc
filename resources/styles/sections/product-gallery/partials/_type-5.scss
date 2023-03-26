@@ -1,0 +1,29 @@
+.woocommerce-product-gallery-type-5 {
+  @extend .woocommerce-product-gallery-type-2;
+}
+
+.featured-img-wrapper {
+  max-width: 200px;
+  position: absolute;
+  z-index: 2;
+  left: 44%;
+  top: 5%;
+  pointer-events: none;
+
+  .woocommerce-product-gallery__image {
+    .img-variation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+}
+
+.flex-control-nav {
+  .featured-img-wrapper {
+    max-width: 30px;
+    left: 35%;
+  }
+}

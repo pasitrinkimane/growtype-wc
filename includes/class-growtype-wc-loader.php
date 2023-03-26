@@ -142,6 +142,11 @@ class Growtype_Wc_Loader
     function load_wc_methods()
     {
         /**
+         * Autoload vendor
+         */
+        require_once GROWTYPE_WC_PATH . '/vendor/autoload.php';
+
+        /**
          * Methods
          */
         require_once GROWTYPE_WC_PATH . '/includes/methods/index.php';

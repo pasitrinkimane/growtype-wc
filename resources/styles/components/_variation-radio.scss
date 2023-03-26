@@ -17,6 +17,11 @@
         //text-transform: uppercase;
       }
     }
+
+    &.is-disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
   }
 
   .variations-single[data-type="pa_color"] {
@@ -62,6 +67,11 @@
       display: inline-block;
       cursor: pointer;
       overflow: hidden;
+
+      &.is-disabled {
+        pointer-events: none;
+        opacity: 0.5;
+      }
 
       &.is-active {
         color: white;

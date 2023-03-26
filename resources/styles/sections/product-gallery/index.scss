@@ -1,0 +1,177 @@
+.woocommerce.single-product.single-product-data div.product div.images.woocommerce-product-gallery {
+  margin-bottom: 20px !important;
+}
+
+/**
+Style 1, thumbnails bottom
+ */
+.woocommerce div.product div.images .flex-control-thumbs {
+  position: relative;
+  padding-top: 5px;
+  margin-left: -5px;
+  width: calc(100% + 10px);
+
+  &.slick-slider {
+    max-width: 90%;
+    overflow: initial;
+    margin: auto;
+
+    .slick-list {
+      overflow: hidden;
+    }
+
+    .slick-prev:before, .slick-next:before {
+      color: black;
+    }
+  }
+
+  li {
+    padding: 5px;
+  }
+}
+
+.woocommerce div.product div.images .flex-control-thumbs li {
+  float: initial;
+  display: inline-block;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs {
+  padding: 0;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs li.active {
+  background: initial;
+  border: none;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs li {
+  background: none;
+  border: none;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs li::before, .woocommerce div.product .woocommerce-tabs ul.tabs li::after {
+  border: none;
+  content: none;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs li {
+  &.active {
+    a {
+      color: $color-text;
+      font-weight: 500;
+    }
+  }
+
+  a {
+    font-size: 18px;
+    color: #c2c2c2;
+    font-weight: 500;
+  }
+}
+
+.woocommerce div.product .woocommerce-tabs .panel {
+  h2 {
+    display: none;
+  }
+}
+
+div.product .woocommerce-tabs {
+  border-bottom: 1px solid #ededed;
+  margin-bottom: 40px;
+}
+
+.woocommerce div.product .woocommerce-tabs ul.tabs::before {
+  border-bottom: 1px solid #ededed;
+}
+
+.woocommerce div.product .woocommerce-tabs .panel {
+  padding-top: 3px;
+}
+
+.flex-direction-nav {
+  position: absolute;
+  right: 0;
+  top: 47%;
+  margin: auto;
+  height: 50px;
+  width: 100%;
+  padding: 0 20px;
+  @include bp-phone-xl() {
+    width: 100%;
+    bottom: initial;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .flex-nav-prev {
+    width: 40px;
+    height: 30px;
+    float: left;
+    overflow: hidden;
+    position: relative;
+    font-size: 18px;
+    color: grey;
+    text-align: left;
+    @include bp-phone-xl() {
+      width: 35px;
+      height: 25px;
+    }
+
+    &:before {
+      content: "\f340";
+      font-family: Dashicons;
+    }
+
+    .flex-prev {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      text-indent: 1000px;
+      opacity: 0;
+    }
+  }
+
+  .flex-nav-next {
+    width: 40px;
+    height: 30px;
+    float: right;
+    overflow: hidden;
+    position: relative;
+    font-size: 18px;
+    color: grey;
+    text-align: right;
+    @include bp-phone-xl() {
+      width: 35px;
+      height: 25px;
+    }
+
+    &:before {
+      content: "\f344";
+      font-family: Dashicons;
+    }
+
+    .flex-next {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      text-indent: 1000px;
+      opacity: 0;
+    }
+  }
+}
+
+/**
+Lightbox settings
+ */
+.pswp__ui .pswp__top-bar {
+  opacity: 1;
+}
+
+@import "partials/type-2";
+@import "partials/type-3";
+@import "partials/type-4";
+@import "partials/type-5";
