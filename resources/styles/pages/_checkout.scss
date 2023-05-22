@@ -314,9 +314,22 @@ h3 {
   & + .woocommerce-billing-fields__field-wrapper {
     margin-top: 20px;
     display: inline-block;
+    width: 100%;
   }
 }
 
 .woocommerce-privacy-policy-link {
   text-decoration: underline;
+}
+
+.woocommerce-checkout-review-order-table, .woocommerce-table--order-details {
+  thead {
+    .product-name {
+      width: 60%;
+    }
+
+    .product-total {
+      width: 40%;
+    }
+  }
 }

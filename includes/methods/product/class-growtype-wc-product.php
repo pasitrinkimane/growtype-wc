@@ -6,8 +6,38 @@
  */
 class Growtype_Wc_Product
 {
-    const KEY_PRICE_PER_UNIT = 'price_per_unit';
-    const META_KEY_PRICE_PER_UNIT = '_price_per_unit';
+    /**
+     * @return mixed
+     */
+    public static function visible_attributes($product_id): array
+    {
+        $product = wc_get_product($product_id);
+
+        $visible_attributes = [];
+        if (!empty($product)) {
+            $existing_attributes = get_post_meta($product->get_parent_id(), '_product_attributes', true);
+
+            if (!$existing_attributes) {
+                return [];
+            }
+
+            $product_attributes = $product->get_attributes();
+
+            foreach ($existing_attributes as $key => $value) {
+                if (isset($product_attributes[$key])) {
+                    if (isset($value['is_visible'])) {
+                        if ($value['is_visible']) {
+                            $visible_attributes[$key] = $product_attributes[$key];
+                        }
+                    } else {
+                        $visible_attributes[$key] = $value['name'];
+                    }
+                }
+            }
+        }
+
+        return $visible_attributes;
+    }
 
     /**
      * @return mixed
@@ -21,6 +51,37 @@ class Growtype_Wc_Product
         }
 
         return $preview_style ?? '';
+    }
+
+    /**
+     * @return void
+     */
+    public static function preview_image($product_id, $size = 'medium')
+    {
+        $_product = wc_get_product($product_id);
+        $product_image = $_product->get_image();
+        $gallery_type = Growtype_Wc_Product::gallery_type();
+
+        /**
+         * Check gallery type, and use featured image in different way if needed
+         */
+        if ($gallery_type === 'woocommerce-product-gallery-type-5') {
+            $_parent_product = wc_get_product($_product->get_parent_id());
+
+            $parent_img_details = wp_get_attachment_image_src(get_post_thumbnail_id($_product->get_parent_id()), $size);
+            $variation_img_details = wp_get_attachment_image_src(get_post_thumbnail_id($product_id), $size);
+
+            if (!empty($variation_img_details) && !empty($parent_img_details)) {
+                $variation_img_url = $variation_img_details[0];
+                $parent_img_url = $parent_img_details[0];
+
+                if ($variation_img_url !== $parent_img_url) {
+                    $product_image = '<div class="product-img-wrapper">' . $_parent_product->get_image() . '<img src="' . $variation_img_url . '" class="img-variation">' . '</div>';
+                }
+            }
+        }
+
+        return $product_image;
     }
 
     /**
@@ -433,9 +494,9 @@ class Growtype_Wc_Product
     /**
      * @return bool
      */
-    public static function product_preview_cta_disabled()
+    public static function product_preview_cta_enabled()
     {
-        return empty(get_theme_mod('woocommerce_product_preview_add_to_cart_btn')) || !get_theme_mod('woocommerce_product_preview_add_to_cart_btn');
+        return get_theme_mod('woocommerce_product_preview_cta_btn', true);
     }
 
     /**
@@ -788,9 +849,9 @@ class Growtype_Wc_Product
             $display = true;
         }
 
-        $catalog_sidebar_disabled = get_theme_mod('catalog_sidebar_disabled') ? get_theme_mod('catalog_sidebar_disabled') : false;
+        $catalog_sidebar_enabled = get_theme_mod('catalog_sidebar_enabled', true);
 
-        if (function_exists('is_shop') && is_shop() && !is_product_category() && $catalog_sidebar_disabled) {
+        if (function_exists('is_shop') && is_shop() && !is_product_category() && !$catalog_sidebar_enabled) {
             $display = false;
         }
 
@@ -802,11 +863,29 @@ class Growtype_Wc_Product
         $product = new WC_Product_Variable();
 
         $product->set_name($details['post_title']);
+
         $product->set_status('publish');
+
         $product->set_sku($details['sku']);
+
+        if (isset($details['short_description'])) {
+            $product->set_short_description($details['short_description']);
+        }
+
+        if (isset($details['description'])) {
+            $product->set_description($details['description']);
+        }
+
         $product->set_catalog_visibility('visible');
 
-        $product->set_image_id($details['image_id']);
+        if (isset($details['image_id'])) {
+            $product->set_image_id($details['image_id']);
+        }
+        if (isset($details['image_url'])) {
+            $image_id = $this->upload_image($details['image_url']);
+
+            $product->set_image_id($image_id);
+        }
 
         $product->set_gallery_image_ids($details['gallery_image_ids']);
 
@@ -815,6 +894,21 @@ class Growtype_Wc_Product
         $product_id = $product->save();
 
         wp_set_object_terms($product_id, 'variable', 'product_type');
+
+        /**
+         * Add attributes
+         */
+        if (isset($details['variations'])) {
+            foreach ($details['variations'] as $variation) {
+                foreach ($variation['custom_variables'] as $taxonomy => $variable) {
+                    wp_insert_term(ucfirst(str_replace('-', ' ', $variable)), str_replace('attribute_', '', $taxonomy), array (
+                        'description' => isset($variable['description']) ? $variable['description'] : '',
+                        'parent' => 0,
+                        'slug' => isset($variable['slug']) ? $variable['slug'] : $variable
+                    ));
+                }
+            }
+        }
 
         /**
          * Add attributes existing
@@ -886,18 +980,150 @@ class Growtype_Wc_Product
                 update_post_meta($variation_id, $custom_key, $custom_value);
             }
 
+            /**
+             * Update meta details
+             */
+            if (isset($variation_details['custom_meta'])) {
+                foreach ($variation_details['custom_meta'] as $custom_key => $custom_value) {
+                    update_post_meta($variation_id, 'custom_meta_' . $custom_key, $custom_value);
+                }
+            }
+
             $variation->set_regular_price($variation_details['regular_price']);
             $variation->set_price($variation_details['price']);
-            $variation->set_sale_price($variation_details['sale_price']);
+
+            if (isset($variation_details['sale_price']) && !empty($variation_details['sale_price'])) {
+                $variation->set_sale_price($variation_details['sale_price']);
+            }
+
             $variation->set_stock_quantity($variation_details['stock_qty']);
             $variation->set_stock_status($variation_details['stock_status']);
             $variation->set_description($variation_details['variation_description']);
-            $variation->set_sku($variation_details['sku']);
+
+            if (isset($variation_details['sku']) && !empty($variation_details['sku'])) {
+                $variation->set_sku($variation_details['sku']);
+            }
+
             $variation->set_image_id($variation_details['image_id']);
 
             $variation->save();
         }
 
-        dd('done');
+        /**
+         * Add categories
+         */
+        $cat_terms_ids = [];
+        if (isset($details['categories']) && !empty($details['categories'])) {
+            foreach ($details['categories'] as $category) {
+
+                $parent_term = wp_insert_term($category['term'], 'product_cat', array (
+                    'description' => isset($category['description']) ? $category['description'] : '',
+                    'parent' => 0,
+                    'slug' => isset($category['slug']) ? $category['slug'] : $category['term']
+                ));
+
+                if (is_wp_error($parent_term)) {
+                    $parent_term_id = $parent_term->get_error_data();
+                } else {
+                    $parent_term_id = $parent_term['term_id'];
+                }
+
+                array_push($cat_terms_ids, $parent_term_id);
+
+                $product->set_category_ids([$parent_term_id]);
+
+                foreach ($category['children'] as $child) {
+                    $child_term = wp_insert_term($child['term'], 'product_cat', array (
+                        'description' => isset($child['description']) ? $child['description'] : '',
+                        'parent' => $parent_term_id,
+                        'slug' => isset($child['slug']) ? $child['slug'] : $child['term']
+                    ));
+
+                    if (is_wp_error($child_term)) {
+                        $child_term_id = $child_term->get_error_data();
+                    } else {
+                        $child_term_id = $child_term['term_id'];
+                    }
+
+                    array_push($cat_terms_ids, $child_term_id);
+                }
+            }
+        }
+
+        $product->set_category_ids($cat_terms_ids);
+
+        /**
+         * Add tags
+         */
+        $tag_terms_ids = [];
+        if (isset($details['tags']) && !empty($details['tags'])) {
+            foreach ($details['tags'] as $tag) {
+                $parent_term = wp_insert_term($tag['term'], 'product_tag', array (
+                    'description' => isset($tag['description']) ? $tag['description'] : '',
+                    'parent' => 0,
+                    'slug' => isset($tag['slug']) ? $tag['slug'] : $tag['term']
+                ));
+
+                if (is_wp_error($parent_term)) {
+                    $term_term_id = $parent_term->get_error_data();
+                } else {
+                    $term_term_id = $parent_term['term_id'];
+                }
+
+                array_push($tag_terms_ids, $term_term_id);
+            }
+        }
+
+        $product->set_tag_ids($tag_terms_ids);
+
+        $product->save();
+
+        /**
+         * Update meta details
+         */
+        if (isset($details['meta_details'])) {
+            foreach ($details['meta_details'] as $meta_key => $meta_value) {
+                update_post_meta($product_id, $meta_key, $meta_value);
+            }
+        }
+    }
+
+    public static function upload_image($image_url)
+    {
+        include_once(ABSPATH . 'wp-admin/includes/image.php');
+
+        $file_details = explode('/', getimagesize($image_url)['mime']);
+        $image_type = end($file_details);
+        $uniq_name = date('dmY') . '' . (int)microtime(true);
+        $filename = $uniq_name . '.' . $image_type;
+
+        $uploaddir = wp_upload_dir();
+        $uploadfile = $uploaddir['path'] . '/' . $filename;
+        $contents = file_get_contents($image_url);
+        $savefile = fopen($uploadfile, 'w');
+        fwrite($savefile, $contents);
+        fclose($savefile);
+
+        $wp_filetype = wp_check_filetype(basename($filename), null);
+        $attachment = array (
+            'post_mime_type' => $wp_filetype['type'],
+            'post_title' => $filename,
+            'post_content' => '',
+            'post_status' => 'inherit'
+        );
+
+        $attach_id = wp_insert_attachment($attachment, $uploadfile);
+        $imagenew = get_post($attach_id);
+        $fullsizepath = get_attached_file($imagenew->ID);
+        $attach_data = wp_generate_attachment_metadata($attach_id, $fullsizepath);
+        wp_update_attachment_metadata($attach_id, $attach_data);
+
+        return $attach_id;
+    }
+
+    public static function gallery_type()
+    {
+        return get_theme_mod('woocommerce_product_page_gallery_type',
+            'woocommerce-product-gallery-type-2');
     }
 }

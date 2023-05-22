@@ -1,5 +1,6 @@
 @import "common/mixins";
 @import "common/variables";
+@import "common/icons";
 
 /** Woocommerce */
 @import "plugins/woocommerce";
@@ -42,3 +43,6 @@
 @import "payments/reepay";
 
 @import "sections/product-gallery";
+
+@import "shortcodes/features";
+@import "shortcodes/payment-methods";

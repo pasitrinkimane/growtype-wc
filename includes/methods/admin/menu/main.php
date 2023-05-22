@@ -4,9 +4,10 @@
  * Disable marketing
  */
 add_action('admin_menu', 'growtype_wc_admin_menu');
-
 function growtype_wc_admin_menu()
 {
+    global $menu, $submenu;
+
     /**
      * Woocommerce product menu custom title
      */

@@ -6,10 +6,18 @@
 include('templates/index.php');
 
 /**
- * Admin
+ * Payment
  */
 include('payments/gateways.php');
 
+/**
+ * Shipping
+ */
+include('shipping/index.php');
+
+/**
+ * Admin
+ */
 include('admin/menu/features.php');
 include('admin/menu/orders.php');
 include('admin/menu/main.php');
@@ -21,6 +29,7 @@ include('admin/product/sections/data-general.php');
 include('admin/product/sections/data-advanced.php');
 include('admin/product/sections/data-inventory.php');
 include('admin/product/sections/data-shipping.php');
+include('admin/product/sections/data-variation.php');
 include('admin/product/sections/description.php');
 
 include('admin/product/types/subscription.php');
@@ -53,6 +62,8 @@ include('components/product-loop-link.php');
 include('components/product-loop-thumbnail.php');
 include('components/product-loop-button.php');
 include('components/product-loop-rating.php');
+include('components/product-loop-title.php');
+include('components/product-loop-price.php');
 
 include('components/product-price.php');
 
@@ -86,9 +97,7 @@ include('blocks/product-grid-item.php');
 /**
  * Shortcodes
  */
-include('shortcodes/product.php');
-include('shortcodes/coupon.php');
-include('shortcodes/wishlist.php');
+include('shortcodes/index.php');
 
 /**
  * Layout
@@ -99,10 +108,8 @@ include('layout/index.php');
  * Crud
  */
 include('crud/class-growtype-wc-crud.php');
-new Growtype_Wc_Crud();
 
 /**
  * Product
  */
 include('product/class-growtype-wc-product.php');
-new Growtype_Wc_Product();

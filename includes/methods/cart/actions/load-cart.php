@@ -10,7 +10,7 @@ function growtype_load_cart_callback()
     $data = array (
         'fragments' => apply_filters(
             'woocommerce_add_to_cart_fragments', array (
-                'shopping_cart_content' => '<div class="b-shoppingcart-main">' . growtype_render_cart_content() . '</div>',
+                'shopping_cart_content' => '<div class="b-shoppingcart-main">' . growtype_wc_render_cart_content() . '</div>',
             )
         ),
         'cart_contents_count' => WC()->cart->cart_contents_count,

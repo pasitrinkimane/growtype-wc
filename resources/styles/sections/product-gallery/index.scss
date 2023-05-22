@@ -12,10 +12,6 @@ Style 1, thumbnails bottom
   width: calc(100% + 10px);
 
   &.slick-slider {
-    max-width: 90%;
-    overflow: initial;
-    margin: auto;
-
     .slick-list {
       overflow: hidden;
     }
@@ -27,6 +23,14 @@ Style 1, thumbnails bottom
 
   li {
     padding: 5px;
+  }
+}
+
+.woocommerce-product-gallery.gallery-nav-with-arrows {
+  .flex-control-nav.slick-slider {
+    max-width: 90% !important;
+    overflow: initial !important;
+    margin: auto !important;
   }
 }
 
@@ -88,79 +92,101 @@ div.product .woocommerce-tabs {
   padding-top: 3px;
 }
 
-.flex-direction-nav {
-  position: absolute;
-  right: 0;
-  top: 47%;
-  margin: auto;
-  height: 50px;
-  width: 100%;
-  padding: 0 20px;
-  @include bp-phone-xl() {
+.woocommerce-product-gallery{
+  .flex-direction-nav {
+    position: absolute;
+    right: 0;
+    top: 47%;
+    margin: auto;
+    height: 50px;
     width: 100%;
-    bottom: initial;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  .flex-nav-prev {
-    width: 40px;
-    height: 30px;
-    float: left;
-    overflow: hidden;
-    position: relative;
-    font-size: 18px;
-    color: grey;
-    text-align: left;
+    padding: 0 20px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     @include bp-phone-xl() {
-      width: 35px;
-      height: 25px;
+      width: 100%;
+      bottom: initial;
+      padding-left: 20px;
+      padding-right: 20px;
     }
 
-    &:before {
-      content: "\f340";
-      font-family: Dashicons;
+    .flex-nav-prev {
+      width: 40px;
+      height: 30px;
+      float: left;
+      overflow: hidden;
+      position: relative;
+      font-size: 18px;
+      color: grey;
+      text-align: left;
+      @include bp-phone-xl() {
+        width: 35px;
+        height: 25px;
+      }
+
+      &:before {
+        content: "\f340";
+        font-family: Dashicons;
+      }
+
+      .flex-prev {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        text-indent: 1000px;
+        opacity: 0;
+      }
     }
 
-    .flex-prev {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      text-indent: 1000px;
-      opacity: 0;
+    .flex-nav-next {
+      width: 40px;
+      height: 30px;
+      float: right;
+      overflow: hidden;
+      position: relative;
+      font-size: 18px;
+      color: grey;
+      text-align: right;
+      @include bp-phone-xl() {
+        width: 35px;
+        height: 25px;
+      }
+
+      &:before {
+        content: "\f344";
+        font-family: Dashicons;
+      }
+
+      .flex-next {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        text-indent: 1000px;
+        opacity: 0;
+      }
     }
   }
+}
 
-  .flex-nav-next {
-    width: 40px;
-    height: 30px;
-    float: right;
-    overflow: hidden;
-    position: relative;
-    font-size: 18px;
-    color: grey;
-    text-align: right;
-    @include bp-phone-xl() {
-      width: 35px;
-      height: 25px;
-    }
+.product-img-wrapper {
+  position: relative;
 
-    &:before {
-      content: "\f344";
-      font-family: Dashicons;
-    }
-
-    .flex-next {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      text-indent: 1000px;
-      opacity: 0;
-    }
+  .img-variation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    bottom: 0;
+    right: 0;
+    height: 100% !important;
   }
 }
 
@@ -171,6 +197,7 @@ Lightbox settings
   opacity: 1;
 }
 
+@import "partials/type-1";
 @import "partials/type-2";
 @import "partials/type-3";
 @import "partials/type-4";

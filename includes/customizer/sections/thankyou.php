@@ -58,7 +58,7 @@ $wp_customize->add_setting('woocommerce_thankyou_page_intro_content',
     array (
         'default' => '',
         'transport' => 'postMessage',
-        'sanitize_callback' => 'woocommerce_thankyou_page_intro_content_translation'
+        'sanitize_callback' => array ($this, 'woocommerce_thankyou_page_intro_content_translation')
     )
 );
 
@@ -84,7 +84,7 @@ $wp_customize->add_setting('woocommerce_thankyou_page_intro_content_access_platf
     array (
         'default' => '',
         'transport' => 'postMessage',
-        'sanitize_callback' => 'woocommerce_thankyou_page_intro_content_access_platform_translation'
+        'sanitize_callback' => array ($this, 'woocommerce_thankyou_page_intro_content_access_platform_translation')
     )
 );
 

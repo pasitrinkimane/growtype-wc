@@ -1,0 +1,31 @@
+.b-features {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 80px;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  .b-features-single {
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    width: calc(100% / 5);
+    @include bp-phone-xl() {
+      width: 100%;
+    }
+
+    .icon {
+      margin-bottom: 15px;
+    }
+
+    .title {
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 14px;
+    }
+  }
+}

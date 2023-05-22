@@ -2,7 +2,9 @@
     $wrapper_classes))); ?>"
      data-columns="<?php echo esc_attr($columns); ?>"
      data-thumbnail-width="<?php echo growtype_wc_get_product_gallery_sizes()['thumbnail']['width'] ?>"
-     data-thumbnail-height="<?php echo growtype_wc_get_product_gallery_sizes()['thumbnail']['height'] ?>" style="opacity: 0; transition: opacity .25s ease-in-out;">
+     data-thumbnail-height="<?php echo growtype_wc_get_product_gallery_sizes()['thumbnail']['height'] ?>"
+     data-nav-slider-params='<?php echo $control_nav_slider_args ?>'
+     style="opacity: 0; transition: opacity .25s ease-in-out;">
     <figure class="woocommerce-product-gallery__wrapper">
         <?php if ($featured_image_id) {
             $html = '';

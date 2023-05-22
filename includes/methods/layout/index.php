@@ -3,7 +3,7 @@
 add_action('growtype_header_before_close', 'growtype_header_before_close_wc_extend');
 function growtype_header_before_close_wc_extend()
 {
-    if (growtype_wc_cart_icon_is_active()) {
+    if (get_theme_mod('woocommerce_cart_enabled', true)) {
         echo growtype_wc_include_view('components.cart');
     }
 }
@@ -19,11 +19,22 @@ function growtype_wc_side_nav()
         </li>
     <?php }
 
-    if (growtype_wc_cart_icon_is_active()) { ?>
-        <li class="e-cart">
-            <i class="icon-cart"></i>
-        </li>
-    <?php }
+    if (growtype_wc_cart_icon_is_active()) {
+        echo growtype_wc_get_cart_icon();
+    }
+}
+
+function growtype_wc_get_cart_icon()
+{
+    ob_start();
+    ?>
+    <a href="#" class="e-cart">
+        <i class="icon-cart"></i>
+    </a>
+    <?php
+    $html = ob_get_clean();
+
+    return apply_filters('growtype_wc_get_cart_icon', $html);
 }
 
 add_action('wp_head', 'growtype_wc_wp_head');

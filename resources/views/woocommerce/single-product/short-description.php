@@ -31,7 +31,7 @@ if (!$short_description) {
 
 <section class="woocommerce-product-details__short-description">
     <?php if (get_theme_mod('woocommerce_product_page_short_description_section_title', true)) { ?>
-        <h6 class="e-title-section"><?php echo __('About product', 'growtype-wc') ?></h6>
+        <h6 class="e-title-section"><?php echo __('About', 'growtype-wc') ?></h6>
     <?php } ?>
     <?php echo $short_description; // WPCS: XSS ok. ?>
 </section>

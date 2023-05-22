@@ -20,8 +20,8 @@ $wp_customize->add_setting('woocommerce_cart_enabled',
 
 $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_cart_enabled',
     array (
-        'label' => esc_html__('Enabled'),
-        'description' => __('Enable/disable cart.', 'growtype-wc'),
+        'label' => esc_html__('Cart preview'),
+        'description' => __('Enable/disable cart preview modal.', 'growtype-wc'),
         'section' => 'woocommerce_cart_page',
     )
 ));

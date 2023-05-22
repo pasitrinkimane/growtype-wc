@@ -203,7 +203,7 @@ $wp_customize->add_setting('woocommerce_checkout_intro_text',
     array (
         'default' => '',
         'transport' => 'postMessage',
-        'sanitize_callback' => 'woocommerce_checkout_intro_text_translation'
+        'sanitize_callback' => array ($this, 'woocommerce_checkout_intro_text_translation')
     )
 );
 
@@ -228,7 +228,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
 $wp_customize->add_setting('woocommerce_checkout_billing_section_title', array (
     'capability' => 'edit_theme_options',
     'default' => 'Billing details',
-    'sanitize_callback' => 'woocommerce_checkout_billing_section_title_translation'
+    'sanitize_callback' => array ($this, 'woocommerce_checkout_billing_section_title_translation')
 ));
 
 $wp_customize->add_control('woocommerce_checkout_billing_section_title', array (
@@ -244,7 +244,7 @@ $wp_customize->add_control('woocommerce_checkout_billing_section_title', array (
 $wp_customize->add_setting('woocommerce_checkout_additional_section_title', array (
     'capability' => 'edit_theme_options',
     'default' => 'Additional details',
-    'sanitize_callback' => 'woocommerce_checkout_additional_section_title_translation'
+    'sanitize_callback' => array ($this, 'woocommerce_checkout_additional_section_title_translation')
 ));
 
 $wp_customize->add_control('woocommerce_checkout_additional_section_title', array (
@@ -260,7 +260,7 @@ $wp_customize->add_control('woocommerce_checkout_additional_section_title', arra
 $wp_customize->add_setting('woocommerce_checkout_account_section_title', array (
     'capability' => 'edit_theme_options',
     'default' => 'Account details',
-    'sanitize_callback' => 'woocommerce_checkout_account_section_title_translation'
+    'sanitize_callback' => array ($this, 'woocommerce_checkout_account_section_title_translation')
 ));
 
 $wp_customize->add_control('woocommerce_checkout_account_section_title', array (
@@ -276,7 +276,7 @@ $wp_customize->add_control('woocommerce_checkout_account_section_title', array (
 $wp_customize->add_setting('woocommerce_checkout_place_order_button_title', array (
     'capability' => 'edit_theme_options',
     'default' => 'Place order',
-    'sanitize_callback' => 'woocommerce_checkout_place_order_button_title_translation'
+    'sanitize_callback' => array ($this, 'woocommerce_checkout_place_order_button_title_translation')
 ));
 
 $wp_customize->add_control('woocommerce_checkout_place_order_button_title', array (

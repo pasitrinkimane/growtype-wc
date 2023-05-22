@@ -40,13 +40,6 @@ if (empty($product) || !$is_visible) {
  */
 $classes = wc_get_product_class(get_theme_mod('woocommerce_product_preview_style'), $product);
 
-/**
- * Cta disabled class
- */
-if (Growtype_Wc_Product::product_preview_cta_disabled() && !get_query_var('cta_btn')) {
-    array_push($classes, 'cta-disabled');
-}
-
 $classes = implode(' ', $classes);
 
 if ($filterClasses ?? '') {

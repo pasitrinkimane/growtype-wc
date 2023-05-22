@@ -222,7 +222,7 @@
     overflow: hidden;
 
     > h2 {
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       font-size: 20px;
       line-height: 34px;
       text-transform: uppercase;
@@ -428,6 +428,13 @@
 .has-panel {
   &.woocommerce.single-product .woocommerce-breadcrumb {
     margin: 0;
+  }
+}
+
+.b-content-main {
+  .product-extra-details-content {
+    white-space: pre-wrap;
+    padding-bottom: 25px;
   }
 }
 

@@ -73,18 +73,20 @@
   }
 
   .b-shoppingcart--intro {
-    padding: 30px 30px 15px;
+    padding: 20px 20px 15px;
+    padding-bottom: 45px;
     box-shadow: 0px 1px 5px 0px rgba(128, 128, 128, 0.16);
     @include bp-phone-xl() {
-      padding: 30px 20px 15px;
+      padding: 35px 20px 15px;
     }
   }
 
   .e-btn--close {
-    right: 30px;
-    top: 30px;
+    right: 20px;
+    top: 20px;
     @include bp-phone-xl() {
-      right: 20px;
+      right: 15px;
+      top: 15px;
     }
   }
 
@@ -374,11 +376,11 @@
   &:before, &:after {
     content: '';
     transform: rotate(45deg);
-    height: 15px;
+    height: 13px;
     background: white;
     width: 2px;
     display: inline-block;
-    top: 2px;
+    top: 0;
     left: 8px;
     position: relative;
     border-radius: 2px;

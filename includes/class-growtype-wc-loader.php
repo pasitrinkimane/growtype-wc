@@ -55,7 +55,7 @@ class Growtype_Wc_Loader
         $this->actions = array ();
         $this->filters = array ();
 
-        add_action('plugins_loaded', array ($this, 'load_wc_methods'));
+        add_action('plugins_loaded', array ($this, 'load_methods'));
     }
 
     /**
@@ -139,8 +139,11 @@ class Growtype_Wc_Loader
      * Load the required methods for this plugin.
      *
      */
-    function load_wc_methods()
+    function load_methods()
     {
+        if (!class_exists('WooCommerce')) {
+            return;
+        }
         /**
          * Autoload vendor
          */

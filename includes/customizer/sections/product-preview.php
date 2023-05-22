@@ -52,19 +52,74 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
- * Add to cart button status
+ * Sale flash
  */
-$wp_customize->add_setting('woocommerce_product_preview_add_to_cart_btn',
+$wp_customize->add_setting('woocommerce_product_preview_sale_badge',
     array (
-        'default' => 0,
+        'default' => 1,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_add_to_cart_btn',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_sale_badge',
     array (
-        'label' => esc_html__('CTA Button Enabled'),
-        'description' => __('Enable add to cart btn.', 'growtype-wc'),
+        'label' => esc_html__('Sale badge'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable sale badge (flash).', 'growtype-wc'),
+    )
+));
+
+/**
+ * product title
+ */
+$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_title',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_shop_loop_item_title',
+    array (
+        'label' => esc_html__('Product title'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable product title.', 'growtype-wc'),
+    )
+));
+
+
+/**
+ * product price
+ */
+$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_price',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_shop_loop_item_price',
+    array (
+        'label' => esc_html__('Product price'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable product price.', 'growtype-wc'),
+    )
+));
+
+/**
+ * Add to cart button status
+ */
+$wp_customize->add_setting('woocommerce_product_preview_cta_btn',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_cta_btn',
+    array (
+        'label' => esc_html__('CTA Button'),
+        'description' => __('Enable/disable cta button.', 'growtype-wc'),
         'section' => 'woocommerce_product_preview_page',
     )
 ));
@@ -73,9 +128,9 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  * CTA button label
  */
 $wp_customize->add_setting('woocommerce_product_preview_cta_label', array (
-//            'capability' => 'edit_theme_options',
+    'capability' => 'edit_theme_options',
     'default' => 'Preview product',
-    'sanitize_callback' => 'woocommerce_product_preview_cta_label_translation'
+    'sanitize_callback' => array ($this, 'woocommerce_product_preview_cta_label_translation')
 ));
 
 $wp_customize->add_control('woocommerce_product_preview_cta_label', array (
@@ -83,22 +138,4 @@ $wp_customize->add_control('woocommerce_product_preview_cta_label', array (
     'section' => 'woocommerce_product_preview_page',
     'label' => __('CTA Button Label'),
     'description' => __('Default: "Preview product"')
-));
-
-/**
- * Sale flash
- */
-$wp_customize->add_setting('woocommerce_product_preview_sale_flash_disabled',
-    array (
-        'default' => 0,
-        'transport' => 'refresh',
-    )
-);
-
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_sale_flash_disabled',
-    array (
-        'label' => esc_html__('Sale flash disabled'),
-        'section' => 'woocommerce_product_preview_page',
-        'description' => __('Enable/disable sale flash (badge).', 'growtype-wc'),
-    )
 ));

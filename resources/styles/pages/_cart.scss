@@ -143,13 +143,17 @@
     .cart-subtotal {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
+
+      & + .order-total {
+        margin-top: 15px;
+      }
     }
 
     .order-total {
       display: flex;
       justify-content: space-between;
-      margin-top: 15px;
+      margin-top: 20px;
     }
 
     .woocommerce-shipping-destination {
@@ -234,5 +238,22 @@
 
   li {
     margin: 0;
+  }
+}
+
+.woocommerce-shipping-methods {
+  li {
+    label {
+      font-size: 14px!important;
+    }
+  }
+}
+
+.woocommerce-shipping-calculator {
+  .shipping-calculator-button {
+    border: 1px solid black;
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 5px;
   }
 }

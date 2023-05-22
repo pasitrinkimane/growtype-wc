@@ -88,18 +88,25 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                         </div>
                         <div class="options" data-type="<?php echo $attr_radio ? 'radio' : 'select' ?>">
                             <?php if ($attr_radio) {
-
                                 $existingAttributes = [];
 
                                 if (isset($available_variations) && !empty($available_variations)) {
                                     foreach ($available_variations as $key => $variation) {
                                         if (isset($variation['attributes'])) {
-                                            $attributeTitle = $variation['attributes']['attribute_' . strtolower($attribute_name)];
+                                            $attributeTitle = isset($variation['attributes']['attribute_' . strtolower($attribute_name)]) ? $variation['attributes']['attribute_' . strtolower($attribute_name)] : null;
+
                                             $termId = array_filter(wc_get_product_terms($product->get_id(), $attribute_name),
                                                 function ($object) use ($attributeTitle) {
                                                     return $object->slug === $attributeTitle;
                                                 });
-                                            $termName = !empty($termId) && !empty(array_values($termId)) ? get_term(array_values($termId)[0]->term_id)->name : '';
+
+                                            $terms = array_values($termId);
+
+                                            if (empty($terms)) {
+                                                continue;
+                                            }
+
+                                            $termName = !empty($termId) && !empty(array_values($termId)) ? get_term($terms[0]->term_id)->name : '';
                                             $termName = !empty($termName) ? $termName : $attributeTitle;
                                             $isVisible = false;
                                             $variation_value = apply_filters('woocommerce_variation_option_name', $attributeTitle);
@@ -112,11 +119,11 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                             $termColor = isset(get_term_meta(array_values($termId)[0]->term_id)['color']) ? get_term_meta(array_values($termId)[0]->term_id)['color'][0] : null;
 
                                             ?>
-                                            <div class="option <?php echo $variation_value === $default_value ? 'is-active' : '' ?>"
+                                            <div class="option"
                                                  style="<?php echo $isVisible ? 'display:block;' : 'display:none;' ?>;background: <?php echo $termColor ?>"
                                                  data-type="<?php echo $variation_value ?>">
                                                 <input type="radio"
-                                                       value="<?php echo $variation_value ?>" <?php checked($variation_value === $default_value) ?>
+                                                       value="<?php echo $variation_value ?>"
                                                        data-term-name="<?php echo $termName ?>"
                                                        data-id="<?php echo $variation['variation_id'] ?>"
                                                        name="attribute_<?php echo sanitize_title($attribute_name) ?>">

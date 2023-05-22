@@ -32,4 +32,3 @@ function growtype_wc_admin_process_product_object_general($product)
 {
     $product->update_meta_data('_subscription_duration', $_POST['_subscription_duration'] ?? 1);
 }
-

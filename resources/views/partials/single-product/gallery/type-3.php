@@ -1,5 +1,7 @@
 <div class="<?php echo esc_attr(implode(' ', array_map('sanitize_html_class',
-    $wrapper_classes))); ?>" data-columns="<?php echo esc_attr($columns); ?>"
+    $wrapper_classes))); ?>"
+     data-columns="<?php echo esc_attr($columns); ?>"
+     data-nav-slider-params='<?php echo $control_nav_slider_args ?>'
 >
     <div class="woocommerce-product-gallery__wrapper">
         <?php if ($featured_image_id) {

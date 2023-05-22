@@ -12,7 +12,7 @@ class Growtype_Wc_Customizer_Extend
         $this->available_wc_coupons = $this->get_available_wc_coupons();
         $this->available_products = $this->get_available_products();
 
-        add_action('customize_controls_enqueue_scripts', array ($this, 'customizer_control_email_preview'));
+        add_action('customize_controls_enqueue_scripts', array ($this, 'customizer_control'));
 
         add_filter('growtype_customizer_extend_available_pages', array ($this, 'customizer_extend_available_pages'));
 
@@ -82,10 +82,11 @@ class Growtype_Wc_Customizer_Extend
     /*
 * Customizer email preview
 */
-    function customizer_control_email_preview()
+    function customizer_control()
     {
-        wp_enqueue_script('customizer_control_email_preview', GROWTYPE_WC_URL . '/js/customizer-control-email-preview.js', array ('jquery'));
-        wp_localize_script('customizer_control_email_preview', 'ajax_object',
+        wp_enqueue_script('growtype_wc_customizer_control', GROWTYPE_WC_URL . 'admin/js/customizer-control.js', array ('jquery'));
+        wp_enqueue_script('growtype_wc_customizer_control_email_preview', GROWTYPE_WC_URL . 'admin/js/customizer-control-email-preview.js', array ('jquery'));
+        wp_localize_script('growtype_wc_customizer_control', 'ajax_object',
             array (
                 'ajaxurl' => admin_url('admin-ajax.php'),
             )
@@ -373,6 +374,20 @@ class Growtype_Wc_Customizer_Extend
     {
         if (class_exists('QTX_Translator')) {
             $translation = get_theme_mod('woocommerce_product_page_sidebar_content');
+            return growtype_format_translation($_COOKIE['qtrans_front_language'], $translation, $value, true);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param $checked
+     * Translate text input textarea
+     */
+    function woocommerce_product_page_size_guide_details_translation($value)
+    {
+        if (class_exists('QTX_Translator')) {
+            $translation = get_theme_mod('woocommerce_product_page_size_guide_details');
             return growtype_format_translation($_COOKIE['qtrans_front_language'], $translation, $value, true);
         }
 

@@ -1,23 +1,17 @@
 <?php
 
-do_action('growtype_custom_page_redirect', 'growtype_wc_custom_page_redirect');
-
-function growtype_wc_custom_page_redirect()
+add_action('template_redirect', 'growtype_wc_skip_cart_redirect');
+function growtype_wc_skip_cart_redirect()
 {
-    $woocommerce_skip_cart_page = get_theme_mod('woocommerce_skip_cart_page');
-
-    if ($woocommerce_skip_cart_page && get_permalink() === wc_get_cart_url()) {
-        if (!cart_is_empty()) {
-            wp_redirect(wc_get_checkout_url());
-            exit();
-        }
-
-        /**
-         * Clear cart page notices
-         */
+    if (growtype_wc_skip_cart_page()) {
         wc_clear_notices();
 
-        wp_redirect(get_home_url_custom());
-        exit();
+        if (!WC()->cart->is_empty() && is_cart()) {
+            wp_safe_redirect(wc_get_checkout_url());
+            exit();
+        } elseif (WC()->cart->is_empty() && is_cart()) {
+            wp_safe_redirect(wc_get_page_permalink('shop'));
+            exit();
+        }
     }
 }

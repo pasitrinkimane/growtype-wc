@@ -4,6 +4,10 @@
   }
 }
 
+li.product {
+  list-style-type: none;
+}
+
 .woocommerce .products,
 .wc-block-product-new,
 .wp-block-handpicked-products {
@@ -28,12 +32,6 @@
     &:nth-child(odd) {
       @include bp-phone-xl() {
         clear: both;
-      }
-    }
-
-    &.cta-disabled {
-      .button {
-        display: none;
       }
     }
   }
@@ -343,10 +341,14 @@
   }
 
   .content-wrapper {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     @include bp-phone-xl() {
       padding-left: 5px;
       padding-right: 5px;
+    }
+
+    &:empty {
+      margin-bottom: 0;
     }
   }
 

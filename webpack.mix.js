@@ -23,6 +23,7 @@ mix
      * Woocommerce fonts
      */
     .copyDirectory('resources/fonts', 'public/styles/fonts')
+    .copyDirectory('resources/icons', 'public/icons')
 
 mix
     .sourceMaps()

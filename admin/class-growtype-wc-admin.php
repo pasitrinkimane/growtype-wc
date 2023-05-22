@@ -55,9 +55,7 @@ class Growtype_Wc_Admin
         $this->Growtype_Wc = $growtype_wc;
         $this->version = $version;
 
-        if (is_admin()) {
-            $this->load_methods();
-        }
+        $this->load_methods();
     }
 
     /**
@@ -85,19 +83,7 @@ class Growtype_Wc_Admin
         /**
          * Plugin settings
          */
-        require_once GROWTYPE_WC_PATH . '/admin/partials/growtype-wc-admin-settings.php';
-        new Growtype_Wc_Admin_Settings();
-
-        /**
-         * Growtype settings general
-         */
-        require_once GROWTYPE_WC_PATH . '/admin/partials/growtype-wc-admin-settings-general.php';
-        new Growtype_Wc_Admin_Settings_General();
-
-        /**
-         * Growtype settings general
-         */
-        require_once GROWTYPE_WC_PATH . '/admin/partials/growtype-wc-admin-settings-generate.php';
-        new Growtype_Wc_Admin_Settings_Generate();
+        require GROWTYPE_WC_PATH . '/admin/pages/growtype-wc-admin-pages.php';
+        new Growtype_Wc_Admin_Pages();
     }
 }

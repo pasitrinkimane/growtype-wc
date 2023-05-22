@@ -1,4 +1,14 @@
-.btn-primary {}
+.btn-primary {
+  cursor: pointer;
+}
+
+.single {
+  .btn-sizeguide {
+    padding: 5px 10px;
+    min-width: initial;
+    margin-bottom: 10px;
+  }
+}
 
 .ajax_add_to_cart {
   &.loading {

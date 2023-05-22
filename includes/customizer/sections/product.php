@@ -199,11 +199,11 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
- * Shop gallery type
+ * Gallery animation
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_animation',
     array (
-        'default' => 'fade',
+        'default' => 'slide',
         'transport' => 'refresh',
     )
 );
@@ -217,9 +217,27 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
             'multiselect' => false,
         ),
         'choices' => array (
-            'fade' => __('Fade', 'growtype-wc'),
             'slide' => __('Slide', 'growtype-wc'),
+            'fade' => __('Fade', 'growtype-wc'),
         )
+    )
+));
+
+/**
+ * Gallery nav arrows
+ */
+$wp_customize->add_setting('woocommerce_product_page_gallery_nav_arrows',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_gallery_nav_arrows',
+    array (
+        'label' => esc_html__('Nav arrows'),
+        'section' => 'woocommerce_product_page',
+        'description' => __('Navigation arrows', 'growtype-wc'),
     )
 ));
 
@@ -298,11 +316,36 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
 /**
  * Payment details
  */
+$wp_customize->add_setting('woocommerce_product_page_size_guide_details',
+    array (
+        'default' => '',
+        'transport' => 'postMessage',
+        'sanitize_callback' => array ($this, 'woocommerce_product_page_size_guide_details_translation')
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, 'woocommerce_product_page_size_guide_details',
+    array (
+        'label' => __('Size Guide Details'),
+        'description' => __('Size guide information'),
+        'section' => 'woocommerce_product_page',
+        'input_attrs' => array (
+            'class' => 'qtranxs-translatable',
+            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
+            'toolbar2' => 'formatselect',
+            'mediaButtons' => true,
+        )
+    )
+));
+
+/**
+ * Payment details
+ */
 $wp_customize->add_setting('woocommerce_product_page_payment_details',
     array (
         'default' => '',
         'transport' => 'postMessage',
-        'sanitize_callback' => 'woocommerce_product_page_payment_details_translation'
+        'sanitize_callback' => array ($this, 'woocommerce_product_page_payment_details_translation')
     )
 );
 
@@ -402,16 +445,16 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  * Sale flash
  */
-$wp_customize->add_setting('woocommerce_product_page_sale_flash_disabled',
+$wp_customize->add_setting('woocommerce_product_page_sale_flash',
     array (
         'default' => 0,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_sale_flash_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_sale_flash',
     array (
-        'label' => esc_html__('Sale flash disabled'),
+        'label' => esc_html__('Sale flash'),
         'section' => 'woocommerce_product_page',
         'description' => __('Enable/disable sale flash (badge).', 'growtype-wc'),
     )
@@ -550,7 +593,7 @@ $wp_customize->add_setting('woocommerce_product_page_sidebar_content',
     array (
         'default' => '',
         'transport' => 'postMessage',
-        'sanitize_callback' => 'woocommerce_product_page_sidebar_content_translation'
+        'sanitize_callback' => array ($this, 'woocommerce_product_page_sidebar_content_translation')
     )
 );
 

@@ -1,6 +1,17 @@
 <?php
 
 /**
+ * Remove product loop cta button
+ */
+add_action('wp_loaded', 'growtype_wc_shop_loop_remove_cta');
+function growtype_wc_shop_loop_remove_cta()
+{
+    if (!Growtype_Wc_Product::product_preview_cta_enabled()) {
+        remove_action('woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart');
+    }
+}
+
+/**
  * Render single product main content
  */
 add_action('growtype_wc_single_product_main_content', 'growtype_wc_single_product_main_content_render');
@@ -52,7 +63,7 @@ function growtype_wc_after_add_to_cart_button()
 /**
  * Remove the breadcrumbs
  */
-add_action('init', 'growtype_wc_remove_breadcrumbs');
+add_action('wp_loaded', 'growtype_wc_remove_breadcrumbs');
 function growtype_wc_remove_breadcrumbs()
 {
     if (get_theme_mod('woocommerce_product_page_breadcrumb_disabled')) {
@@ -165,4 +176,58 @@ function growtype_wc_register_post_type_product($args)
     }
 
     return $args;
+}
+
+/**
+ * Disable single product page
+ */
+add_filter('woocommerce_get_item_data', 'growtype_wc_woocommerce_get_item_data', 12, 2);
+function growtype_wc_woocommerce_get_item_data($item_data, $cart_item)
+{
+    if (isset($cart_item['variation_id'])) {
+        $visible_attributes = Growtype_Wc_Product::visible_attributes($cart_item['variation_id']);
+
+        $available_items = [];
+        foreach ($visible_attributes as $key => $visible_attribute) {
+            $term = get_term_by('slug', $visible_attribute, $key);
+
+            foreach ($item_data as $item) {
+                if ($item['value'] === $term->name) {
+                    array_push($available_items, $item);
+                }
+            }
+        }
+
+        $item_data = $available_items;
+    }
+
+    return $item_data;
+}
+
+/**
+ * Size guide button
+ */
+add_action('woocommerce_before_single_variation', 'growtype_wc_size_guide_cta', 10);
+function growtype_wc_size_guide_cta()
+{
+    $size_guide = get_theme_mod('woocommerce_product_page_size_guide_details');
+
+    if (!empty($size_guide)) {
+        echo '<button class="btn btn-secondary btn-sizeguide" type="button" data-bs-toggle="modal" data-bs-target="#staticBackdrop">Size guide</button>';
+
+        echo '<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Size guide</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ' . $size_guide . '
+      </div>
+    </div>
+  </div>
+</div>';
+    }
 }

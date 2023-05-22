@@ -42,11 +42,12 @@
 }
 
 .e-wishlist {
-  margin-right: 10px;
+  list-style-type: none;
   margin-left: 5px;
+  margin-right: 6px;
   margin-top: 3px;
   position: relative;
-  list-style-type: none;
+  width: 26px;
 
   i {
     font-size: 20px;

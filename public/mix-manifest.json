@@ -5,8 +5,8 @@
     "/scripts/wc-checkout.js": "/scripts/wc-checkout.js?id=fb15d74b781d52eef3a3",
     "/scripts/wc-login.js": "/scripts/wc-login.js?id=413bbe0b72154d65023a",
     "/scripts/wc-coupon.js": "/scripts/wc-coupon.js?id=7f6c223be47a302a90a7",
-    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=62488cb586c4b25fbac1",
-    "/styles/growtype-wc.css": "/styles/growtype-wc.css?id=988fd8aba1f914625995",
+    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=9ba7fa99d87958cf18ad",
+    "/styles/growtype-wc.css": "/styles/growtype-wc.css?id=317d34e4f2843e72bbb1",
     "/styles/fonts/WooCommerce.eot": "/styles/fonts/WooCommerce.eot?id=97b9b3354d6b0c57fa26",
     "/styles/fonts/WooCommerce.svg": "/styles/fonts/WooCommerce.svg?id=d9b7a6d9164deb672b46",
     "/styles/fonts/WooCommerce.ttf": "/styles/fonts/WooCommerce.ttf?id=960a1d0007f9bd64cb36",
@@ -14,5 +14,7 @@
     "/styles/fonts/star.eot": "/styles/fonts/star.eot?id=46440f8fa7dbd7d2a076",
     "/styles/fonts/star.svg": "/styles/fonts/star.svg?id=5e73470010dd7998b280",
     "/styles/fonts/star.ttf": "/styles/fonts/star.ttf?id=233cd36eada50445a9c3",
-    "/styles/fonts/star.woff": "/styles/fonts/star.woff?id=7e6abd6110bc23e36d79"
+    "/styles/fonts/star.woff": "/styles/fonts/star.woff?id=7e6abd6110bc23e36d79",
+    "/icons/arrow.svg": "/icons/arrow.svg?id=f54878fb22b8156a2efa",
+    "/icons/loader.svg": "/icons/loader.svg?id=72376329015bc6d0d20c"
 }

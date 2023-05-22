@@ -162,16 +162,16 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
 /**
  * Sidebar switch
  */
-$wp_customize->add_setting('catalog_sidebar_disabled',
+$wp_customize->add_setting('catalog_sidebar_enabled',
     array (
-        'default' => 0,
+        'default' => 1,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'catalog_sidebar_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'catalog_sidebar_enabled',
     array (
-        'label' => esc_html__('"Shop" Sidebar Disabled'),
+        'label' => esc_html__('"Shop" Sidebar'),
         'section' => 'woocommerce_product_catalog',
         'description' => __('Sidebar enabled/disabled', 'growtype-wc'),
     )

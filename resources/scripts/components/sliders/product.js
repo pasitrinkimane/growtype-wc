@@ -1,8 +1,42 @@
 function productSlider() {
     (function ($) {
-        $(document).ready(function () {
-            jQuery('.woocommerce-product-gallery .flex-direction-nav').appendTo('.woocommerce-product-gallery .flex-viewport')
 
+        /**
+         * Check if product gallery exists
+         */
+        if ($('.woocommerce-product-gallery').length === 0) {
+            return;
+        }
+
+        let controlNavSliderArgs = $('.woocommerce-product-gallery').attr('data-nav-slider-params');
+        controlNavSliderArgs = JSON.parse(controlNavSliderArgs);
+
+        $(document).ready(function () {
+            jQuery('.woocommerce-product-gallery .flex-direction-nav').appendTo('.woocommerce-product-gallery .flex-viewport');
+
+            /**
+             * Thumbnail index
+             */
+            jQuery('.single .woocommerce-product-gallery').attr('data-slide-index', 0)
+
+            /**
+             * Hide variation image on thumbnail click
+             */
+            if (jQuery('.woocommerce-product-gallery').data('flexslider')) {
+                jQuery('.woocommerce-product-gallery').data('flexslider').vars.before = function (slide, index) {
+                    // $('.woocommerce-product-gallery .featured-img-wrapper').fadeOut(300).promise().done(function () {
+                    //     $(this).delay(200).fadeIn()
+                    // })
+                };
+
+                jQuery('.woocommerce-product-gallery').data('flexslider').vars.after = function (slide) {
+                    $('.single .woocommerce-product-gallery').attr('data-slide-index', slide.currentSlide)
+                };
+            }
+
+            /**
+             * Thumbnail width
+             */
             if (screen.width < 1024) {
                 return false;
             }
@@ -24,25 +58,13 @@ function productSlider() {
                         } else if (viewportHeight > 600) {
                             heightSteps = 'woocommerce-product-gallery-height-large';
                         }
+
+                        controlNavSliderArgs['vertical'] = true;
+
                         jQuery('.woocommerce-product-gallery')
                             .addClass(heightSteps)
                             .find('.flex-control-nav')
-                            .slick({
-                                infinite: false,
-                                autoplay: false,
-                                slidesToShow: 3,
-                                centerMode: false,
-                                arrows: true,
-                                slidesToScroll: 1,
-                                dots: false,
-                                vertical: true,
-                                responsive: [{
-                                    breakpoint: 500,
-                                    settings: {
-                                        slidesToShow: 4,
-                                    },
-                                }],
-                            })
+                            .slick(controlNavSliderArgs)
                     }
                     jQuery('.woocommerce-product-gallery__wrapper').resize()
                 }, 100)
@@ -50,44 +72,23 @@ function productSlider() {
                 setTimeout(function () {
                     if (jQuery('body').hasClass('woocommerce-product-gallery-type-2')) {
                         if (jQuery('.woocommerce .flex-control-nav li').length > 5) {
-                            jQuery(".woocommerce .flex-control-nav").slick({
-                                infinite: false,
-                                autoplay: false,
-                                slidesToShow: 4,
-                                centerMode: false,
-                                arrows: true,
-                                slidesToScroll: 1,
-                                dots: false,
-                                vertical: true,
-                                responsive: [{
-                                    breakpoint: 500,
-                                    settings: {
-                                        slidesToShow: 4,
-                                    },
-                                }],
-                            })
+
+                            controlNavSliderArgs.slidesToShow = 4;
+
+                            jQuery(".woocommerce .flex-control-nav")
+                                .slick(controlNavSliderArgs)
                         }
                     } else {
                         if (jQuery('.woocommerce .flex-control-nav li').length > 4) {
-                            jQuery(".woocommerce .flex-control-nav").slick({
-                                infinite: false,
-                                autoplay: false,
-                                slidesToShow: 4,
-                                centerMode: false,
-                                arrows: true,
-                                slidesToScroll: 1,
-                                dots: false,
-                                responsive: [{
-                                    breakpoint: 500,
-                                    settings: {
-                                        slidesToShow: 4,
-                                    },
-                                }],
-                            })
 
-                            jQuery(".woocommerce .flex-control-nav").on('beforeChange', function (event, {slideCount: count}, currentSlide, nextSlide) {
-                                console.log(count, currentSlide, nextSlide, 'currentSlide, nextSlide')
-                            });
+                            controlNavSliderArgs.slidesToShow = 4;
+
+                            jQuery(".woocommerce .flex-control-nav")
+                                .slick(controlNavSliderArgs)
+
+                            // jQuery(".woocommerce .flex-control-nav").on('beforeChange', function (event, {slideCount: count}, currentSlide, nextSlide) {
+                            //     console.log(count, currentSlide, nextSlide, 'currentSlide, nextSlide')
+                            // });
                         }
                     }
                     jQuery('.woocommerce-product-gallery__wrapper').resize()

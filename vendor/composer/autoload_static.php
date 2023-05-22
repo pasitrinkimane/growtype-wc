@@ -13,6 +13,20 @@ class ComposerStaticInit4225a95abbf392448dff41fd223ef2dd
         'daf45b1134c9868f305965e4c0e0f06c' => __DIR__ . '/..' . '/rappasoft/laravel-helpers/src/strings.php',
     );
 
+    public static $prefixLengthsPsr4 = array (
+        'P' => 
+        array (
+            'Printful\\' => 9,
+        ),
+    );
+
+    public static $prefixDirsPsr4 = array (
+        'Printful\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/printful/php-api-sdk/src',
+        ),
+    );
+
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
@@ -20,6 +34,8 @@ class ComposerStaticInit4225a95abbf392448dff41fd223ef2dd
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
+            $loader->prefixLengthsPsr4 = ComposerStaticInit4225a95abbf392448dff41fd223ef2dd::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit4225a95abbf392448dff41fd223ef2dd::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInit4225a95abbf392448dff41fd223ef2dd::$classMap;
 
         }, null, ClassLoader::class);

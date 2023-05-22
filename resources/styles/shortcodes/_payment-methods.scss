@@ -1,0 +1,29 @@
+.b-payment-methods {
+  display: flex;
+  gap: 10px;
+
+  .b-payment-methods-single {
+    max-width: 60px;
+
+    img {
+      max-width: 100%;
+    }
+
+    &.custom {
+      width: 100px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        width: 35px;
+      }
+    }
+
+    &.border {
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
+    }
+  }
+}

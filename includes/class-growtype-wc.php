@@ -104,12 +104,7 @@ class Growtype_Wc
         /**
          * The helpers function
          */
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/include.php';
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/general.php';
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/cart.php';
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/email.php';
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/wishlist.php';
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/gallery.php';
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/index.php';
 
         /**
          * The class responsible for orchestrating the actions and filters of the
