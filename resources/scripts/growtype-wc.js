@@ -17,23 +17,3 @@ jQuery(document).ready(() => {
     countdown();
     sidebar();
 });
-
-// jQuery(window).load(function() {
-//     jQuery('.woocommerce-product-gallery').flexslider({
-//         animation: "slide",
-//         direction: "horizontal",
-//         slideshowSpeed: 70000,
-//         smoothHeight: true,
-//         animationSpeed: 500,
-//         touch: true,
-//         start: function (){
-//             console.log('testas 1')
-//         },
-//         before: function (){
-//             console.log('testas 2')
-//         },
-//         after: function (){
-//             console.log('testas 3')
-//         },
-//     });
-// });

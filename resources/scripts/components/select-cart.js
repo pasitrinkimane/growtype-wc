@@ -1,21 +1,41 @@
 function selectCart() {
     (function ($) {
-        window.growtypeWcCartSelect = jQuery('.cart select');
+        $(document).ready(function () {
+            window.growtypeWcCartSelect = jQuery('.cart select');
+
+            /**
+             * Disable empty options
+             */
+            jQuery('.cart select option')
+                .filter(function () {
+                    return !this.value || $.trim(this.value).length === 0 || $.trim(this.text).length === 0;
+                });
+
+            window.growtypeWcSelectCartArgs = {
+                disable_search_threshold: 20
+            };
+
+            if (window.growtypeWcCartSelect.length > 0 && window.growtypeWcCartSelect.chosen) {
+                window.growtypeWcCartSelect.chosen(window.growtypeWcSelectCartArgs);
+            }
+        });
 
         /**
-         * Disable empty options
+         * Update state select after checkout update
          */
-        jQuery('.cart select option')
-            .filter(function () {
-                return !this.value || $.trim(this.value).length === 0 || $.trim(this.text).length === 0;
+        $(document).on('updated_checkout cfw_updated_checkout', function (e, data) {
+            setTimeout(function () {
+                $('select').trigger("chosen:updated");
+            }, 1000)
+        });
+
+        /**
+         * Update select on ajax complete
+         */
+        if ($('body').hasClass('woocommerce-page')) {
+            $(document).on("ajaxComplete", function () {
+                $('select').trigger("chosen:updated");
             });
-
-        window.growtypeWcSelectCartArgs = {
-            disable_search_threshold: 20
-        };
-
-        if (window.growtypeWcCartSelect.length > 0 && window.growtypeWcCartSelect.chosen) {
-            window.growtypeWcCartSelect.chosen(window.growtypeWcSelectCartArgs);
         }
     })(jQuery);
 }

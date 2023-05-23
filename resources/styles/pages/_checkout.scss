@@ -139,6 +139,24 @@
 .form-row {
   display: inline-block;
   width: 100%;
+
+  &.form-row-first {
+    width: calc(50% - 10px);
+    float: left;
+    @include bp-phone-xl() {
+      float: initial;
+      width: 100%;
+    }
+  }
+
+  &.form-row-last {
+    width: calc(50% - 10px);
+    float: right;
+    @include bp-phone-xl() {
+      float: initial;
+      width: 100%;
+    }
+  }
 }
 
 .form-row-wide {
@@ -213,6 +231,11 @@ Checkout review table
 
 .woocommerce-terms-and-conditions-checkbox-text {
   font-size: $font-size-body;
+
+  a {
+    font-size: $font-size-body;
+    text-decoration: underline;
+  }
 }
 
 .woocommerce-checkout {
