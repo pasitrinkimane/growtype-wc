@@ -18,6 +18,18 @@
   }
 }
 
+@mixin bp-tablet-reverse($bp:">=1124") {
+  @media only screen and (min-width: 1124px) {
+    @content;
+  }
+}
+
+@mixin bp-tablet-big-reverse($bp:">=992") {
+  @media only screen and (min-width: 992px) {
+    @content;
+  }
+}
+
 @mixin bp-phone-xl-reverse($bp:">=640") {
   @media only screen and (min-width: 640px) {
     @content;

@@ -1,8 +1,9 @@
-<table class="table">
+<div class="table">
 
-    @include('woocommerce.components.table.product-table-head')
+    <?php
+    echo growtype_wc_include_view('woocommerce.components.table.product-table-head'); ?>
 
-    <tbody>
+    <div class="table-body">
     <?php
     if (!isset($products)) {
         global $wp_query;
@@ -10,15 +11,15 @@
     }
 
     while ($products->have_posts()) : $products->the_post();
-    /**
-     * Hook: woocommerce_shop_loop.
-     */
-    do_action('woocommerce_shop_loop');
-    ?>
+        /**
+         * Hook: woocommerce_shop_loop.
+         */
+        do_action('woocommerce_shop_loop');
 
-    @include('woocommerce.components.table.product-table-row')
+        echo growtype_wc_include_view('woocommerce.components.table.product-table-row', [
+            'product' => wc_get_product(),
+        ]);
+    endwhile; ?>
 
-    <?php endwhile; ?>
-
-    </tbody>
-</table>
+    </div>
+</div>

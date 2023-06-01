@@ -99,6 +99,7 @@
           border-radius: 5px;
           padding-left: 70px;
           position: relative;
+          text-decoration: none;
 
           @include bp-phone-xl() {
             font-weight: 500;

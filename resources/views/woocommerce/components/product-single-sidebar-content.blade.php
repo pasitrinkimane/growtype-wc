@@ -1,1 +1,1 @@
-{!! Growtype_Wc_Product::sidebar_content() !!}
+<?php echo Growtype_Wc_Product::sidebar_content() ?>

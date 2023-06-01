@@ -61,12 +61,12 @@ List products as table
     }
   }
 
-  tr {
+  .table-body-cell {
     .badge {
-      padding: 5px 17px;
+      padding: 5px 10px;
       min-width: initial;
       border-radius: 9px;
-      font-size: $font-size-body;
+      font-size: 12px;
       left: 15px;
       top: 8px;
       right: initial;
@@ -87,5 +87,61 @@ List products as table
   & + .woocommerce-pagination {
     text-align: left;
     padding-top: 20px;
+  }
+
+  .table {
+    @include bp-tablet-reverse() {
+      display: table;
+    }
+  }
+
+  .table-header {
+    @include bp-tablet-reverse() {
+      display: table-header-group;
+      font-weight: bold;
+    }
+    display: none;
+  }
+
+  .table-header-cell {
+    @include bp-tablet-reverse() {
+      display: table-cell;
+      padding: 10px;
+      text-align: justify;
+      border-bottom: 1px solid black;
+    }
+  }
+
+  .table-body {
+    @include bp-tablet-reverse() {
+      display: table-row-group;
+    }
+    @include bp-tablet() {
+      display: flex;
+      flex-wrap: wrap;
+      margin-left: -10px;
+      width: calc(100% + 20px);
+    }
+    @include bp-phone-xl() {
+      margin-left: -5px;
+      width: calc(100% + 20px);
+    }
+  }
+
+  .table-body-row {
+    @include bp-tablet-reverse() {
+      display: table-row;
+      width: 100%;
+      float: initial;
+    }
+  }
+
+  .table-body-cell {
+    @include bp-tablet-reverse() {
+      display: table-cell;
+      vertical-align: middle;
+      border-bottom: 1px solid rgb(0 0 0 / 20%);
+      position: relative;
+    }
   }
 }

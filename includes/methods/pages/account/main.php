@@ -5,6 +5,19 @@
  */
 include('subpages/edit-account.php');
 
+/**
+ * Account permalink
+ */
+add_filter('growtype_user_account_permalink', 'growtypw_wc_growtype_user_account_permalink');
+function growtypw_wc_growtype_user_account_permalink($permalink)
+{
+    if (empty($permalink) && class_exists('woocommerce')) {
+        $permalink = wc_get_page_permalink('myaccount');
+    }
+
+    return $permalink;
+}
+
 function get_account_subpage_intro_details($subpage)
 {
     $details = [

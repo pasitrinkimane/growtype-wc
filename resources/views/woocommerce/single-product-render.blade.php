@@ -4,20 +4,6 @@
     @include('partials.sections.header', ['fixedHeader' => false])
 @endsection
 
-@push('pageStyles')
-    <style>
-        @if(class_exists('ACF') && get_field('top_section_color'))
-        .site-header, .woocommerce-breadcrumb, .product-summary {
-            background: <?php echo get_field('top_section_color')?>                               !important;
-        }
-
-        header a, .product-summary, .woocommerce.single-product .woocommerce-breadcrumb a {
-            color: <?php echo get_field('top_section_text_color')?>                 !important;
-        }
-        @endif
-    </style>
-@endpush
-
 @section('content')
     <?php
     /**

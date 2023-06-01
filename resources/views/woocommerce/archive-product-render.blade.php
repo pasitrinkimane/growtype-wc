@@ -50,26 +50,24 @@
 
             woocommerce_product_loop_start();
 
-        if (wc_get_loop_prop('total')) {
+            if (wc_get_loop_prop('total')) {
 
-        if (Growtype_Wc_Product::catalog_default_preview_style() === 'table') { ?>
+                if (Growtype_Wc_Product::catalog_default_preview_style() === 'table') {
+                    echo growtype_wc_include_view('woocommerce.components.table.product-table');
+                } else {
+                    while (have_posts()) {
+                        the_post();
 
-        @include('woocommerce.components.table.product-table')
+                        /**
+                         * Hook: woocommerce_shop_loop.
+                         */
+                        do_action('woocommerce_shop_loop');
 
-        <?php } else {
-            while (have_posts()) {
-                the_post();
+                        echo growtype_wc_include_view('woocommerce.content-product');
+                    }
+                }
 
-                /**
-                 * Hook: woocommerce_shop_loop.
-                 */
-                do_action('woocommerce_shop_loop');
-
-                echo growtype_wc_include_view('woocommerce.content-product');
             }
-        }
-
-        }
 
             woocommerce_product_loop_end();
 

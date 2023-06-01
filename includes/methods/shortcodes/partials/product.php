@@ -95,6 +95,11 @@ function growtype_products_shortcode($atts, $content = null)
             $args['meta_key'] = '_auction_dates_to';
             $args['post__in'] = $watchlist_ids;
         } else {
+
+            if (function_exists('App\template')) {
+                return App\template('partials.content.404.general', ['cta' => urldecode($not_found_cta), 'subtitle' => $not_found_subtitle]);
+            }
+
             return growtype_wc_include_view('partials.content.404.general');
         }
     } elseif ($products_group === 'user_active_bids') {
@@ -192,10 +197,6 @@ function growtype_products_shortcode($atts, $content = null)
 
         if ($preview_style === 'table') {
             echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
-        } elseif ($preview_style === 'plan') {
-            while ($products->have_posts()) : $products->the_post();
-                echo growtype_wc_include_view('woocommerce.content-product-plans');
-            endwhile;
         } else {
             while ($products->have_posts()) : $products->the_post();
                 wc_get_template_part('content', 'product');

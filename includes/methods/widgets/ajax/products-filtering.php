@@ -8,13 +8,13 @@ add_action('wp_ajax_nopriv_filter_products', 'growtype_wc_filter_products');
 function growtype_wc_filter_products()
 {
     $filter_params = [
-        'orderby' => $_POST['orderby'] ?? 'menu_order title',
-        'categories_ids' => $_POST['categories_ids'] ?? [],
-        'products_group' => $_POST['products_group'] ?? [],
-        'min_price' => $_POST['min_price'] ?? [],
-        'max_price' => $_POST['max_price'] ?? [],
-        'base' => $_POST['base'] ?? '',
-        'page_nr' => $_POST['page_nr'] ?? '',
+        'orderby' => isset($_POST['orderby']) ? $_POST['orderby'] : 'menu_order title',
+        'categories_ids' => isset($_POST['categories_ids']) ? $_POST['categories_ids'] : [],
+        'products_group' => isset($_POST['products_group']) ? $_POST['products_group'] : [],
+        'min_price' => isset($_POST['min_price']) ? $_POST['min_price'] : [],
+        'max_price' => isset($_POST['max_price']) ? $_POST['max_price'] : [],
+        'base' => isset($_POST['base']) ? $_POST['base'] : '',
+        'page_nr' => isset($_POST['page_nr']) ? $_POST['page_nr'] : '',
     ];
 
     $products = growtype_wc_get_filtered_products($filter_params);
@@ -78,7 +78,7 @@ function growtype_wc_get_filtered_products($filter_params)
 {
     $meta_key = '';
     $order = 'ASC';
-    $orderby = $filter_params['orderby'] ?? null;
+    $orderby = isset($filter_params['orderby']) ? $filter_params['orderby'] : null;
 
     if (!empty($orderby)) {
         switch ($orderby) {
@@ -201,7 +201,7 @@ function growtype_wc_get_filtered_products($filter_params)
     /**
      * Extend arguments
      */
-    $args = apply_filters('extend_growtype_wc_catalog_ordering_args', $args);
+    $args = apply_filters('growtype_wc_catalog_filtering_args', $args);
 
     return new WP_Query($args);
 }

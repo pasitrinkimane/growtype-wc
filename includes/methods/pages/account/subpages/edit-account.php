@@ -1,17 +1,6 @@
 <?php
 
 /**
- * Show extra fields
- */
-add_action('woocommerce_edit_account_form', 'add_favorite_color_to_edit_account_form');
-function add_favorite_color_to_edit_account_form()
-{
-    if (class_exists('Growtype_Form')) {
-        echo do_shortcode('[growtype_form name="signup_edit" type="fields"]');
-    }
-}
-
-/**
  * Save extra fields info
  */
 add_action('woocommerce_save_account_details', 'save_favorite_color_account_details', 12, 1);
@@ -65,7 +54,7 @@ function growtype_wc_after_my_account()
 
     if (!current_user_can('manage_options')) {
         ?>
-        <a href="<?php echo $delete_url; ?>" class="btn btn-secondary ms-auto"><?php echo __('Delete Account', 'growtype-wc') ?></a>
+        <a href="<?php echo $delete_url; ?>" class="btn btn-secondary ms-auto btn-remove"><?php echo __('Delete Account', 'growtype-wc') ?></a>
         <?php
     }
 }

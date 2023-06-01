@@ -45,9 +45,11 @@ function productVariation() {
         /**
          * Select
          */
-        window.growtypeWcCartSelect.change(function (e) {
-            selectVariation($(this));
-        });
+        if (window.growtypeWcCartSelect.length > 0) {
+            window.growtypeWcCartSelect.change(function (e) {
+                selectVariation($(this));
+            });
+        }
     });
 
     /**

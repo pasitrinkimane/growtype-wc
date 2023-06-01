@@ -3,8 +3,14 @@
 add_filter('growtype_page_is_among_enabled_pages', 'growtype_wc_page_is_among_enabled_pages');
 function growtype_wc_page_is_among_enabled_pages($enabled_pages)
 {
-    if (class_exists('woocommerce') && is_product()) {
-        return in_array('single_shop_page', $enabled_pages);
+    if (class_exists('woocommerce')) {
+        if (
+            (is_product() && in_array('single_shop_page', $enabled_pages))
+            ||
+            (is_shop() && in_array(wc_get_page_id('shop'), $enabled_pages))
+        ) {
+            return true;
+        }
     }
 
     return false;

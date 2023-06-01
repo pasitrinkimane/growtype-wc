@@ -34,7 +34,7 @@ if (post_password_required()) {
 
 $classes = wc_get_product_class('', $product);
 
-if (class_exists('Growtype_Auction') && Growtype_Auction::has_started()) {
+if (class_exists('growtype-wc\Methods\auction\Growtype_Auction') && Growtype_Auction::has_started()) {
     array_push($classes, 'auction-has-started');
 }
 
@@ -46,7 +46,9 @@ $classes = 'class="' . $classes . '"';
 <div id="product-<?php the_ID(); ?>" <?php echo $classes ?>>
 
     <?php if (Growtype_Wc_Product::sidebar()) {
-        growtype_wc_include_view('woocommerce.components.product-single-sidebar');
+        echo growtype_wc_include_view('woocommerce.components.product-single-sidebar', [
+            'product' => $product,
+        ]);
     } ?>
 
     <div class="product-details-wrapper">

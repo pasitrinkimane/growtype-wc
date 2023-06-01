@@ -24,9 +24,6 @@ function add_to_cart_ajax_callback()
     /**
      * Get current cart data
      */
-//    WC()->cart->empty_cart();
-//    die();
-
     $cart_data = WC()->cart->get_cart();
 
     foreach ($cart_data as $cart_item) {
@@ -195,6 +192,7 @@ add_filter('woocommerce_add_cart_item_data', 'growtype_wc_add_cart_item_data');
 function growtype_wc_add_cart_item_data($cart_item_data)
 {
     global $woocommerce;
+
     /**
      * Check product type
      */
@@ -270,17 +268,18 @@ function wc_add_to_cart_redirect($url = false)
         return false;
     }
 
-    $instant_checkout = 'no';
+    $instant_checkout = false;
     $sold_individually = false;
 
     if (isset($_REQUEST['add-to-cart'])) {
         $product_id = apply_filters('woocommerce_add_to_cart_product_id', absint($_REQUEST['add-to-cart']));
         $instant_checkout = get_post_meta($product_id, '_instant_checkout_enabled', true);
+        $instant_checkout = $instant_checkout === 'yes' ? true : false;
         $product = wc_get_product($product_id);
         $sold_individually = $product->is_sold_individually();
     }
 
-    if ((!empty($instant_checkout) && $instant_checkout === 'yes') || $sold_individually || growtype_wc_selling_type_single()) {
+    if ($instant_checkout || $sold_individually || growtype_wc_selling_type_single()) {
         $url = wc_get_checkout_url();
     }
 

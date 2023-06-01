@@ -8,6 +8,12 @@ li.product {
   list-style-type: none;
 }
 
+.product {
+  a {
+    text-decoration: none;
+  }
+}
+
 .woocommerce .products,
 .wc-block-product-new,
 .wp-block-handpicked-products {
@@ -15,7 +21,7 @@ li.product {
     margin-left: 10px;
     margin-right: 10px;
     width: calc(25% - 20px);
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     margin-top: 15px;
     position: relative;
     float: left;
@@ -436,7 +442,7 @@ Product type auction
     padding: 15px 15px;
     position: relative;
     padding-left: 45px;
-    font-size: $font-size-body;
+    font-size: 14px;
     color: $color-dark-grey;
 
     &:before {
@@ -452,7 +458,7 @@ Product type auction
     }
 
     .b-time {
-      font-size: $font-size-body;
+      font-size: 14px;
       display: flex;
       font-weight: bold;
     }
@@ -462,6 +468,7 @@ Product type auction
 
       .countdown_row {
         word-break: keep-all;
+        font-size: 14px;
       }
     }
 

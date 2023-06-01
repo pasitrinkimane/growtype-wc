@@ -58,7 +58,7 @@ function growtype_wc_is_dashboard_page()
  */
 function growtype_wc_selling_type_single(): bool
 {
-    return get_theme_mod('shop_selling_type_select') === 'shop_selling_type_single';
+    return get_theme_mod('shop_selling_type_select', 'shop_selling_type_multiple') === 'shop_selling_type_single';
 }
 
 /**

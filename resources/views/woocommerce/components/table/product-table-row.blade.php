@@ -38,16 +38,23 @@ if (empty($product) || !$is_visible) {
 /**
  * Remove firs,last classes
  */
-$classes = wc_get_product_class(get_theme_mod('woocommerce_product_preview_style'), $product);
+$classes = Growtype_Wc_Product::get_classes($product->get_id());
+
+/**
+ * Table row
+ */
+array_push($classes, 'table-body-row');
 
 $classes = implode(' ', $classes);
 
-if ($filterClasses ?? '') {
+if (isset($filterClasses) && $filterClasses) {
     $classes = str_replace('first', '', $classes);
     $classes = str_replace('last', '', $classes);
 }
 
 $classes = 'class="' . $classes . '"';
-?>
 
-@include('woocommerce.components.table.product-table-row-content')
+echo growtype_wc_include_view('woocommerce.components.table.product-table-row-content', [
+    'classes' => $classes,
+    'product' => $product,
+]);
