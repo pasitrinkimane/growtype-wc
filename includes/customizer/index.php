@@ -84,8 +84,8 @@ class Growtype_Wc_Customizer_Extend
 */
     function customizer_control()
     {
-        wp_enqueue_script('growtype_wc_customizer_control', GROWTYPE_WC_URL . 'admin/js/customizer-control.js', array ('jquery'));
-        wp_enqueue_script('growtype_wc_customizer_control_email_preview', GROWTYPE_WC_URL . 'admin/js/customizer-control-email-preview.js', array ('jquery'));
+        wp_enqueue_script('growtype_wc_customizer_control', GROWTYPE_WC_URL . 'admin/js/customizer-control.js', array ('jquery'), GROWTYPE_WC_VERSION);
+        wp_enqueue_script('growtype_wc_customizer_control_email_preview', GROWTYPE_WC_URL . 'admin/js/customizer-control-email-preview.js', array ('jquery'), GROWTYPE_WC_VERSION);
         wp_localize_script('growtype_wc_customizer_control', 'ajax_object',
             array (
                 'ajaxurl' => admin_url('admin-ajax.php'),
@@ -501,6 +501,20 @@ class Growtype_Wc_Customizer_Extend
     {
         if (class_exists('QTX_Translator')) {
             $translation = get_theme_mods()["woocommerce_product_preview_cta_label"];
+            return growtype_format_translation($_COOKIE['qtrans_front_language'], $translation, $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param $checked
+     * Translate text input copyright
+     */
+    function woocommerce_product_page_shop_loop_item_price_starts_from_text_translation($value)
+    {
+        if (class_exists('QTX_Translator')) {
+            $translation = get_theme_mods()["woocommerce_product_page_shop_loop_item_price_starts_from_text"];
             return growtype_format_translation($_COOKIE['qtrans_front_language'], $translation, $value);
         }
 

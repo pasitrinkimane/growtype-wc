@@ -112,3 +112,14 @@ wp.customize("add_to_cart_button_text_color", function (value) {
         });
     });
 });
+
+/**
+ * Product Price preview
+ */
+wp.customize("woocommerce_product_page_shop_loop_item_price_starts_from_text", function (value) {
+    value.bind(function (newval) {
+        var convertedString = replaceBreaksWithParagraphs(newval);
+        convertedString = convertedString.replace(/<[^/>][^>]*><\/[^>]+>/, "");
+        $(".product .text-price-startsfrom").text(newval);
+    });
+});

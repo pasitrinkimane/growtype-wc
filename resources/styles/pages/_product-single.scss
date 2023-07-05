@@ -56,6 +56,10 @@
 
   .product-extra-inner {
     padding-bottom: 30px;
+
+    &.is-empty {
+      display: none;
+    }
   }
 
   .product-summary-inner {
@@ -248,6 +252,7 @@
 
     a {
       color: $color-text;
+      text-decoration: none;
     }
 
     .e-separator {
@@ -309,7 +314,7 @@
           padding-top: 3px;
           padding-bottom: 3px;
           height: initial;
-          margin-left: 10px;
+          margin-left: 0;
         }
 
         .e-text {
@@ -361,7 +366,7 @@
   }
 
   div.product form.cart div.quantity {
-    margin-right: 15px;
+    margin: 0;
     border-radius: 5px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -373,6 +378,13 @@
       padding-left: 12px;
       @include bp-phone-xl() {
         width: 100%;
+      }
+    }
+
+    & + .btn {
+      margin-left: 15px;
+      @include bp-phone-xl() {
+        margin-left: 0;
       }
     }
   }
@@ -448,5 +460,15 @@ Related products with panel
     background: $color-extra-light-grey;
     width: calc(100% + 30px);
     padding-right: 15px;
+  }
+}
+
+.single-item-available {
+  &.woocommerce.single-product div.product form.cart div.quantity {
+    margin: 0;
+  }
+
+  &.woocommerce.single-product div.product form.cart div.quantity + .btn {
+    margin-left: 0;
   }
 }

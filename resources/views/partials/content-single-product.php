@@ -84,7 +84,7 @@ $classes = 'class="' . $classes . '"';
             </div>
         </div>
         <div class="product-extra">
-            <div class="product-extra-inner">
+            <div class="product-extra-inner <?php echo empty(get_post_field('post_content', get_the_ID())) ? 'is-empty' : '' ?>">
                 <?php
                 /**
                  * Hook: woocommerce_after_single_product_summary.

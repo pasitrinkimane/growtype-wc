@@ -11,17 +11,17 @@ $wp_customize->add_section(
 /**
  * Intro
  */
-$wp_customize->add_setting('woocommerce_product_preview_page_details',
+$wp_customize->add_setting('woocommerce_product_preview_settings',
     array (
         'default' => '',
         'transport' => 'postMessage'
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_product_preview_page_details',
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_product_preview_settings',
     array (
-        'label' => __('Product Preview Settings'),
-        'description' => __('Below you can change product preview details.'),
+        'label' => __('General Settings'),
+        'description' => __('Below you can change product preview general settings.'),
         'section' => 'woocommerce_product_preview_page'
     )
 ));
@@ -52,24 +52,6 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
- * Sale flash
- */
-$wp_customize->add_setting('woocommerce_product_preview_sale_badge',
-    array (
-        'default' => 1,
-        'transport' => 'refresh',
-    )
-);
-
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_sale_badge',
-    array (
-        'label' => esc_html__('Sale badge'),
-        'section' => 'woocommerce_product_preview_page',
-        'description' => __('Enable/disable sale badge (flash).', 'growtype-wc'),
-    )
-));
-
-/**
  * product title
  */
 $wp_customize->add_setting('woocommerce_product_page_shop_loop_item_title',
@@ -84,25 +66,6 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
         'label' => esc_html__('Product title'),
         'section' => 'woocommerce_product_preview_page',
         'description' => __('Enable/disable product title.', 'growtype-wc'),
-    )
-));
-
-
-/**
- * product price
- */
-$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_price',
-    array (
-        'default' => 1,
-        'transport' => 'refresh',
-    )
-);
-
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_shop_loop_item_price',
-    array (
-        'label' => esc_html__('Product price'),
-        'section' => 'woocommerce_product_preview_page',
-        'description' => __('Enable/disable product price.', 'growtype-wc'),
     )
 ));
 
@@ -138,4 +101,128 @@ $wp_customize->add_control('woocommerce_product_preview_cta_label', array (
     'section' => 'woocommerce_product_preview_page',
     'label' => __('CTA Button Label'),
     'description' => __('Default: "Preview product"')
+));
+
+/**
+ * Intro
+ */
+$wp_customize->add_setting('woocommerce_product_preview_price_settings',
+    array (
+        'default' => '',
+        'transport' => 'postMessage'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_product_preview_price_settings',
+    array (
+        'label' => __('Price Settings'),
+        'description' => __('Below you can change product preview price settings.'),
+        'section' => 'woocommerce_product_preview_page'
+    )
+));
+
+/**
+ * Product price
+ */
+$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_price',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_shop_loop_item_price',
+    array (
+        'label' => esc_html__('Product price'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable product price.', 'growtype-wc'),
+    )
+));
+
+/**
+ * Product price single
+ */
+$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_price_is_single',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_shop_loop_item_price_is_single',
+    array (
+        'label' => esc_html__('Show single price'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Show product preview single price only.', 'growtype-wc'),
+    )
+));
+
+/**
+ * CTA button label
+ */
+$wp_customize->add_setting('woocommerce_product_page_shop_loop_item_price_starts_from_text', array (
+    'capability' => 'edit_theme_options',
+    'default' => '',
+    'sanitize_callback' => array ($this, 'woocommerce_product_page_shop_loop_item_price_starts_from_text_translation')
+));
+
+$wp_customize->add_control('woocommerce_product_page_shop_loop_item_price_starts_from_text', array (
+    'type' => 'text',
+    'section' => 'woocommerce_product_preview_page',
+    'label' => __('Price Starts From Text'),
+    'description' => __('There is no text by default.')
+));
+
+/**
+ * Intro
+ */
+$wp_customize->add_setting('woocommerce_product_preview_sale_badge_settings',
+    array (
+        'default' => '',
+        'transport' => 'postMessage'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_product_preview_sale_badge_settings',
+    array (
+        'label' => __('Sale Badge Settings'),
+        'description' => __('Below you can change product preview sale badge settings.'),
+        'section' => 'woocommerce_product_preview_page'
+    )
+));
+
+/**
+ * Sale flash
+ */
+$wp_customize->add_setting('woocommerce_product_preview_sale_badge',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_sale_badge',
+    array (
+        'label' => esc_html__('Sale badge'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable sale badge (flash).', 'growtype-wc'),
+    )
+));
+
+/**
+ * Sale badge as percentage
+ */
+$wp_customize->add_setting('woocommerce_product_preview_sale_badge_as_percentage',
+    array (
+        'default' => 0,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_sale_badge_as_percentage',
+    array (
+        'label' => esc_html__('Show as percentage'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Show sale badge as percentage.', 'growtype-wc'),
+    )
 ));

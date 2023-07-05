@@ -12,3 +12,18 @@ function growtype_wc_get_all_products()
 
     return $query->get_products();
 }
+
+function growtype_wc_single_item_available($product_id)
+{
+    $sold_individually = get_post_meta($product_id, '_sold_individually', true) === 'yes';
+    $manage_stock = get_post_meta($product_id, '_manage_stock', true) === 'yes';
+    $stock = (int)get_post_meta($product_id, '_stock', true);
+
+    $single_item = false;
+
+    if ($sold_individually || $manage_stock && $stock <= 1) {
+        $single_item = true;
+    }
+
+    return $single_item;
+}

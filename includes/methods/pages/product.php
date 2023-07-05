@@ -115,7 +115,7 @@ function growtype_wc_get_breadcrumb($crumbs, $breadcrumb)
 /**
  * Add info below add to form button
  */
-add_action('woocommerce_after_add_to_cart_form', 'growtype_wc_after_add_to_cart_form');
+add_action('woocommerce_single_product_summary', 'growtype_wc_after_add_to_cart_form', 100);
 function growtype_wc_after_add_to_cart_form()
 {
     echo growtype_wc_include_view('woocommerce.components.product-single-payment-details');
@@ -127,7 +127,11 @@ function growtype_wc_after_add_to_cart_form()
 add_action('woocommerce_before_quantity_input_field', 'growtype_wc_before_quantity_input_field');
 function growtype_wc_before_quantity_input_field()
 {
-    echo '<div class="btn btn-down">-</div>';
+    $single_item_available = growtype_wc_single_item_available(get_the_ID());
+
+    if (!$single_item_available) {
+        echo '<div class="btn btn-down">-</div>';
+    }
 }
 
 /**
@@ -136,7 +140,11 @@ function growtype_wc_before_quantity_input_field()
 add_action('woocommerce_after_quantity_input_field', 'growtype_wc_after_quantity_input_field');
 function growtype_wc_after_quantity_input_field()
 {
-    echo '<div class="btn btn-up">+</div>';
+    $single_item_available = growtype_wc_single_item_available(get_the_ID());
+
+    if (!$single_item_available) {
+        echo '<div class="btn btn-up">+</div>';
+    }
 }
 
 /**

@@ -198,6 +198,7 @@
         margin-top: 20px;
         font-size: 15px;
         line-height: 22px;
+        text-decoration: none;
         @include bp-phone-xl() {
           margin-top: 0;
           text-align: left;

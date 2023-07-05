@@ -23,10 +23,12 @@ function price() {
             data: filter.serialize(), // form data
             type: filter.attr('method'), // POST
             beforeSend: function (xhr) {
-                existing_products.addClass('is-loading');
+                existing_products.append("<span class='spinner-border'><div></div><div></div></span>").addClass('is-loading');
             },
             success: function (data) {
+                jQuery('.products .spinner-border').remove();
                 existing_products.removeClass('is-loading');
+
                 var filtered_products = jQuery(data).find('.products');
                 var filtered_main = jQuery(data).find('#main');
                 window.history.pushState('page-url', 'url', filter.attr('action') + '?' + filter.serialize());
@@ -34,6 +36,7 @@ function price() {
                 if (filtered_products.html().length === 1) {
                     jQuery('#main').prepend(jQuery(data).find('.woocommerce-info'));
                 }
+
                 existing_main.replaceWith(filtered_main);
                 document.dispatchEvent(filterProductsByPriceEvent);
             }

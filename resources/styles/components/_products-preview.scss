@@ -6,11 +6,73 @@
 
 li.product {
   list-style-type: none;
+
+  &.product-style-2 {
+    background: white;
+    padding: 20px !important;
+    border-radius: $border-radius-card;
+    box-shadow: $box-shadow-card;
+    position: relative;
+    @include bp-phone-xl() {
+      padding: 15px !important;
+    }
+
+    .woocommerce-loop-product__title {
+      padding-top: 10px;
+    }
+
+    .content-wrapper {
+      padding-top: 10px;
+      margin: 0;
+    }
+
+    .badge {
+      left: 20px;
+      right: initial;
+      padding: 3px;
+      top: 20px;
+      min-width: initial;
+      padding-left: 11px;
+      padding-right: 11px;
+      text-transform: initial;
+      background: white;
+      color: black;
+    }
+  }
 }
 
 .product {
+  position: relative;
+
   a {
     text-decoration: none;
+  }
+
+  .onsale {
+    right: initial;
+    padding: 3px;
+    min-width: initial;
+    padding-left: 11px;
+    padding-right: 11px;
+    text-transform: initial;
+    background: black;
+    position: absolute;
+    top: -10px;
+    left: -5px;
+    color: white;
+    border-radius: 5px;
+    font-size: 14px;
+    z-index: 1;
+  }
+
+  .entry-summary {
+    .onsale {
+      position: relative;
+      top: 0;
+      left: 0;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
   }
 }
 
@@ -39,47 +101,6 @@ li.product {
       @include bp-phone-xl() {
         clear: both;
       }
-    }
-  }
-
-  .product-style-2 {
-    background: white;
-    padding: 20px !important;
-    border-radius: $border-radius-card;
-    box-shadow: $box-shadow-card;
-    @include bp-phone-xl() {
-      padding: 15px !important;
-    }
-
-    .content-wrapper {
-      padding-top: 10px;
-      margin: 0;
-    }
-
-    .onsale {
-      left: 20px;
-      right: initial;
-      padding: 3px;
-      top: 20px;
-      min-width: initial;
-      padding-left: 11px;
-      padding-right: 11px;
-      text-transform: initial;
-      background: white;
-      color: black;
-    }
-
-    .badge {
-      left: 20px;
-      right: initial;
-      padding: 3px;
-      top: 20px;
-      min-width: initial;
-      padding-left: 11px;
-      padding-right: 11px;
-      text-transform: initial;
-      background: white;
-      color: black;
     }
   }
 
@@ -243,10 +264,6 @@ li.product {
   float: none;
 }
 
-.woocommerce span.onsale {
-  padding: 0;
-}
-
 .product {
   .badge {
     position: absolute;
@@ -301,40 +318,6 @@ li.product {
 
 .wc-block-grid.has-5-columns .wc-block-grid__product {
   max-width: calc(100% / 5 - 20px);
-}
-
-.woocommerce span.onsale, .woocommerce ul.products li.product .onsale, .wc-block-grid .wc-block-grid__product .wc-block-grid__product-onsale {
-  position: relative;
-  text-align: center;
-  background-color: #77a464;
-  color: #fff;
-  z-index: 1;
-  border-radius: 5px;
-  margin-bottom: 15px;
-  display: inline-block;
-  font-size: 13px;
-  padding: 10px;
-  right: 0;
-  top: 0;
-  left: auto;
-  text-transform: uppercase;
-  min-width: 80px;
-  font-weight: 500;
-  line-height: 16px;
-  min-height: initial;
-  border: none;
-  @include bp-phone-xl() {
-    padding: 5px;
-    min-width: 60px;
-    font-size: 12px;
-  }
-}
-
-.woocommerce ul.products li.product .onsale {
-  position: absolute;
-  margin: 0;
-  top: -10px;
-  right: -10px;
 }
 
 .woocommerce ul.products {
@@ -404,6 +387,12 @@ li.product {
   font-size: 15px;
   margin-bottom: 0;
   font-weight: 500;
+
+  .strike {
+    & + .highlight {
+      padding-left: 5px;
+    }
+  }
 }
 
 .woocommerce ul.products li.product .button {

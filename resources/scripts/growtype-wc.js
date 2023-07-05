@@ -7,6 +7,8 @@ import {productVariation} from "./components/product-variation"
 import {selectCart} from "./components/select-cart";
 import {sidebar} from "./sidebar";
 
+window.growtypeWc = {}
+
 jQuery(document).ready(() => {
     productSlider();
     productsSlider();

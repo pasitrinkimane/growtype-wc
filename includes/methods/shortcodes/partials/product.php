@@ -103,21 +103,12 @@ function growtype_products_shortcode($atts, $content = null)
             return growtype_wc_include_view('partials.content.404.general');
         }
     } elseif ($products_group === 'user_active_bids') {
-        $user_ID = get_current_user_id();
+        $bids_ids = Growtype_Wc_Auction::user_active_bids_ids(get_current_user_id());
 
-        $postids = array ();
-        $userauction = $wpdb->get_results("SELECT DISTINCT auction_id FROM " . $wpdb->prefix . "simple_auction_log WHERE userid = $user_ID ", ARRAY_N);
-
-        if (isset($userauction) && !empty($userauction)) {
-            foreach ($userauction as $auction) {
-                $postids[] = $auction[0];
-            }
-        }
-
-        if (!empty($postids)) {
+        if (!empty($bids_ids)) {
             $args['orderby'] = 'meta_value';
             $args['meta_key'] = '_auction_dates_to';
-            $args['post__in'] = $postids;
+            $args['post__in'] = $bids_ids;
         } else {
             return growtype_wc_include_view('partials.content.404.general');
         }

@@ -1,13 +1,18 @@
 <?php
 
 /**
+ * Ajax
+ */
+include('ajax/index.php');
+
+/**
  * Enqueue scripts
  */
-add_action('wp_enqueue_scripts', 'growtype_wc_widgets_scripts');
+add_action('wp_enqueue_scripts', 'growtype_wc_widgets_scripts', 10);
 function growtype_wc_widgets_scripts()
 {
     if (!is_admin()) {
-        wp_enqueue_script('wc-widgets', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-widgets.js', '', '', true);
+        wp_enqueue_script('wc-widgets', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-widgets.js', [], GROWTYPE_WC_VERSION, true);
 
         wp_localize_script(
             'wc-widgets',
@@ -21,15 +26,10 @@ function growtype_wc_widgets_scripts()
 }
 
 /**
- * Ajax
+ * Extend Widgets
  */
-include('ajax/products-filtering.php');
-
-/**
- * Widgets
- */
-add_action('widgets_init', 'override_woocommerce_widgets', 15);
-function override_woocommerce_widgets()
+add_action('widgets_init', 'growtype_wc_extend_widgets', 15);
+function growtype_wc_extend_widgets()
 {
     /**
      * Sidebar shop
@@ -72,5 +72,20 @@ function override_woocommerce_widgets()
         unregister_widget('WC_Widget_Product_Tag_Cloud');
         include('components/Custom_WC_Widget_Product_Tag_Cloud.php');
         register_widget('Custom_WC_Widget_Product_Tag_Cloud');
+    }
+}
+
+/**
+ * Custom Widgets
+ */
+add_action('widgets_init', 'growtype_wc_custom_widgets');
+function growtype_wc_custom_widgets()
+{
+    /**
+     * WC_Widget_Product_Meta
+     */
+    if (!class_exists('Custom_WC_Widget_Product_Meta_Filter')) {
+        include('components/Custom_WC_Widget_Product_Meta_Filter.php');
+        register_widget('Custom_WC_Widget_Product_Meta_Filter');
     }
 }

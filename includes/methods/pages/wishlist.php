@@ -17,7 +17,7 @@ if (!function_exists('loop_columns') && isset($_POST['action']) && $_POST['actio
 add_action('wp_enqueue_scripts', 'wc_wishlist_scripts');
 function wc_wishlist_scripts()
 {
-    wp_enqueue_script('growtype-wc-wishlist', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-wishlist.js', '', '', true);
+    wp_enqueue_script('growtype-wc-wishlist', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-wishlist.js', [], GROWTYPE_WC_VERSION, true);
 
     wp_localize_script(
         'growtype-wc-wishlist',

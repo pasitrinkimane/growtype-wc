@@ -874,37 +874,47 @@ class Growtype_Wc_Product
         return $display;
     }
 
+    public static function get_attachment_id_by_meta_key($meta_key, $meta_value = null)
+    {
+        global $wpdb;
+
+        if (!empty($meta_value)) {
+            $results = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM $wpdb->postmeta WHERE meta_key = %s and meta_value = %s", $meta_key, $meta_value));
+        } else {
+            $results = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM $wpdb->postmeta WHERE meta_key = %s", $meta_key));
+        }
+
+        return !empty($results) ? (int)$results : null;
+    }
+
     public static function upload_image($image_url)
     {
+        if (empty($image_url)) {
+            return null;
+        }
+
         include_once(ABSPATH . 'wp-admin/includes/image.php');
 
-        $file_details = explode('/', getimagesize($image_url)['mime']);
-        $image_type = end($file_details);
-        $uniq_name = date('dmY') . '' . (int)microtime(true);
-        $filename = $uniq_name . '.' . $image_type;
+        if (!function_exists('download_url')) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
 
-        $uploaddir = wp_upload_dir();
-        $uploadfile = $uploaddir['path'] . '/' . $filename;
-        $contents = file_get_contents($image_url);
-        $savefile = fopen($uploadfile, 'w');
-        fwrite($savefile, $contents);
-        fclose($savefile);
+        if (!function_exists('media_handle_sideload')) {
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+        }
 
-        $wp_filetype = wp_check_filetype(basename($filename), null);
-        $attachment = array (
-            'post_mime_type' => $wp_filetype['type'],
-            'post_title' => $filename,
-            'post_content' => '',
-            'post_status' => 'inherit'
+        $tmp = download_url($image_url);
+
+        $file_array = array (
+            'name' => basename($image_url),
+            'tmp_name' => $tmp
         );
 
-        $attach_id = wp_insert_attachment($attachment, $uploadfile);
-        $imagenew = get_post($attach_id);
-        $fullsizepath = get_attached_file($imagenew->ID);
-        $attach_data = wp_generate_attachment_metadata($attach_id, $fullsizepath);
-        wp_update_attachment_metadata($attach_id, $attach_data);
+        $attachment_id = media_handle_sideload($file_array, 0);
 
-        return $attach_id;
+        update_post_meta($attachment_id, '_custom_meta_original_attachment_url', $image_url);
+
+        return $attachment_id;
     }
 
     public static function gallery_type()
@@ -920,10 +930,14 @@ class Growtype_Wc_Product
      */
     public function create($details)
     {
+        $post_status = isset($details['post_status']) ? $details['post_status'] : 'draft';
+        $catalog_visibility = isset($details['catalog_visibility']) ? $details['catalog_visibility'] : 'hidden';
+        $post_title = isset($details['post_title']) ? $details['post_title'] : time();
+
         /**
          * Update details
          */
-        $details['sold_individually'] = isset($details['sold_individually']) ? $details['sold_individually'] : true;
+        $details['sold_individually'] = isset($details['sold_individually']) ? $details['sold_individually'] : false;
 
         /**
          * @var WC_Product $product
@@ -933,7 +947,7 @@ class Growtype_Wc_Product
         /**
          * Clear existing product transient
          */
-        if (isset($details['post_id'])) {
+        if (isset($details['post_id']) && !empty($details['post_id'])) {
             $product = wc_get_product($details['post_id']);
 
             if (!empty($product)) {
@@ -963,9 +977,30 @@ class Growtype_Wc_Product
             }
         }
 
-        $product->set_name($details['post_title']);
+        /**
+         * Assign unique name for new product
+         */
+        if (empty($product->get_id())) {
+            global $wpdb;
+            $results = $wpdb->get_results($wpdb->prepare("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = %s", "product"), ARRAY_A);
 
-        $product->set_status($details['post_status']);
+            if (in_array($post_title, array_pluck($results, 'post_title'))) {
+                for ($i = 2; $i <= 20; $i++) {
+                    $post_title_test = $post_title . ' ' . $i;
+
+                    $results = $wpdb->get_results($wpdb->prepare("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = %s and post_title= %s", "product", $post_title_test), ARRAY_A);
+
+                    if (empty($results)) {
+                        $post_title = $post_title_test;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $product->set_name($post_title);
+
+        $product->set_status($post_status);
 
         if (isset($details['sku'])) {
             $product->set_sku($details['sku']);
@@ -979,21 +1014,56 @@ class Growtype_Wc_Product
             $product->set_description($details['description']);
         }
 
-        $product->set_catalog_visibility($details['catalog_visibility']);
+        $product->set_catalog_visibility($catalog_visibility);
 
         $product->set_sold_individually($details['sold_individually']);
 
         if (isset($details['image_id'])) {
-            $product->set_image_id($details['image_id']);
+            if (!empty($details['image_id'])) {
+                $product->set_image_id($details['image_id']);
+            }
+        } else {
+            if (isset($details['image_url'])) {
+
+                /**
+                 * Check if image already uploaded
+                 */
+                $image_id = self::get_attachment_id_by_meta_key('_custom_meta_original_attachment_url', $details['image_url']);
+
+                if (empty($image_id)) {
+                    $image_id = $this->upload_image($details['image_url']);
+                }
+
+                $product->set_image_id($image_id);
+            }
         }
 
-        if (isset($details['image_url'])) {
-            $image_id = $this->upload_image($details['image_url']);
+        /**
+         * Set gallery images
+         */
+        if (isset($details['gallery_image_ids'])) {
+            $product->set_gallery_image_ids($details['gallery_image_ids']);
+        } else {
+            if (isset($details['gallery_image_urls'])) {
+                $gallery_image_ids = [];
 
-            $product->set_image_id($image_id);
+                foreach ($details['gallery_image_urls'] as $gallery_image_url) {
+                    $gallery_image_id = self::get_attachment_id_by_meta_key('_custom_meta_original_attachment_url', $gallery_image_url);
+
+                    if (empty($gallery_image_id)) {
+                        $gallery_image_id = $this->upload_image($gallery_image_url);
+
+//                        var_dump($gallery_image_id);
+                    }
+
+                    array_push($gallery_image_ids, $gallery_image_id);
+                }
+
+                $product->set_gallery_image_ids($gallery_image_ids);
+
+//                d($gallery_image_ids);
+            }
         }
-
-        $product->set_gallery_image_ids($details['gallery_image_ids']);
 
         if (isset($details['default_attributes'])) {
             $product->set_default_attributes($details['default_attributes']);
@@ -1015,12 +1085,30 @@ class Growtype_Wc_Product
 
         $product_id = $product->save();
 
-        wp_set_object_terms($product_id, 'variable', 'product_type');
+        /**
+         * Set general stock
+         */
+        if (isset($details['manage_stock'])) {
+            $product->set_manage_stock($details['manage_stock']);
+        }
+
+        if (isset($details['stock'])) {
+            $product->set_stock_quantity($details['stock']);
+        }
+
+        /**
+         * Save original image url
+         */
+        if (isset($image_already_uploaded) && !$image_already_uploaded) {
+            update_post_meta($product_id, 'custom_meta_original_image_url', $details['image_url']);
+        }
 
         /**
          * Add attributes
          */
         if (isset($details['variations'])) {
+            wp_set_object_terms($product_id, 'variable', 'product_type');
+
             foreach ($details['variations'] as $variation) {
                 foreach ($variation['custom_variables'] as $taxonomy => $variable) {
                     wp_insert_term(ucfirst(str_replace('-', ' ', $variable)), str_replace('attribute_', '', $taxonomy), array (
@@ -1037,8 +1125,12 @@ class Growtype_Wc_Product
          */
         if (isset($details['taxonomies'])) {
             foreach ($details['taxonomies'] as $taxonomy => $values) {
-
                 $terms = get_terms($taxonomy, array ('hide_empty' => false));
+
+                if (is_wp_error($terms)) {
+                    dd('Please create Product attribute first - ' . $taxonomy);
+                }
+
                 $keywords = array_pluck($terms, 'slug');
 
                 wp_set_object_terms($product_id, $keywords, $taxonomy);
@@ -1085,41 +1177,43 @@ class Growtype_Wc_Product
         }
 
         /**
-         * Add attribute custom
-         */
-//        $attr_label = 'Orientation';
-//        $attr_slug = sanitize_title($attr_label);
-//
-//        $attributes_array[$attr_slug] = array (
-//            'name' => $attr_label,
-//            'value' => 'Horizontal | Vertical',
-//            'is_visible' => '1',
-//            'is_variation' => '1',
-//            'is_taxonomy' => '0' // for some reason, this is really important
-//        );
-//
-//        update_post_meta($post_id, '_product_attributes', $attributes_array);
-
-        /**
          * Add variations
          */
         if (isset($details['variations'])) {
             foreach ($details['variations'] as $variation_details) {
-                $variation = array (
-                    'post_title' => $product->get_name(),
-                    'post_name' => 'product-' . $product_id . '-variation',
-                    'post_status' => 'publish',
-                    'post_parent' => $product_id,
-                    'post_type' => 'product_variation',
-                    'guid' => $product->get_permalink()
-                );
 
-                $variation_id = wp_insert_post($variation);
+                $variations = $product->get_available_variations();
 
-                $variation = new WC_Product_Variation($variation_id);
+                $variation_id = null;
+                if (!empty($variations)) {
+                    foreach ($variations as $variation) {
+                        $variation_difference = array_diff($variation['attributes'], $variation_details['custom_variables']);
 
-                foreach ($variation_details['custom_variables'] as $custom_key => $custom_value) {
-                    update_post_meta($variation_id, $custom_key, $custom_value);
+                        if (empty($variation_difference)) {
+                            $variation_id = $variation['variation_id'];
+                            break;
+                        }
+                    }
+                }
+
+                if (empty($variation_id)) {
+                    $variation = array (
+                        'post_title' => $product->get_name(),
+                        'post_name' => 'product-' . $product_id . '-variation',
+                        'post_status' => 'publish',
+                        'post_parent' => $product_id,
+                        'post_type' => 'product_variation',
+                        'guid' => $product->get_permalink()
+                    );
+
+                    $variation_id = wp_insert_post($variation);
+                    $variation = new WC_Product_Variation($variation_id);
+
+                    foreach ($variation_details['custom_variables'] as $custom_key => $custom_value) {
+                        update_post_meta($variation_id, $custom_key, $custom_value);
+                    }
+                } else {
+                    $variation = wc_get_product($variation_id);
                 }
 
                 /**
@@ -1132,7 +1226,10 @@ class Growtype_Wc_Product
                 }
 
                 $variation->set_regular_price($variation_details['regular_price']);
-                $variation->set_price($variation_details['price']);
+
+                if (isset($variation_details['price'])) {
+                    $variation->set_price($variation_details['price']);
+                }
 
                 if (isset($variation_details['sale_price']) && !empty($variation_details['sale_price'])) {
                     $variation->set_sale_price($variation_details['sale_price']);
@@ -1146,7 +1243,25 @@ class Growtype_Wc_Product
                     $variation->set_sku($variation_details['sku']);
                 }
 
-                $variation->set_image_id($variation_details['image_id']);
+                if (isset($variation_details['image_id'])) {
+                    if (!empty($variation_details['image_id'])) {
+                        $variation->set_image_id($variation_details['image_id']);
+                    }
+                } else {
+                    if (isset($variation_details['image_url'])) {
+
+                        /**
+                         * Check if image already uploaded
+                         */
+                        $variation_image_id = self::get_attachment_id_by_meta_key('_custom_meta_original_attachment_url', $variation_details['image_url']);
+
+                        if (empty($variation_image_id)) {
+                            $variation_image_id = $this->upload_image($variation_details['image_url']);
+                        }
+
+                        $variation->set_image_id($variation_image_id);
+                    }
+                }
 
                 $variation->save();
             }

@@ -7,7 +7,6 @@ function productVariation() {
      * Set global values
      * @type {{}}
      */
-    window.growtypeWc = {}
 
     let variation_form = jQuery('.variations_form.cart')
     let product_id = variation_form.data('product_id');
@@ -367,8 +366,9 @@ function productVariation() {
         }
 
         if (variation['custom_meta_product_details'].length > 0) {
-            jQuery('.product-extra-details .b-content-main .product-extra-details-content').remove();
-            jQuery('.product-extra-details .b-content-main').prepend('<div class="product-extra-details-content">' + variation['custom_meta_product_details'] + '</div>');
+            jQuery('.product-extra .product-extra-inner').removeClass('is-empty');
+            jQuery('.product-extra .product-extra-details .b-content-main .product-extra-details-content').remove();
+            jQuery('.product-extra .product-extra-details .b-content-main').prepend('<div class="product-extra-details-content">' + variation['custom_meta_product_details'] + '</div>');
         }
     }
 

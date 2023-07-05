@@ -5,6 +5,6 @@ function growtype_wc_login_scripts()
 {
     global $post;
     if (isset($post) && $post->ID == get_option('woocommerce_myaccount_page_id')) {
-        wp_enqueue_script('login-main', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-login.js', [], '1.0.0', true);
+        wp_enqueue_script('login-main', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-login.js', [], GROWTYPE_WC_VERSION, true);
     }
 }

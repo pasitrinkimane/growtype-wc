@@ -1,12 +1,15 @@
-.products.preview-style--grid {
-  @include bp-phone-xl() {
-    width: calc(100% + 0px) !important;
-    margin-left: 0 !important;
-  }
-
-  .content-wrapper {
+.woocommerce {
+  .products.preview-style--grid {
+    padding-bottom: 40px;
     @include bp-phone-xl() {
-      padding: 0!important;
+      width: calc(100% + 0px) !important;
+      margin-left: 0 !important;
+    }
+
+    .content-wrapper {
+      @include bp-phone-xl() {
+        padding: 0 !important;
+      }
     }
   }
 }

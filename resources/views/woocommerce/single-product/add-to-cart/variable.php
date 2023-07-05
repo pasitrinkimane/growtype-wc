@@ -75,7 +75,7 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                 $attribute_term = array_pop($attribute_term);
                             }
                             ?>
-                            <label for="<?php echo esc_attr(sanitize_title($attribute_name)); ?>">
+                            <label>
                                 <?php
                                 $attribute_name_formated = $attribute_name;
                                 if (strpos($attribute_name, 'size')) {

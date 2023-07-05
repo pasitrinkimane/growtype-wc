@@ -1,9 +1,34 @@
 <?php
 
 /**
+ * Register theme support
+ */
+add_action('after_setup_theme', function () {
+    add_theme_support('woocommerce');
+    add_theme_support('wc-product-gallery-zoom');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
+}, 20);
+
+/**
+ * Crud
+ */
+include('crud/class-growtype-wc-crud.php');
+
+/**
+ * Product
+ */
+include('product/class-growtype-wc-product.php');
+
+/**
  * Templates
  */
 include('templates/index.php');
+
+/**
+ * Auction
+ */
+include('product/class-growtype-wc-auction.php');
 
 /**
  * Payment
@@ -103,13 +128,3 @@ include('shortcodes/index.php');
  * Layout
  */
 include('layout/index.php');
-
-/**
- * Crud
- */
-include('crud/class-growtype-wc-crud.php');
-
-/**
- * Product
- */
-include('product/class-growtype-wc-product.php');

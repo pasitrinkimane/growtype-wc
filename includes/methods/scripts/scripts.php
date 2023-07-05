@@ -60,13 +60,3 @@ function growtype_wc_ajax_variation_threshold()
 {
     return 150;
 }
-
-/**
- * Register theme support
- */
-add_action('after_setup_theme', function () {
-    add_theme_support('woocommerce');
-    add_theme_support('wc-product-gallery-zoom');
-    add_theme_support('wc-product-gallery-lightbox');
-    add_theme_support('wc-product-gallery-slider');
-}, 20);

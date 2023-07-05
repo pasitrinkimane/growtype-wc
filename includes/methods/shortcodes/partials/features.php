@@ -19,12 +19,12 @@ function growtype_wc_features_shorcode($atts)
         ],
         [
             'title' => 'Sustainability',
-            'description' => 'Read about our sustainability work',
+            'description' => 'Products from sustainable materials',
             'icon' => 'fa-solid fa-earth-americas',
         ],
         [
             'title' => 'Safe payments',
-            'description' => 'Quick and safe with card or Klarna',
+            'description' => 'Quick and safe online payments',
             'icon' => 'fa-solid fa-credit-card',
         ]
     ];

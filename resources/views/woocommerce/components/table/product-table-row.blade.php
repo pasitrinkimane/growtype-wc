@@ -57,4 +57,5 @@ $classes = 'class="' . $classes . '"';
 echo growtype_wc_include_view('woocommerce.components.table.product-table-row-content', [
     'classes' => $classes,
     'product' => $product,
+    'params' => isset($params) ? $params : [],
 ]);

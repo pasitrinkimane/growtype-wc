@@ -522,23 +522,6 @@ p.demo_store,
     }
   }
 
-  span.onsale {
-    min-height: 3.236em;
-    min-width: 3.236em;
-    padding: 0.202em;
-    font-size: 1em;
-    font-weight: 700;
-    position: absolute;
-    text-align: center;
-    line-height: 3.236;
-    margin: 0;
-    border-radius: 100%;
-    background-color: $highlight;
-    color: $highlightext;
-    font-size: 0.857em;
-    z-index: 9;
-  }
-
   /**
    * Product loops
    */
@@ -557,14 +540,6 @@ p.demo_store,
   }
 
   ul.products li.product {
-
-    .onsale {
-      top: 0;
-      right: 0;
-      left: auto;
-      margin: -0.5em -0.5em 0 0;
-    }
-
     a {
       text-decoration: none;
     }

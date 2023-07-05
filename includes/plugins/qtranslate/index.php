@@ -13,6 +13,7 @@ add_filter('growtype_wp_ajax_qtranslate_fields_theme_mods', function ($theme_mod
         'woocommerce_thankyou_page_intro_content_access_platform',
         'woocommerce_product_page_sidebar_content',
         'woocommerce_product_preview_cta_label',
+        'woocommerce_product_page_shop_loop_item_price_starts_from_text',
     ];
 
     $theme_mods = array_merge($theme_mods, $wc_mods);

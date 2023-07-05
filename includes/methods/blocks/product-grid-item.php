@@ -1,14 +1,29 @@
 <?php
 
 /**
- * Product preview
+ * Product classes
  */
-add_filter('woocommerce_blocks_product_grid_item_html', 'woocommerce_blocks_product_grid_item_html_custom', 9999, 3);
-function woocommerce_blocks_product_grid_item_html_custom($content, $data, $product)
+add_filter('woocommerce_post_class', 'growtype_wc_woocommerce_post_class', 9999, 3);
+function growtype_wc_woocommerce_post_class($classes, $product)
 {
+    $classes[] = get_theme_mod('woocommerce_product_preview_style');
+
     $preview_style = get_post_meta($product->get_id(), '_preview_style', true);
 
-    $data->classes = [];
+    if ($preview_style === 'plan') {
+        $classes[] = 'wc-block-grid__product_plan';
+    }
+
+    return $classes;
+}
+
+/**
+ * Product html
+ */
+add_filter('woocommerce_blocks_product_grid_item_html', 'growtype_wc_woocommerce_blocks_product_grid_item_html', 9999, 3);
+function growtype_wc_woocommerce_blocks_product_grid_item_html($content, $data, $product)
+{
+    $preview_style = get_post_meta($product->get_id(), '_preview_style', true);
 
     if ($preview_style === 'plan') {
         /**
@@ -19,11 +34,8 @@ function woocommerce_blocks_product_grid_item_html_custom($content, $data, $prod
         }
 
         $data->description = $product->get_short_description();
-        $data->classes[] = 'wc-block-grid__product_plan';
         $data->permalink = '';
     }
-
-    $data->classes[] = get_theme_mod('woocommerce_product_preview_style');
 
     /**
      * Change button text if different

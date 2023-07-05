@@ -15,6 +15,8 @@ function growtype_wc_filter_products()
         'max_price' => isset($_POST['max_price']) ? $_POST['max_price'] : [],
         'base' => isset($_POST['base']) ? $_POST['base'] : '',
         'page_nr' => isset($_POST['page_nr']) ? $_POST['page_nr'] : '',
+        'meta_key' => isset($_POST['meta_key']) ? $_POST['meta_key'] : [],
+        'meta_values' => isset($_POST['meta_values']) ? json_decode(stripslashes($_POST['meta_values'])) : [],
     ];
 
     $products = growtype_wc_get_filtered_products($filter_params);
@@ -24,8 +26,17 @@ function growtype_wc_filter_products()
          * Products
          */
         ob_start();
+
         if (Growtype_Wc_Product::catalog_default_preview_style() === 'table') {
-            echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
+            $params = [
+                'watchlist_btn' => isset($_POST['products_group']) && ($_POST['products_group'] === 'watchlist' || $_POST['products_group'] === 'default'),
+                'edit_btn' => isset($_POST['products_group']) && $_POST['products_group'] === 'user_uploaded',
+            ];
+
+            echo growtype_wc_include_view('woocommerce.components.table.product-table', [
+                'products' => $products,
+                'params' => $params
+            ]);
         } else {
             while ($products->have_posts()) : $products->the_post();
                 wc_get_template_part('content', 'product');
@@ -78,7 +89,7 @@ function growtype_wc_get_filtered_products($filter_params)
 {
     $meta_key = '';
     $order = 'ASC';
-    $orderby = isset($filter_params['orderby']) ? $filter_params['orderby'] : null;
+    $orderby = isset($filter_params['orderby']) ? $filter_params['orderby'] : '';
 
     if (!empty($orderby)) {
         switch ($orderby) {
@@ -161,6 +172,9 @@ function growtype_wc_get_filtered_products($filter_params)
             $post__in = Growtype_Wc_Product::get_user_created_products_ids($user_ID);
             $args['post__in'] = $post__in;
             set_query_var('visibility', 'any');
+        } elseif ($filter_params['products_group'] === 'user_active_bids') {
+            $bids_ids = Growtype_Wc_Auction::user_active_bids_ids(get_current_user_id());
+            $args['post__in'] = $bids_ids;
         }
     }
 
@@ -199,9 +213,26 @@ function growtype_wc_get_filtered_products($filter_params)
     $args['limit'] = apply_filters('loop_shop_per_page', wc_get_default_products_per_row() * wc_get_default_product_rows_per_page());
 
     /**
+     * Meta key and values
+     */
+    if (isset($filter_params['meta_key']) && !empty($filter_params['meta_key']) && isset($filter_params['meta_values']) && !empty($filter_params['meta_values'])) {
+        $meta_query = [];
+        foreach ($filter_params['meta_values'] as $meta_value) {
+            array_push($meta_query, [
+                'key' => $filter_params['meta_key'],
+                'value' => $meta_value,
+                'compare' => 'LIKE'
+            ]);
+        }
+
+        $args['meta_query'] = $meta_query;
+        $args['meta_query']['relation'] = 'OR';
+    }
+
+    /**
      * Extend arguments
      */
-    $args = apply_filters('growtype_wc_catalog_filtering_args', $args);
+    $args = apply_filters('growtype_wc_catalog_filtering_args', $args, $filter_params);
 
     return new WP_Query($args);
 }

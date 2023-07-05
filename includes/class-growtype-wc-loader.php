@@ -144,6 +144,7 @@ class Growtype_Wc_Loader
         if (!class_exists('WooCommerce')) {
             return;
         }
+
         /**
          * Autoload vendor
          */
