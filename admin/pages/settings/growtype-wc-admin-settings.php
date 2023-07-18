@@ -2,6 +2,8 @@
 
 class Growtype_Wc_Admin_Settings
 {
+    const PAGE_NAME = 'growtype-wc-settings';
+
     public function __construct()
     {
         if (is_admin()) {
@@ -103,9 +105,16 @@ class Growtype_Wc_Admin_Settings
     function process_posted_data()
     {
         if (isset($_POST['option_page']) && $_POST['option_page'] === 'growtype_wc_settings_generate') {
-            if (isset($_POST['generate_settings'])) {
+            if (isset($_POST['growtype_wc_generate_products']) && !empty($_POST['growtype_wc_generate_products'])) {
                 $growtype_wc_crud = new Growtype_Wc_Crud();
                 $growtype_wc_crud->generate_products();
+            }
+
+            if (isset($_POST['growtype_wc_update_products']) && !empty($_POST['growtype_wc_update_products'])) {
+                $growtype_wc_crud = new Growtype_Wc_Crud();
+                $products_ids = $_POST['growtype_wc_update_products'] === 'all' ? [] : explode(',', $_POST['growtype_wc_update_products']);
+
+                $growtype_wc_crud->update_products($products_ids);
             }
 
             wp_redirect(admin_url('admin.php?page=growtype-wc-settings&tab=generate&updated=true'));

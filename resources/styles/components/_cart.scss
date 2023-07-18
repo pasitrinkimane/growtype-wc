@@ -373,6 +373,8 @@
   width: 22px;
   height: 22px;
   border-radius: 20px;
+  display: flex;
+  align-items: center;
 
   &:before, &:after {
     content: '';

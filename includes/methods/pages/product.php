@@ -148,31 +148,6 @@ function growtype_wc_after_quantity_input_field()
 }
 
 /**
- * Customize variation option name. Display out of stock.
- */
-add_filter('woocommerce_variation_option_name', 'growtype_wc_variation_option_name', 10, 1);
-function growtype_wc_variation_option_name($term_name)
-{
-    global $product;
-
-    if (is_single()) {
-        $product_variations = $product->get_available_variations();
-
-        foreach ($product_variations as $product_variation) {
-            if (isset($product_variation['attributes'])) {
-                $key = array_search($term_name, $product_variation['attributes']);
-
-                if ($key !== false && !$product_variation['is_in_stock']) {
-                    return $term_name . ' - Out of Stock';
-                }
-            }
-        }
-    }
-
-    return $term_name;
-}
-
-/**
  * Disable single product page
  */
 add_filter('woocommerce_register_post_type_product', 'growtype_wc_register_post_type_product', 12, 1);

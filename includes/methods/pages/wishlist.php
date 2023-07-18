@@ -37,9 +37,9 @@ function wc_wishlist_scripts()
 /**
  * Get current user data
  */
-add_action('wp_ajax_fetch_user_data', 'fetch_user_data');
-add_action('wp_ajax_nopriv_fetch_user_data', 'fetch_user_data');
-function fetch_user_data()
+add_action('wp_ajax_fetch_user_data', 'growtype_wc_fetch_user_data');
+add_action('wp_ajax_nopriv_fetch_user_data', 'growtype_wc_fetch_user_data');
+function growtype_wc_fetch_user_data()
 {
     if (is_user_logged_in()) {
         $current_user = wp_get_current_user();
@@ -71,7 +71,7 @@ function fetch_user_data()
         $current_user_wishlist_ids = isset($_POST['wishlist_ids']) && !empty($_POST['wishlist_ids']) ? $_POST['wishlist_ids'] : [];
     }
 
-    $wishList = get_wishlist_html($current_user_wishlist_ids);
+    $wishList = growtype_wc_get_wishlist_html($current_user_wishlist_ids);
 
     echo json_encode(
         [
@@ -88,7 +88,7 @@ function fetch_user_data()
  * Wishlist html
  */
 
-function get_wishlist_html($wishlist_ids)
+function growtype_wc_get_wishlist_html($wishlist_ids)
 {
     if (empty($wishlist_ids)) {
         $content = ob_start();
@@ -128,7 +128,9 @@ function get_wishlist_html($wishlist_ids)
     return $content;
 }
 
-function update_wishlist_ajax()
+add_action('admin_post_nopriv_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
+add_action('admin_post_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
+function growtype_wc_update_wishlist_ajax()
 {
     if (isset($_POST["user_id"]) && !empty($_POST["user_id"])) {
         $user_id = $_POST["user_id"];
@@ -139,6 +141,3 @@ function update_wishlist_ajax()
     }
     die();
 }
-
-add_action('admin_post_nopriv_user_wishlist_update', 'update_wishlist_ajax');
-add_action('admin_post_user_wishlist_update', 'update_wishlist_ajax');

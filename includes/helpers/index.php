@@ -7,3 +7,4 @@ require_once 'partials/wishlist.php';
 require_once 'partials/gallery.php';
 require_once 'partials/product.php';
 require_once 'partials/include.php';
+require_once 'partials/price.php';

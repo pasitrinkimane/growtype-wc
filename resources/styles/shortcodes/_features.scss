@@ -1,11 +1,12 @@
-.b-features {
+.b-shopfeatures {
   display: flex;
   gap: 10px;
   margin-bottom: 80px;
   flex-wrap: wrap;
   justify-content: center;
+  width: 100%;
 
-  .b-features-single {
+  .b-shopfeatures-single {
     flex-direction: column;
     display: flex;
     align-items: center;

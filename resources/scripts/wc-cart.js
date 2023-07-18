@@ -376,14 +376,17 @@
      * Other event
      */
     jQuery("body").on('updated_cart_totals', function () {
+        console.log('updated_cart_totals')
         loadCartContent();
     });
 
     jQuery("body").on('removed_from_cart', function () {
+        console.log('removed_from_cart')
         loadCartContent();
     });
 
     jQuery("body").on('wc_cart_emptied', function () {
+        console.log('wc_cart_emptied')
         loadCartContent();
     });
 

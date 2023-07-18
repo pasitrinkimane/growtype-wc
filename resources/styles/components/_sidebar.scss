@@ -1,8 +1,53 @@
 #sidebar-shop {
   float: left;
+  @include bp-phone-xl() {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    z-index: 100;
+    padding: 0;
+    background: rgb(0 0 0 / 20%);
+  }
+
+  &:before {
+    @include bp-phone-xl() {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0;
+      content: '';
+      background: white;
+      max-width: 80%;
+    }
+  }
+
+  &:after {
+    @include bp-phone-xl() {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      padding: 0;
+      font-family: "Font Awesome 5 Free";
+      content: "\f00d";
+      color: white;
+      font-size: 22px;
+      font-weight: 900;
+    }
+  }
 
   .widget {
     margin-bottom: 15px;
+    @include bp-phone-xl() {
+      max-width: 80%;
+      position: relative;
+      margin: 0;
+      box-shadow: none;
+    }
 
     &:first-child {
       h3 {
@@ -76,9 +121,6 @@
 
   .widget_product_categories {
     border-bottom: none;
-    @include bp-tablet-portrait() {
-      padding: 0;
-    }
   }
 
   .btn-clear-cat-filter {
