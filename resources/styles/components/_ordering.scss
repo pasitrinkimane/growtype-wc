@@ -2,4 +2,12 @@
   .select2-container {
     min-width: 250px;
   }
+
+  select {
+    @include bp-phone-xl() {
+      color: black;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+  }
 }

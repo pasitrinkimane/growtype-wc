@@ -6,6 +6,13 @@
  */
 class Growtype_Wc_Product
 {
+    protected $uploaded_images;
+
+    public function __construct()
+    {
+        $this->uploaded_images = [];
+    }
+
     public static function get_classes($product_id)
     {
         $product = wc_get_product($product_id);
@@ -925,11 +932,13 @@ class Growtype_Wc_Product
 
     /**
      * @param $details
-     * @return WC_Product_Variable
-     * @throws WC_Data_Exception
+     * @return WC_Product|WC_Product_Auction|WC_Product_External|WC_Product_Grouped|WC_Product_Simple|WC_Product_Variable
+     * @throws Exception
      */
     public function create($details)
     {
+        error_log("Creating product");
+
         $post_status = isset($details['post_status']) ? $details['post_status'] : 'draft';
         $catalog_visibility = isset($details['catalog_visibility']) ? $details['catalog_visibility'] : 'hidden';
         $post_title = isset($details['post_title']) ? $details['post_title'] : time();
@@ -955,6 +964,20 @@ class Growtype_Wc_Product
             }
         }
 
+        /**
+         * Check sku
+         */
+        if (isset($details['sku'])) {
+            $existing_product_id = wc_get_product_id_by_sku($details['sku']);
+
+            if (!empty($existing_product_id)) {
+                $product = wc_get_product($existing_product_id);
+                wc_delete_product_transients($product->get_id());
+            }
+        } else {
+            throw new Exception('Sku is not passed. ' . json_encode($details));
+        }
+
         if (empty($product)) {
             $product_type = isset($details['product_type']) ? $details['product_type'] : 'simple';
 
@@ -975,6 +998,13 @@ class Growtype_Wc_Product
                     $product = new WC_Product_Auction($product);
                     break;
             }
+
+            /**
+             * Set sku
+             */
+            if (isset($details['sku'])) {
+                $product->set_sku($details['sku']);
+            }
         }
 
         /**
@@ -985,6 +1015,9 @@ class Growtype_Wc_Product
             $results = $wpdb->get_results($wpdb->prepare("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = %s", "product"), ARRAY_A);
 
             if (in_array($post_title, array_pluck($results, 'post_title'))) {
+
+                throw new Exception('Change post title. Title: ' . $post_title);
+
                 for ($i = 2; $i <= 20; $i++) {
                     $post_title_test = $post_title . ' ' . $i;
 
@@ -1002,10 +1035,6 @@ class Growtype_Wc_Product
 
         $product->set_status($post_status);
 
-        if (isset($details['sku'])) {
-            $product->set_sku($details['sku']);
-        }
-
         if (isset($details['short_description'])) {
             $product->set_short_description($details['short_description']);
         }
@@ -1018,6 +1047,32 @@ class Growtype_Wc_Product
 
         $product->set_sold_individually($details['sold_individually']);
 
+        if (isset($details['default_attributes'])) {
+            $product->set_default_attributes($details['default_attributes']);
+        }
+
+        /**
+         * Set regular price
+         */
+        if (isset($details['regular_price'])) {
+            $product->set_regular_price($details['regular_price']);
+        }
+
+        /**
+         * Set price
+         */
+        if (isset($details['price'])) {
+            $product->set_price($details['price']);
+        }
+
+        /**
+         * Save product
+         */
+        $product_id = $this->save_product_changes($product, $details);
+
+        /**
+         * Set featured image
+         */
         if (isset($details['image_id'])) {
             if (!empty($details['image_id'])) {
                 $product->set_image_id($details['image_id']);
@@ -1032,6 +1087,8 @@ class Growtype_Wc_Product
 
                 if (empty($image_id)) {
                     $image_id = $this->upload_image($details['image_url']);
+
+                    array_push($this->uploaded_images, $image_id);
                 }
 
                 $product->set_image_id($image_id);
@@ -1064,26 +1121,6 @@ class Growtype_Wc_Product
 //                d($gallery_image_ids);
             }
         }
-
-        if (isset($details['default_attributes'])) {
-            $product->set_default_attributes($details['default_attributes']);
-        }
-
-        /**
-         * Set regular price
-         */
-        if (isset($details['regular_price'])) {
-            $product->set_regular_price($details['regular_price']);
-        }
-
-        /**
-         * Set price
-         */
-        if (isset($details['price'])) {
-            $product->set_price($details['price']);
-        }
-
-        $product_id = $product->save();
 
         /**
          * Set general stock
@@ -1240,7 +1277,11 @@ class Growtype_Wc_Product
                 $variation->set_description($variation_details['variation_description']);
 
                 if (isset($variation_details['sku']) && !empty($variation_details['sku'])) {
-                    $variation->set_sku($variation_details['sku']);
+                    $existing_variation_with_sku = wc_get_product_id_by_sku($variation_details['sku']);
+
+                    if (empty($existing_variation_with_sku)) {
+                        $variation->set_sku($variation_details['sku']);
+                    }
                 }
 
                 if (isset($variation_details['image_id'])) {
@@ -1290,20 +1331,22 @@ class Growtype_Wc_Product
 
                 $product->set_category_ids([$parent_term_id]);
 
-                foreach ($category['children'] as $child) {
-                    $child_term = wp_insert_term($child['term'], 'product_cat', array (
-                        'description' => isset($child['description']) ? $child['description'] : '',
-                        'parent' => $parent_term_id,
-                        'slug' => isset($child['slug']) ? $child['slug'] : $child['term']
-                    ));
+                if (isset($category['children'])) {
+                    foreach ($category['children'] as $child) {
+                        $child_term = wp_insert_term($child['term'], 'product_cat', array (
+                            'description' => isset($child['description']) ? $child['description'] : '',
+                            'parent' => $parent_term_id,
+                            'slug' => isset($child['slug']) ? $child['slug'] : $child['term']
+                        ));
 
-                    if (is_wp_error($child_term)) {
-                        $child_term_id = $child_term->get_error_data();
-                    } else {
-                        $child_term_id = $child_term['term_id'];
+                        if (is_wp_error($child_term)) {
+                            $child_term_id = $child_term->get_error_data();
+                        } else {
+                            $child_term_id = $child_term['term_id'];
+                        }
+
+                        array_push($cat_terms_ids, $child_term_id);
                     }
-
-                    array_push($cat_terms_ids, $child_term_id);
                 }
             }
         }
@@ -1348,8 +1391,36 @@ class Growtype_Wc_Product
             }
         }
 
-        $product->save();
+        /**
+         * Save product again
+         */
+        $this->save_product_changes($product, $details);
 
         return $product;
+    }
+
+    private function save_product_changes($product, $changes = null)
+    {
+        /**
+         * Check sku again before save
+         */
+        if (!empty($changes)) {
+            if (isset($changes['sku'])) {
+                $existing_product_id = wc_get_product_id_by_sku($changes['sku']);
+
+                if (!empty($existing_product_id) && empty($product->get_id())) {
+                    /**
+                     * Delete uploaded images
+                     */
+                    foreach ($this->uploaded_images as $uploaded_image) {
+                        wp_delete_attachment($uploaded_image, true);
+                    }
+
+                    throw new Exception('Product with this sku already exists. ' . json_encode($changes));
+                }
+            }
+        }
+
+        return $product->save();
     }
 }

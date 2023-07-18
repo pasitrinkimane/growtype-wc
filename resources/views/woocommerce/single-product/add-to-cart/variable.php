@@ -37,10 +37,11 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
             <div class="variations" data-variations-amount="<?php echo count($attributes) ?>">
                 <?php
                 $index = 0;
-                foreach ($attributes as $attribute_name => $options) {
-                    $product_attributes = get_post_meta($product->get_id(), '_product_attributes', true);
-                    $default_attributes = get_post_meta($product->get_id(), '_default_attributes', true);
+                $product_attributes = get_post_meta($product->get_id(), '_product_attributes', true);
+                $default_attributes = get_post_meta($product->get_id(), '_default_attributes', true);
 
+                foreach ($attributes as $attribute_name => $options) {
+                    $product_terms = wc_get_product_terms($product->get_id(), $attribute_name);
                     $is_visible = $product_attributes[$attribute_name]['is_visible'];
                     $default_value = isset($default_attributes[$attribute_name]) ? $default_attributes[$attribute_name] : '';
 
@@ -95,7 +96,7 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                         if (isset($variation['attributes'])) {
                                             $attributeTitle = isset($variation['attributes']['attribute_' . strtolower($attribute_name)]) ? $variation['attributes']['attribute_' . strtolower($attribute_name)] : null;
 
-                                            $termId = array_filter(wc_get_product_terms($product->get_id(), $attribute_name),
+                                            $termId = array_filter($product_terms,
                                                 function ($object) use ($attributeTitle) {
                                                     return $object->slug === $attributeTitle;
                                                 });
@@ -109,7 +110,7 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
                                             $termName = !empty($termId) && !empty(array_values($termId)) ? get_term($terms[0]->term_id)->name : '';
                                             $termName = !empty($termName) ? $termName : $attributeTitle;
                                             $isVisible = false;
-                                            $variation_value = apply_filters('woocommerce_variation_option_name', $attributeTitle);
+                                            $variation_value = $attributeTitle;
 
                                             if (!in_array($attributeTitle, $existingAttributes)) {
                                                 array_push($existingAttributes, $attributeTitle);

@@ -1,9 +1,29 @@
+body.archive .main {
+  @include bp-phone-xl() {
+    padding-top: 0;
+  }
+}
+
 .archive {
   .site-main {
     padding-top: 25px;
     @include bp-phone-xl() {
       padding-top: 10px;
       overflow: hidden;
+    }
+  }
+
+  .btn-filters-trigger {
+    display: none;
+    @include bp-phone-xl() {
+      display: block;
+      width: 50%;
+      min-width: initial;
+      float: left;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 0;
+      text-align: left;
     }
   }
 }
@@ -37,7 +57,16 @@
     display: inline-block;
     @include bp-phone-xl() {
       margin-top: 10px;
-      min-width: 160px;
+      min-width: 130px;
+      width: 50%;
+    }
+
+    .chosen-single, .orderby {
+      @include bp-phone-xl() {
+        border-color: black;
+        border-radius: 0 !important;
+        min-height: 43px;
+      }
     }
   }
 

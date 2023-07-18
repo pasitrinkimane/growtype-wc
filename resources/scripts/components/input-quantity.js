@@ -1,7 +1,7 @@
 function inputQuantity() {
     function changeInputQuantityWithArrows() {
         jQuery('.quantity .btn').click(function () {
-            var currentQuantityInput = jQuery(this).closest('.quantity').find('input[name="quantity"]');
+            var currentQuantityInput = jQuery(this).closest('.quantity').find('.qty');
             var currentQuantity = currentQuantityInput.val().length > 0 ? currentQuantityInput.val() : 0;
             var currentQuantityInputMax = currentQuantityInput.attr('max');
             var currentQuantityInputMin = currentQuantityInput.attr('min');

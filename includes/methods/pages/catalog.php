@@ -115,3 +115,12 @@ function woocommerce_template_loop_result_count_remove()
         remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);
     }
 }
+
+/**
+ * Filters btn for mobile
+ */
+add_action('woocommerce_before_shop_loop', 'growtype_wc_woocommerce_before_main_content');
+function growtype_wc_woocommerce_before_main_content()
+{
+    echo '<button class="btn btn-secondary btn-filters-trigger">' . __('Filter', 'growtype-wc') . '</button>';
+}

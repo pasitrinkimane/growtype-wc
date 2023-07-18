@@ -53,10 +53,16 @@ function growtype_wc_filter_products()
 
         ob_start();
 
+        if (!empty($filter_params['categories_ids'])) {
+            $cat_url = get_term_link((int)$filter_params['categories_ids'][0], 'product_cat');
+        } else {
+            $cat_url = get_permalink(wc_get_page_id('shop'));
+        }
+
         $args = array (
             'total' => $products->max_num_pages,
             'current' => $filter_params['page_nr'],
-            'base' => home_url() . '/auctions/' . '%_%?orderby=' . $_POST['orderby'],
+            'base' => $cat_url . '%_%?orderby=' . $_POST['orderby'],
             'format' => 'page/%#%',
         );
 

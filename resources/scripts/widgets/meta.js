@@ -21,9 +21,10 @@ function meta() {
             url: ajax_object.ajaxurl,
             type: "post",
             data: {
-                'action': 'filter_products',
-                'meta_key': metaKey,
-                'meta_values': JSON.stringify(window.growtypeWc['widgets']['meta']['values']),
+                action: 'filter_products',
+                meta_key: metaKey,
+                meta_values: JSON.stringify(window.growtypeWc['widgets']['meta']['values']),
+                categories_ids: woocommerce_params_widgets.categories_ids,
             },
             beforeSend: function (xhr) {
                 existingProducts.append("<span class='spinner-border'><div></div><div></div></span>").addClass('is-loading');
@@ -32,10 +33,15 @@ function meta() {
                 jQuery('.products .spinner-border').remove();
                 existingProducts.removeClass('is-loading');
 
-                // window.history.pushState('page-url', 'url', filter.attr('action') + '?' + filter.serialize());
                 jQuery('.woocommerce-info').remove();
 
                 existingProducts.html(data.products)
+
+                if (jQuery('.woocommerce-pagination').length > 0) {
+                    jQuery('.woocommerce-pagination').replaceWith(data.pagination);
+                } else {
+                    jQuery('.products').after(data.pagination);
+                }
 
                 document.dispatchEvent(filterProductsByMetaEvent);
             }
