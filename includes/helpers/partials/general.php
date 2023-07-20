@@ -55,10 +55,20 @@ function growtype_wc_is_dashboard_page()
 
 /**
  * @return bool
+ * Selling type when online one product is sold
  */
-function growtype_wc_selling_type_single(): bool
+function growtype_wc_selling_type_single_product(): bool
 {
     return get_theme_mod('shop_selling_type_select', 'shop_selling_type_multiple') === 'shop_selling_type_single';
+}
+
+/**
+ * @return bool
+ * Selling type when online one product unit is sold
+ */
+function growtype_wc_selling_type_single_item(): bool
+{
+    return get_theme_mod('shop_selling_type_select', 'shop_selling_type_multiple') === 'shop_selling_type_single_item';
 }
 
 /**

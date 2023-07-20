@@ -30,7 +30,7 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
  */
 $wp_customize->add_setting('woocommerce_checkout_order_notes',
     array (
-        'default' => 'hidden',
+        'default' => 'optional',
         'transport' => 'refresh'
     )
 );

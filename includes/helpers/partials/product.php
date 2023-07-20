@@ -21,7 +21,7 @@ function growtype_wc_single_item_available($product_id)
 
     $single_item = false;
 
-    if ($sold_individually || $manage_stock && $stock <= 1) {
+    if ($sold_individually || $manage_stock && $stock <= 1 || growtype_wc_selling_type_single_item()) {
         $single_item = true;
     }
 

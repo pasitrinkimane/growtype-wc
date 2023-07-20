@@ -1,5 +1,5 @@
 function productVariation() {
-    if (!jQuery('body').hasClass('single-product')) {
+    if (!jQuery('body').hasClass('single-product') || window.growtypeWc['productVariations'] === undefined) {
         return;
     }
 
@@ -20,9 +20,7 @@ function productVariation() {
         /**
          * Initial select
          */
-        if (window.growtypeWc['productVariations']) {
-            selectVariation()
-        }
+        selectVariation();
 
         /**
          * Radio select

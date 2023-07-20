@@ -64,8 +64,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
         'section' => 'woocommerce_email_page',
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )
@@ -88,8 +87,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
         'section' => 'woocommerce_email_page',
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )
@@ -108,12 +106,11 @@ $wp_customize->add_setting('wc_email_customer_completed_order_main_content',
 $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, 'wc_email_customer_completed_order_main_content',
     array (
         'label' => __('"Completed Order" Intro Content'),
-        'description' => __('Available variables: {customer_name} , {date_created}'),
+        'description' => __('Available variables: {customer_name} , {date_created} etc.'),
         'section' => 'woocommerce_email_page',
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )
@@ -136,8 +133,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
         'section' => 'woocommerce_email_page',
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )

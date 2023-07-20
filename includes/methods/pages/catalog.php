@@ -122,5 +122,7 @@ function woocommerce_template_loop_result_count_remove()
 add_action('woocommerce_before_shop_loop', 'growtype_wc_woocommerce_before_main_content');
 function growtype_wc_woocommerce_before_main_content()
 {
-    echo '<button class="btn btn-secondary btn-filters-trigger">' . __('Filter', 'growtype-wc') . '</button>';
+    if (is_shop() && is_active_sidebar('sidebar-shop')) {
+        echo '<button class="btn btn-secondary btn-catalog-filters">' . __('Filter', 'growtype-wc') . '</button>';
+    }
 }

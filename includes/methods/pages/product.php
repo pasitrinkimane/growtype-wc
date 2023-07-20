@@ -113,41 +113,6 @@ function growtype_wc_get_breadcrumb($crumbs, $breadcrumb)
 }
 
 /**
- * Add info below add to form button
- */
-add_action('woocommerce_single_product_summary', 'growtype_wc_after_add_to_cart_form', 100);
-function growtype_wc_after_add_to_cart_form()
-{
-    echo growtype_wc_include_view('woocommerce.components.product-single-payment-details');
-}
-
-/**
- * Add sign after quantity input
- */
-add_action('woocommerce_before_quantity_input_field', 'growtype_wc_before_quantity_input_field');
-function growtype_wc_before_quantity_input_field()
-{
-    $single_item_available = growtype_wc_single_item_available(get_the_ID());
-
-    if (!$single_item_available) {
-        echo '<div class="btn btn-down">-</div>';
-    }
-}
-
-/**
- * Add sign after quantity input
- */
-add_action('woocommerce_after_quantity_input_field', 'growtype_wc_after_quantity_input_field');
-function growtype_wc_after_quantity_input_field()
-{
-    $single_item_available = growtype_wc_single_item_available(get_the_ID());
-
-    if (!$single_item_available) {
-        echo '<div class="btn btn-up">+</div>';
-    }
-}
-
-/**
  * Disable single product page
  */
 add_filter('woocommerce_register_post_type_product', 'growtype_wc_register_post_type_product', 12, 1);

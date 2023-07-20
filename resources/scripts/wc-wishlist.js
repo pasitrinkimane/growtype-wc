@@ -35,9 +35,9 @@
         });
     }
 
-    let shopName = woocommerce_params_wishlist.shop_name + '-wishlist',
-        inWishlist = woocommerce_params_wishlist.in_wishlist_text,
-        restUrl = woocommerce_params_wishlist.rest_url,
+    let shopName = growtype_wc_ajax.shop_name + '-wishlist',
+        inWishlist = growtype_wc_ajax.in_wishlist_text,
+        restUrl = growtype_wc_ajax.rest_url,
         wishlistIds = new Array,
         ls = sessionStorage.getItem(shopName),
         loggedIn = (jQuery('body').hasClass('logged-in')) ? true : false,
@@ -136,7 +136,7 @@
                 if (loggedIn) {
                     $.ajax({
                         type: 'POST',
-                        url: woocommerce_params_wishlist.ajax_post,
+                        url: growtype_wc_ajax.url,
                         data: {
                             action: 'user_wishlist_update',
                             user_id: userData['user_id'],
@@ -149,7 +149,7 @@
                             }
                         })
                         .fail(function (data) {
-                            alert(woocommerce_params_wishlist.error_text);
+                            alert(growtype_wc_ajax.error_text);
                         });
                 } else {
                     sessionStorage.setItem(shopName, wishlistIds.toString());
@@ -200,7 +200,7 @@
 
                 })
                 .fail(function (response) {
-                    alert(woocommerce_params_wishlist.no_wishlist_text);
+                    alert(growtype_wc_ajax.no_wishlist_text);
                 })
         }
 

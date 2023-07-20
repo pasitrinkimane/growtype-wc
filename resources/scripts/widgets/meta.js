@@ -18,7 +18,7 @@ function meta() {
         })
 
         $.ajax({
-            url: ajax_object.ajaxurl,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: {
                 action: 'filter_products',

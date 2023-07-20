@@ -60,7 +60,7 @@ function growtype_wc_cart_item_name($text)
 add_filter('woocommerce_checkout_fields', 'growtype_wc_checkout_fields_extend');
 function growtype_wc_checkout_fields_extend($fields)
 {
-    $order_notes = get_theme_mod('woocommerce_checkout_order_notes');
+    $order_notes = get_theme_mod('woocommerce_checkout_order_notes', 'optional');
 
     switch ($order_notes) {
         case 'required':
@@ -107,7 +107,10 @@ function growtype_wc_billing_fields($fields)
             $fields['billing_email']['required'] = true;
             break;
         case 'hidden':
-            array_push($fields['billing_email']['class'], 'd-none');
+            if (!$fields['billing_email']['required']) {
+                array_push($fields['billing_email']['class'], 'd-none');
+            }
+            break;
     }
 
     /**

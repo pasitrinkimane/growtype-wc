@@ -85,7 +85,14 @@ class Growtype_Wc_Public
         wp_localize_script($this->growtype_wc, 'growtype_wc_ajax', array (
             'url' => $ajax_url,
             'nonce' => wp_create_nonce('ajax-nonce'),
-            'action' => self::AJAX_ACTION
+            'action' => self::AJAX_ACTION,
+            'rest_url' => rest_url('wp/v2/product'),
+            'shop_name' => sanitize_title_with_dashes(sanitize_title_with_dashes(get_bloginfo('name'))),
+            'in_wishlist_text' => esc_html__("Already in wishlist", "growtype-wc"),
+            'remove_from_wishlist_text' => esc_html__("Remove from wishlist", "growtype-wc"),
+            'error_text' => esc_html__("Something went wrong, please contact our support", "growtype-wc"),
+            'no_wishlist_text' => esc_html__("No wishlist found", "growtype-wc"),
+            'fill_required_fields_text' => esc_html__("Please fill all required fields", "growtype-wc"),
         ));
     }
 
