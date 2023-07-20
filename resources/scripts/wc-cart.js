@@ -7,7 +7,7 @@
         jQuery('.b-shoppingcart .b-shoppingcart-content').html('');
         jQuery('.b-shoppingcart-inner').append(loadingAnimation);
         $.ajax({
-            url: ajax_object.ajaxurl,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: {
                 action: 'growtype_load_cart'
@@ -30,7 +30,7 @@
      */
     function loadCartDetails() {
         $.ajax({
-            url: ajax_object.ajaxurl,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: {
                 action: 'get_cart_details_ajax'
@@ -92,7 +92,7 @@
 
         if (action !== 'ajax-no') {
             $.ajax({
-                url: ajax_object.ajaxurl,
+                url: growtype_wc_ajax.url,
                 type: "post",
                 data: {
                     quantity: current_amount_val,
@@ -138,7 +138,44 @@
         }
     }
 
+    function validateEmail(email) {
+        return String(email)
+            .toLowerCase()
+            .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+    };
+
     function addToCart(cart) {
+
+        /**
+         * Check required fields
+         */
+        let passedValidation = true;
+        cart.find('input[required],select[required]').map(function (index, element) {
+            if ($(element).val().length === 0) {
+                passedValidation = false;
+                return false;
+            }
+
+            if ($(element).attr('type') === 'email' && validateEmail($(element).val()) === null) {
+                passedValidation = false;
+                return false;
+            }
+
+            if ($(element).attr('type') === 'checkbox' && !$(element).is(':checked')) {
+                passedValidation = false;
+                return false;
+            }
+        })
+
+        /**
+         * Check validation
+         */
+        if (!passedValidation) {
+            alert(growtype_wc_ajax.fill_required_fields_text);
+            return false;
+        }
 
         if (cart.find('button[type="submit"]').hasClass('disabled')) {
             return false;
@@ -193,7 +230,7 @@
          * Post data to backend
          */
         $.ajax({
-            url: ajax_object.ajaxurl,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: productData,
             beforeSend: function () {
@@ -293,7 +330,7 @@
 
     function removeItemFromCart(cart_item_key) {
         $.ajax({
-            url: ajax_object.ajaxurl,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: {
                 action: 'update_cart_ajax',

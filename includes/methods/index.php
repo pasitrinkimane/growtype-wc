@@ -33,7 +33,7 @@ include('product/class-growtype-wc-auction.php');
 /**
  * Payment
  */
-include('payments/gateways.php');
+include('payments/index.php');
 
 /**
  * Shipping
@@ -61,7 +61,7 @@ include('admin/product/types/subscription.php');
 
 include('scripts/scripts.php');
 
-include('emails/preview.php');
+include('emails/index.php');
 
 include('orders/orders.php');
 
@@ -79,6 +79,7 @@ include('components/product-single-related-products.php');
 include('components/product-single-button.php');
 include('components/product-single-reviews.php');
 include('components/product-single-sale-flash.php');
+include('components/product-single-quantity.php');
 
 /**
  * Components

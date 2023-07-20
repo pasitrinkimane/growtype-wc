@@ -8,13 +8,27 @@ function growtype_wc_template_include($template)
         $default_path = substr($template, 0, strpos($template, "templates"));
         $file_name = str_replace($default_path . 'templates/', '', $template);
 
+        /**
+         * Get local template
+         */
         $local_template = GROWTYPE_WC_PATH . 'resources/views/woocommerce/' . $file_name;
+
+        /**
+         * Get local blade template
+         */
         $local_blade_template = GROWTYPE_WC_PATH . 'resources/views/woocommerce/' . str_replace('.php', '.blade.php', $file_name);
 
-        if (file_exists($local_blade_template)) {
-            return $local_blade_template;
+        /**
+         * Get child theme template
+         */
+        $child_template = get_stylesheet_directory() . '/views/woocommerce/' . $file_name;
+
+        if (file_exists($child_template)) {
+            $template = $child_template;
+        } elseif (file_exists($local_blade_template)) {
+            $template = $local_blade_template;
         } elseif (file_exists($local_template)) {
-            return $local_template;
+            $template = $local_template;
         }
     }
 
@@ -26,8 +40,15 @@ function growtype_wc_locate_template($template, $template_name, $template_path)
 {
     $local_template = GROWTYPE_WC_PATH . 'resources/views/woocommerce/' . $template_name;
 
-    if (file_exists($local_template)) {
-        return $local_template;
+    /**
+     * Get child theme template
+     */
+    $child_template = get_stylesheet_directory() . '/views/woocommerce/' . $template_name;
+
+    if (file_exists($child_template)) {
+        $template = $child_template;
+    } elseif (file_exists($local_template)) {
+        $template = $local_template;
     }
 
     return $template;

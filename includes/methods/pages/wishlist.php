@@ -18,20 +18,6 @@ add_action('wp_enqueue_scripts', 'wc_wishlist_scripts');
 function wc_wishlist_scripts()
 {
     wp_enqueue_script('growtype-wc-wishlist', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-wishlist.js', [], GROWTYPE_WC_VERSION, true);
-
-    wp_localize_script(
-        'growtype-wc-wishlist',
-        'woocommerce_params_wishlist',
-        array (
-            'ajax_post' => admin_url('admin-post.php'),
-            'rest_url' => rest_url('wp/v2/product'),
-            'shop_name' => sanitize_title_with_dashes(sanitize_title_with_dashes(get_bloginfo('name'))),
-            'in_wishlist_text' => esc_html__("Already in wishlist", "growtype"),
-            'remove_from_wishlist_text' => esc_html__("Remove from wishlist", "growtype"),
-            'error_text' => esc_html__("Something went wrong, could not add to wishlist", "growtype"),
-            'no_wishlist_text' => esc_html__("No wishlist found", "growtype"),
-        )
-    );
 }
 
 /**

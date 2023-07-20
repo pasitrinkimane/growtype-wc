@@ -38,7 +38,7 @@ jQuery(document).ready(() => {
      * Catalog widgets
      */
     if ($(window).width() < 641) {
-        $('.btn-filters-trigger').on('click', function () {
+        $('.btn-catalog-filters').on('click', function () {
             $('.sidebar-shop').fadeIn();
         });
 

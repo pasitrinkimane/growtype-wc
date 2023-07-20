@@ -29,7 +29,8 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
         ),
         'choices' => array (
             'shop_selling_type_multiple' => __('Multiple products', 'growtype-wc'),
-            'shop_selling_type_single' => __('Single product', 'growtype-wc')
+            'shop_selling_type_single' => __('Single product', 'growtype-wc'),
+            'shop_selling_type_single_item' => __('Single item', 'growtype-wc')
         )
     )
 ));

@@ -17,6 +17,15 @@
     top: 12px;
     left: 20px;
   }
+
+  .btn-close {
+    position: absolute;
+    right: 35px;
+    top: 17px;
+    font-size: 18px;
+    color: $color-text;
+    cursor: pointer;
+  }
 }
 
 .alert {

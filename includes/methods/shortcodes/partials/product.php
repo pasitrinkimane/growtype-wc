@@ -29,12 +29,12 @@ function growtype_products_shortcode($atts, $content = null)
         'edit_product' => 'false',
         'post_status' => 'publish',
         'cta_btn' => '',
-        'before_shop_loop' => '',
+        'before_shop_loop' => 'false',
         'after_shop_loop' => '',
         'not_found_message' => 'true',
         'not_found_subtitle' => __('You have no products.', 'growtype-wc'),
         'not_found_cta' => '',
-        'ids_required' => 'true',
+        'ids_required' => 'false',
     ), $atts));
 
     /**
@@ -174,7 +174,7 @@ function growtype_products_shortcode($atts, $content = null)
          */
         ob_start();
 
-        if (isset($before_shop_loop) && $before_shop_loop) {
+        if (isset($before_shop_loop) && $before_shop_loop === 'true') {
             do_action('woocommerce_before_shop_loop');
         }
 

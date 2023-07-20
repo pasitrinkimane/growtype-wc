@@ -244,22 +244,11 @@ class Growtype_Wc_Product
 
         $product_type = $product->get_type();
 
-        switch ($product_type) {
-            case 'external':
-                return $add_to_cart_button_label;
-                break;
-            case 'grouped':
-                return __('Select', 'growtype-wc');
-                break;
-            case 'simple':
-                return $add_to_cart_button_label;
-                break;
-            case 'variable':
-                return $add_to_cart_button_label;
-                break;
-            default:
-                return $add_to_cart_button_label;
+        if ($product_type === 'grouped') {
+            $add_to_cart_button_label = __('Select', 'growtype-wc');
         }
+
+        return $add_to_cart_button_label;
     }
 
     /**

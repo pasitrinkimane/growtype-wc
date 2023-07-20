@@ -13,17 +13,17 @@ body.archive .main {
     }
   }
 
-  .btn-filters-trigger {
+  .btn-catalog-filters {
+    width: 50%;
+    min-width: initial;
+    float: left;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 0;
+    text-align: left;
     display: none;
     @include bp-phone-xl() {
       display: block;
-      width: 50%;
-      min-width: initial;
-      float: left;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 0;
-      text-align: left;
     }
   }
 }

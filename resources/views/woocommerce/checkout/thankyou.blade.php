@@ -21,18 +21,7 @@ defined('ABSPATH') || exit;
 <div class="woocommerce-order <?php echo get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : '' ?> order-details-<?php echo !get_theme_mod('woocommerce_thankyou_page_order_details_disabled') ? 'enabled' : 'disabled' ?> customer-details-<?php echo !get_theme_mod('woocommerce_thankyou_page_customer_details_disabled') ? 'enabled' : 'disabled' ?> download-details-<?php echo !get_theme_mod('woocommerce_thankyou_page_download_details_disabled') ? 'enabled' : 'disabled' ?>>">
 
     <?php
-
-    $woocommerce_thankyou_page_intro_content = get_theme_mod('woocommerce_thankyou_page_intro_content');
-
-    if (user_can_access_platform()) {
-        $woocommerce_thankyou_page_intro_content = get_theme_mod('woocommerce_thankyou_page_intro_content_access_platform');
-    }
-
     if ($order) :
-
-        $woocommerce_thankyou_page_intro_content = !empty($woocommerce_thankyou_page_intro_content) ? $woocommerce_thankyou_page_intro_content : '<h3 class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">' . apply_filters('woocommerce_thankyou_order_received_text',
-                esc_html__('Thank you. Your order has been received.', 'growtype-wc'),
-                $order) . '</h3><p>' . esc_html__('Below are the details of your order.', 'growtype-wc') . '</p>';
 
         do_action('woocommerce_before_thankyou', $order->get_id());
         ?>
@@ -54,10 +43,10 @@ defined('ABSPATH') || exit;
     <?php else : ?>
 
     <div class="b-intro-content">
-            <?php echo apply_filters('the_content', $woocommerce_thankyou_page_intro_content); ?>
+            <?php echo apply_filters('the_content', growtype_wc_thankyou_page_intro_content($order)); ?>
     </div>
 
-        <?php if (!get_theme_mod('woocommerce_thankyou_page_order_overview_disabled')) { ?>
+        <?php if (!growtype_wc_order_overview_disabled()) { ?>
     <ul class="woocommerce-order-overview woocommerce-thankyou-order-details order_details">
 
         <li class="woocommerce-order-overview__order order">
@@ -97,16 +86,10 @@ defined('ABSPATH') || exit;
         <?php do_action('woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id()); ?>
         <?php do_action('woocommerce_thankyou', $order->get_id()); ?>
 
-    <?php else :
-
-        $woocommerce_thankyou_page_intro_content = !empty($woocommerce_thankyou_page_intro_content) ? $woocommerce_thankyou_page_intro_content : apply_filters('woocommerce_thankyou_order_received_text',
-            esc_html__('Thank you. Your order has been received.', 'growtype-wc'),
-            null);
-        ?>
-
-    <p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">
-            <?php echo $woocommerce_thankyou_page_intro_content; ?>
-    </p>
+    <?php else : ?>
+    <div class="b-intro-content">
+            <?php echo apply_filters('the_content', growtype_wc_thankyou_page_intro_content($order)); ?>
+    </div>
     <?php endif; ?>
 
 </div>

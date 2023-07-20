@@ -16,7 +16,7 @@ function add_to_cart_ajax_callback()
     if (empty($product_id)) {
         $data = [
             'error' => true,
-            'message' => 'Missing info.',
+            'message' => __('Missing info.', 'growtype-wc'),
         ];
         return wp_send_json($data);
     }
@@ -61,7 +61,6 @@ function add_to_cart_ajax_callback()
             }
         }
     } elseif (class_exists('Growtype_Auction') && $product->is_type('auction')) {
-
         $is_reserved = Growtype_Auction::is_reserved($product->get_id());
 
         if (!$is_reserved && !empty($_REQUEST['place-bid'])) {
@@ -69,7 +68,6 @@ function add_to_cart_ajax_callback()
                 'message' => __('Bid added.', 'growtype-wc'),
             ];
         } else {
-
             if (!$is_reserved) {
                 $reservation = Growtype_Auction::reserve_for_user($product->get_id(), get_current_user_id());
 
@@ -137,7 +135,7 @@ function add_to_cart_ajax_callback()
 
     if ($product->is_type('grouped') && empty($quantity) || !$product->is_type('grouped') && empty($quantity)) {
         $data = [
-            'message' => 'Please select product amount',
+            'message' => __('Please select product amount', 'growtype-wc'),
             'quantity' => 0
         ];
         return wp_send_json($data);
@@ -151,7 +149,7 @@ function add_to_cart_ajax_callback()
         }
 
         foreach ($cart_data as $cart_item) {
-            $cart_item_variation_id = $cart_item['variation_id'] ?? '';
+            $cart_item_variation_id = isset($cart_item['variation_id']) ? $cart_item['variation_id'] : null;
             if (!empty($cart_item_variation_id) && !empty($variation_id)) {
                 if ($cart_item['variation_id'] === $variation_id) {
                     $cart_item_key = $cart_item['key'];
@@ -162,6 +160,10 @@ function add_to_cart_ajax_callback()
                 }
             }
         }
+
+//        d($cart_item_key);
+
+//        apply_filters('growtype_wc_after_successful_add_to_cart_validation', $_POST, $cart_item_key);
 
         $data = array (
             'cart_contents_count' => WC()->cart->cart_contents_count,
@@ -178,7 +180,7 @@ function add_to_cart_ajax_callback()
     } else {
         $data = array (
             'error' => true,
-            'message' => 'The selected product is out of stock.',
+            'message' => __('The selected product is out of stock.', 'growtype-wc')
         );
     }
 
@@ -207,7 +209,7 @@ function growtype_wc_add_cart_item_data($cart_item_data)
     /**
      * If selling type single clear all other products and add a new one
      */
-    if (growtype_wc_selling_type_single()) {
+    if (growtype_wc_selling_type_single_product() || growtype_wc_selling_type_single_item()) {
         $woocommerce->cart->empty_cart();
     }
 
@@ -279,7 +281,7 @@ function wc_add_to_cart_redirect($url = false)
         $sold_individually = $product->is_sold_individually();
     }
 
-    if ($instant_checkout || $sold_individually || growtype_wc_selling_type_single()) {
+    if ($instant_checkout || $sold_individually || growtype_wc_selling_type_single_product() || growtype_wc_selling_type_single_item()) {
         $url = wc_get_checkout_url();
     }
 

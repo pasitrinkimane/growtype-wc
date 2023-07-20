@@ -86,11 +86,6 @@ class Growtype_Wc_Customizer_Extend
     {
         wp_enqueue_script('growtype_wc_customizer_control', GROWTYPE_WC_URL . 'admin/js/customizer-control.js', array ('jquery'), GROWTYPE_WC_VERSION);
         wp_enqueue_script('growtype_wc_customizer_control_email_preview', GROWTYPE_WC_URL . 'admin/js/customizer-control-email-preview.js', array ('jquery'), GROWTYPE_WC_VERSION);
-        wp_localize_script('growtype_wc_customizer_control', 'ajax_object',
-            array (
-                'ajaxurl' => admin_url('admin-ajax.php'),
-            )
-        );
     }
 
     /**

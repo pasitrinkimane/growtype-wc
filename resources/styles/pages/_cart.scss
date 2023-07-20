@@ -242,20 +242,6 @@
   }
 }
 
-//.woocommerce .woocommerce-checkout-review-order-table ul#shipping_method {
-//  li {
-//    margin-bottom: 0 !important;
-//    display: flex;
-//    align-items: center;
-//
-//    label {
-//      font-size: 16px !important;
-//      display: flex;
-//      align-items: center;
-//    }
-//  }
-//}
-
 .woocommerce-shipping-methods {
   li {
     margin-bottom: 0 !important;
@@ -279,4 +265,9 @@
     border-radius: 5px;
     text-decoration: none;
   }
+}
+
+.return-to-shop {
+  text-align: center;
+  padding-top: 20px;
 }
