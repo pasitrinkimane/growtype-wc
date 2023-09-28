@@ -307,7 +307,7 @@ class Growtype_Wc_Customizer_Extend
                 wp.customize.section('woocommerce_thankyou_page', function (section) {
                     section.expanded.bind(function (isExpanded) {
                         if (isExpanded) {
-                            wp.customize.previewer.previewUrl.set('<?php echo home_url('/documentation/examples/payment/success') ?>');
+                            wp.customize.previewer.previewUrl.set('<?php echo home_url('/growtype-wc/documentation/examples/payment/success') ?>');
                         }
                     });
                 });
@@ -320,7 +320,7 @@ class Growtype_Wc_Customizer_Extend
                     section.expanded.bind(function (isExpanded) {
                         if (isExpanded) {
                             var template = $('#customize-control-woocommerce_email_page_template select').val();
-                            var templateUrl = '<?php echo home_url('/documentation/examples/email/preview?email_type=WC_Email_Customer_Processing_Order&order_id=' . (get_user_first_order() ? get_user_first_order()->get_id() : '')); ?>';
+                            var templateUrl = '<?php echo home_url('/growtype-wc/documentation/examples/email/preview?email_type=WC_Email_Customer_Processing_Order&order_id=' . (get_user_first_order() ? get_user_first_order()->get_id() : '')); ?>';
                             templateUrl = templateUrl.replace("WC_Email_Customer_Processing_Order", template);
                             wp.customize.previewer.previewUrl(templateUrl);
                             $("#sub-accordion-section-woocommerce_email_page li[id*='main_content']").hide();

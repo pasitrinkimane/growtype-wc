@@ -3,7 +3,7 @@
     "description": "growtype woocommerce extension",
     "type": "wordpress-plugin",
     "require": {
-        "php": "^7.2",
+        "php": "^7.0|^8.0",
         "rappasoft/laravel-helpers": "^2.0",
         "printful/php-api-sdk": "^2.2",
         "google/apiclient": "^2.15"

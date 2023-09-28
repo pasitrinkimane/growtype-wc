@@ -66,7 +66,7 @@
 
         $.ajax({
             type: 'POST',
-            url: woocommerce_params.ajax_url,
+            url: growtype_wc_ajax.url,
             data: {
                 'action': 'fetch_user_data',
                 'dataType': 'json',

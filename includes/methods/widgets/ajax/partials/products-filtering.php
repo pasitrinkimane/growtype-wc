@@ -39,7 +39,7 @@ function growtype_wc_filter_products()
             ]);
         } else {
             while ($products->have_posts()) : $products->the_post();
-                wc_get_template_part('content', 'product');
+                echo growtype_wc_include_view('woocommerce.content-product');
             endwhile;
         }
 
@@ -86,17 +86,8 @@ function growtype_wc_filter_products()
     return wp_send_json($data);
 }
 
-/**
- * @param $orderby
- * @param $categories_ids
- * @return WP_Query
- */
-function growtype_wc_get_filtered_products($filter_params)
+function growtype_wc_get_orderby_params($orderby)
 {
-    $meta_key = '';
-    $order = 'ASC';
-    $orderby = isset($filter_params['orderby']) ? $filter_params['orderby'] : '';
-
     if (!empty($orderby)) {
         switch ($orderby) {
             case 'menu_order':
@@ -107,6 +98,7 @@ function growtype_wc_get_filtered_products($filter_params)
             case 'popularity':
                 $meta_key = 'total_sales';
                 $order = 'DESC';
+                $orderby = '';
                 break;
             case 'price':
                 $meta_key = '_price';
@@ -129,6 +121,34 @@ function growtype_wc_get_filtered_products($filter_params)
                 $orderby = 'meta_value_num title';
                 break;
         }
+    }
+
+    if (isset($meta_key) && isset($order) && isset($orderby)) {
+        return [
+            'meta_key' => $meta_key,
+            'order' => $order,
+            'orderby' => $orderby,
+        ];
+    } else {
+        return [];
+    }
+}
+
+/**
+ * @param $orderby
+ * @param $categories_ids
+ * @return WP_Query
+ */
+function growtype_wc_get_filtered_products($filter_params)
+{
+    $meta_key = '';
+    $order = 'ASC';
+    $orderby = isset($filter_params['orderby']) ? $filter_params['orderby'] : '';
+
+    $growtype_wc_get_orderby_params = growtype_wc_get_orderby_params($orderby);
+
+    if (!empty($growtype_wc_get_orderby_params)) {
+        extract($growtype_wc_get_orderby_params);
     }
 
     $args = array (
@@ -203,7 +223,10 @@ function growtype_wc_get_filtered_products($filter_params)
             array (
                 'taxonomy' => 'product_visibility',
                 'field' => 'name',
-                'terms' => 'exclude-from-catalog',
+                'terms' => [
+                    'exclude-from-catalog',
+                    'exclude-from-search'
+                ],
                 'operator' => 'NOT IN',
             )
         );

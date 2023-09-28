@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Include custom view
+ */
 add_filter('template_include', 'growtype_wc_template_include', 101);
 add_filter('wc_get_template', 'growtype_wc_template_include', 1, 3);
 function growtype_wc_template_include($template)
@@ -35,6 +38,9 @@ function growtype_wc_template_include($template)
     return $template;
 }
 
+/**
+ * Locate custom template
+ */
 add_filter('woocommerce_locate_template', 'growtype_wc_locate_template', 1, 3);
 function growtype_wc_locate_template($template, $template_name, $template_path)
 {

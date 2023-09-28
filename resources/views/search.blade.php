@@ -22,7 +22,7 @@
                     @else
                         @while(have_posts()) @php the_post() @endphp
                         <?php
-                        wc_get_template_part('content', 'product');
+                            echo growtype_wc_include_view('woocommerce.content-product');
                         ?>
                         @endwhile
                     @endif

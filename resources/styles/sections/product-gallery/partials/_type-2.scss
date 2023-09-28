@@ -17,12 +17,14 @@
       padding-right: 10px !important;
     }
 
-    .woocommerce-product-gallery__wrapper, .flex-direction-nav {
-      width: 82%;
-      float: right;
-      z-index: 2;
-      @include bp-phone-xl() {
-        width: 100%;
+    &:not(.woocommerce-product-gallery--without-images) {
+      .woocommerce-product-gallery__wrapper, .flex-direction-nav {
+        width: 82%;
+        float: right;
+        z-index: 2;
+        @include bp-phone-xl() {
+          width: 100%;
+        }
       }
     }
 

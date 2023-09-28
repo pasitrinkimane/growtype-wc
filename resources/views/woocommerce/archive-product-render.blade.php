@@ -105,7 +105,7 @@
                      */
                     do_action('woocommerce_shop_loop');
 
-                    wc_get_template_part('content', 'product');
+                    echo growtype_wc_include_view('woocommerce.content-product');
                 }
             }
 
