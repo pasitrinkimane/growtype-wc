@@ -411,10 +411,10 @@
   }
 
   div.product .product_title {
-    font-size: 26px !important;
-    line-height: 32px !important;
+    font-size: 26px;
+    line-height: 32px;
     @include bp-phone-xl() {
-      font-size: 24px !important;
+      font-size: 24px;
     }
   }
 

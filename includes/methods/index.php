@@ -129,3 +129,8 @@ include('shortcodes/index.php');
  * Layout
  */
 include('layout/index.php');
+
+/**
+ * Users
+ */
+include('users/index.php');

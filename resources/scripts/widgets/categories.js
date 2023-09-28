@@ -105,7 +105,7 @@ function categories() {
         woocommerce_params_widgets.categories_ids = categoriesIds;
 
         $.ajax({
-            url: woocommerce_params.ajax_url,
+            url: growtype_wc_ajax.url,
             type: "post",
             data: {
                 orderby: woocommerce_params_widgets.orderby,

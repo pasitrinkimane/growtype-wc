@@ -70,8 +70,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
         'priority' => 10,
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )
@@ -96,8 +95,7 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
         'priority' => 10,
         'input_attrs' => array (
             'class' => 'qtranxs-translatable',
-            'toolbar1' => 'bold italic bullist numlist alignleft aligncenter alignright link',
-            'toolbar2' => 'formatselect',
+            'toolbar1' => 'formatselect bold italic bullist numlist alignleft aligncenter alignright link',
             'mediaButtons' => true,
         )
     )

@@ -43,7 +43,7 @@ function growtype_wc_widget_meta()
             ]);
         } else {
             while ($products->have_posts()) : $products->the_post();
-                wc_get_template_part('content', 'product');
+                echo growtype_wc_include_view('woocommerce.content-product');
             endwhile;
         }
 

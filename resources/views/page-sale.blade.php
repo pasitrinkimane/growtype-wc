@@ -72,7 +72,7 @@
                 $post_object = get_post($product);
                 $product = wc_get_product($product);
                 setup_postdata($GLOBALS['post'] =& $post_object);
-                wc_get_template_part('content', 'product');
+                echo growtype_wc_include_view('woocommerce.content-product');
             }
             wp_reset_postdata();
             woocommerce_product_loop_end();

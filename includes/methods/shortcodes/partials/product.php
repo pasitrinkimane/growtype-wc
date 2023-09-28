@@ -18,10 +18,10 @@ function growtype_products_shortcode($atts, $content = null)
     extract(shortcode_atts(array (
         'ids' => '',
         'category' => '',
-        'per_page' => '',
+        'posts_per_page' => wc_get_default_products_per_row() * wc_get_default_product_rows_per_page(),
         'columns' => '',
-        'orderby' => 'menu_order',
-        'order' => 'asc',
+        'orderby' => isset($_GET['orderby']) ? $_GET['orderby'] : get_option('woocommerce_default_catalog_orderby'),
+        'order' => '',
         'visibility' => ['catalog', 'search'],
         'products_group' => 'default',
         'product_type' => '',
@@ -35,7 +35,14 @@ function growtype_products_shortcode($atts, $content = null)
         'not_found_subtitle' => __('You have no products.', 'growtype-wc'),
         'not_found_cta' => '',
         'ids_required' => 'false',
+        'meta_key' => '',
     ), $atts));
+
+    $growtype_wc_get_orderby_params = growtype_wc_get_orderby_params($orderby);
+
+    $orderby = isset($growtype_wc_get_orderby_params['orderby']) ? $growtype_wc_get_orderby_params['orderby'] : 'menu_order';
+    $meta_key = !empty($meta_key) ? $meta_key : (isset($growtype_wc_get_orderby_params['meta_key']) ? $growtype_wc_get_orderby_params['meta_key'] : '');
+    $order = !empty($order) ? $order : (isset($growtype_wc_get_orderby_params['order']) ? $growtype_wc_get_orderby_params['order'] : 'asc');
 
     /**
      * Default args
@@ -46,6 +53,14 @@ function growtype_products_shortcode($atts, $content = null)
         'orderby' => $orderby,
         'order' => $order
     );
+
+    if (!empty($meta_key)) {
+        $args['meta_query'] = [
+            'meta_value' => [
+                'key' => $meta_key
+            ]
+        ];
+    }
 
     /**
      * Check if ids specified
@@ -59,10 +74,8 @@ function growtype_products_shortcode($atts, $content = null)
     /**
      * Posts per page
      */
-    if (!empty($per_page)) {
-        $args['posts_per_page'] = $per_page;
-    } else {
-        $per_page = wc_get_default_products_per_row() * wc_get_default_product_rows_per_page();
+    if (!empty($posts_per_page)) {
+        $args['posts_per_page'] = $posts_per_page;
     }
 
     /**
@@ -157,7 +170,7 @@ function growtype_products_shortcode($atts, $content = null)
         wc_set_loop_prop('current_page', $paged);
         wc_set_loop_prop('is_paginated', wc_string_to_bool(true));
         wc_set_loop_prop('page_template', get_page_template_slug());
-        wc_set_loop_prop('per_page', $per_page);
+        wc_set_loop_prop('per_page', $posts_per_page);
         wc_set_loop_prop('total', $products->post_count);
         wc_set_loop_prop('total_pages', $products->max_num_pages);
 
@@ -190,7 +203,7 @@ function growtype_products_shortcode($atts, $content = null)
             echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
         } else {
             while ($products->have_posts()) : $products->the_post();
-                wc_get_template_part('content', 'product');
+                echo growtype_wc_include_view('woocommerce.content-product');
             endwhile;
         }
 

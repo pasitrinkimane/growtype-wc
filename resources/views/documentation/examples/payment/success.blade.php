@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ['body_class' => 'woocommerce-order-received'])
 
 @section('header')
     @include('partials.sections.header', ['fixedHeader' => false])
@@ -12,12 +12,12 @@
     <div class="page page-checkout-data">
         <div class="maincontent">
             <div class="woocommerce container">
-                @if(growtype_wc_user_can_manage_shop())
-                    <?php
+                <?php
+                if (growtype_wc_user_can_manage_shop()) {
                     $order = get_user_first_order();
-                    ?>
-                    @include('woocommerce.checkout.thankyou')
-                @endif
+                    echo growtype_wc_include_view('woocommerce.checkout.thankyou', ['order' => $order]);
+                }
+                ?>
             </div>
         </div>
     </div>

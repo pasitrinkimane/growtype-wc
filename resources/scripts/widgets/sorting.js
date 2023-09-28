@@ -48,7 +48,7 @@ function sorting() {
              * Get products
              */
             $.ajax({
-                url: woocommerce_params.ajax_url,
+                url: growtype_wc_ajax.url,
                 type: "post",
                 data: {
                     orderby: woocommerce_params_widgets.orderby,
