@@ -22,7 +22,7 @@
   &.is-active {
     &:before {
       content: "\E801";
-      color: $color-text;
+      color: var(--text-color);
     }
   }
 

@@ -3,9 +3,9 @@
 /**
  * Add to cart action
  */
-add_action('wp_ajax_add_to_cart_ajax', 'add_to_cart_ajax_callback');
-add_action('wp_ajax_nopriv_add_to_cart_ajax', 'add_to_cart_ajax_callback');
-function add_to_cart_ajax_callback()
+add_action('wp_ajax_add_to_cart_ajax', 'growtype_wc_wp_ajax_add_to_cart_ajax');
+add_action('wp_ajax_nopriv_add_to_cart_ajax', 'growtype_wc_wp_ajax_add_to_cart_ajax');
+function growtype_wc_wp_ajax_add_to_cart_ajax()
 {
     $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : null;
     $quantity = $_POST['quantity'] ?? 0;
@@ -161,10 +161,6 @@ function add_to_cart_ajax_callback()
             }
         }
 
-//        d($cart_item_key);
-
-//        apply_filters('growtype_wc_after_successful_add_to_cart_validation', $_POST, $cart_item_key);
-
         $data = array (
             'cart_contents_count' => WC()->cart->cart_contents_count,
             'cart_subtotal' => WC()->cart->get_cart_subtotal(),
@@ -190,8 +186,8 @@ function add_to_cart_ajax_callback()
 /**
  * Add to cart ajax
  */
-add_filter('woocommerce_add_cart_item_data', 'growtype_wc_add_cart_item_data');
-function growtype_wc_add_cart_item_data($cart_item_data)
+add_filter('woocommerce_add_cart_item_data', 'growtype_wc_woocommerce_add_cart_item_data');
+function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
 {
     global $woocommerce;
 
@@ -219,8 +215,8 @@ function growtype_wc_add_cart_item_data($cart_item_data)
 /**
  * Added to cart ajax
  */
-add_action('woocommerce_ajax_added_to_cart', 'growtype_wc_ajax_added_to_cart');
-function growtype_wc_ajax_added_to_cart($product_id)
+add_action('woocommerce_ajax_added_to_cart', 'growtype_wc_woocommerce_ajax_added_to_cart');
+function growtype_wc_woocommerce_ajax_added_to_cart($product_id)
 {
     global $woocommerce;
 
@@ -263,8 +259,8 @@ function growtype_wc_ajax_added_to_cart($product_id)
 /**
  * Redirect after add to cart
  */
-add_action('woocommerce_add_to_cart_redirect', 'wc_add_to_cart_redirect');
-function wc_add_to_cart_redirect($url = false)
+add_action('woocommerce_add_to_cart_redirect', 'growtype_wc_woocommerce_add_to_cart_redirect');
+function growtype_wc_woocommerce_add_to_cart_redirect($url = false)
 {
     if (!class_exists('woocommerce')) {
         return false;
@@ -295,8 +291,8 @@ function wc_add_to_cart_redirect($url = false)
 /**
  * Redirect after add to cart
  */
-add_action('woocommerce_cart_redirect_after_error', 'woocommerce_cart_redirect_after_error_extend');
-function woocommerce_cart_redirect_after_error_extend($url)
+add_action('woocommerce_cart_redirect_after_error', 'growtype_wc_woocommerce_cart_redirect_after_error');
+function growtype_wc_woocommerce_cart_redirect_after_error($url)
 {
     $product_id = $_REQUEST['product_id'] ?? null;
 
@@ -319,8 +315,8 @@ function woocommerce_cart_redirect_after_error_extend($url)
 /**
  * Add to cart link
  */
-add_filter('woocommerce_product_add_to_cart_url', 'adjust_add_to_cart_button_link', 10, 2);
-function adjust_add_to_cart_button_link($add_to_cart_url, $product)
+add_filter('woocommerce_product_add_to_cart_url', 'growtype_wc_woocommerce_product_add_to_cart_url', 10, 2);
+function growtype_wc_woocommerce_product_add_to_cart_url($add_to_cart_url, $product)
 {
     if (empty(WC()->cart)) {
         return null;

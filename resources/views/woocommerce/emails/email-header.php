@@ -48,7 +48,7 @@ if (!defined('ABSPATH')) {
                         </tr>
                     <?php } ?>
                     <?php
-                    if (get_theme_mod('woocommerce_email_page_header_title_switch') !== false) {
+                    if (get_theme_mod('woocommerce_email_page_header_title_switch', true)) {
                         if (!empty($email_heading)) { ?>
                             <tr>
                                 <td align="center" valign="top">

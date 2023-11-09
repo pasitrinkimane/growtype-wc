@@ -35,7 +35,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_access_disabled',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -69,18 +69,18 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
 /**
  * Breadcrumb status
  */
-$wp_customize->add_setting('woocommerce_product_page_breadcrumb_disabled',
+$wp_customize->add_setting('woocommerce_product_page_breadcrumb',
     array (
-        'default' => 0,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_breadcrumb_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_page_breadcrumb',
     array (
-        'label' => esc_html__('Disabled', 'growtype-wc'),
+        'label' => esc_html__('Enabled', 'growtype-wc'),
         'section' => 'woocommerce_product_page',
-        'description' => __('Woocommerce breadcrumb is disabled', 'growtype-wc'),
+        'description' => __('Woocommerce breadcrumb', 'growtype-wc'),
     )
 ));
 
@@ -139,7 +139,7 @@ $wp_customize->add_control('single_page_gallery_main_img_height', array (
  */
 $wp_customize->add_setting('single_page_gallery_main_img_cropped',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -228,7 +228,7 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_nav_arrows',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -246,7 +246,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_lightbox',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -264,7 +264,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_thumbnails_adaptive_height',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -282,7 +282,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_gallery_trigger_icon',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -393,7 +393,7 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
  */
 $wp_customize->add_setting('woocommerce_product_page_short_description_section_title',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -411,7 +411,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_long_description_section_title',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -429,7 +429,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_meta_data_enabled',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -447,7 +447,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_sale_flash',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -465,7 +465,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_quantity_selector',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -501,7 +501,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_related_products',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -573,7 +573,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_product_page_sidebar_enabled',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );

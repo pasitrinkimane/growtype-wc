@@ -6,7 +6,11 @@
 add_action('woocommerce_account_subscriptions_endpoint', 'woocommerce_account_subscriptions_endpoint_extend');
 function woocommerce_account_subscriptions_endpoint_extend()
 {
-    $products = Growtype_Wc_Product::get_user_subscriptions();
+    if (isset($_POST['subscription_id']) && isset($_POST['change_subscription_status'])) {
+        Growtype_Wc_Subscription::change_status($_POST['subscription_id'], $_POST['change_subscription_status']);
+    }
 
-    echo growtype_wc_include_view('woocommerce.myaccount.subscriptions', ['products' => $products]);
+    $subscriptions = growtype_wc_get_user_subscriptions();
+
+    echo growtype_wc_include_view('woocommerce.myaccount.subscriptions', ['subscriptions' => $subscriptions]);
 }

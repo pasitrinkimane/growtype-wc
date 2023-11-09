@@ -1,6 +1,24 @@
 <?php
 
 /**
+ * Update cart and remove extra items
+ */
+add_action('woocommerce_before_calculate_totals', 'growtype_wc_woocommerce_before_calculate_totals', 10, 1);
+function growtype_wc_woocommerce_before_calculate_totals($cart)
+{
+    if (growtype_wc_selling_type_single_product()) {
+        $cart_items = $cart->get_cart();
+        $last_item = end($cart_items);
+
+        foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
+            if ($cart_item['product_id'] !== $last_item['product_id']) {
+                $cart->remove_cart_item($cart_item_key);
+            }
+        }
+    }
+}
+
+/**
  * Update cart ajax
  */
 add_action('wp_ajax_update_cart_ajax', 'update_cart_ajax_callback');

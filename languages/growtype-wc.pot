@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Growtype - Wc\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-23 14:16+0000\n"
+"POT-Creation-Date: 2023-10-25 10:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -61,9 +61,13 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:29
 #: resources/views/woocommerce/checkout/form-billing.blade.php:25
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:29
 msgid "Account details"
+msgstr ""
+
+#: includes/methods/subscriptions/index.php:111
+msgid "Actions"
 msgstr ""
 
 #: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:27
@@ -99,8 +103,12 @@ msgstr ""
 msgid "Add widgets here."
 msgstr ""
 
-#: includes/methods/cart/actions/add-to-cart.php:172
+#: includes/methods/cart/actions/add-to-cart.php:168
 msgid "Added"
+msgstr ""
+
+#: includes/customizer/sections/checkout.php:136
+msgid "Address 1"
 msgstr ""
 
 #: includes/methods/pages/account/main.php:26
@@ -135,7 +143,7 @@ msgstr ""
 msgid "Already have an account?"
 msgstr ""
 
-#: public/class-growtype-wc-public.php:91
+#: public/class-growtype-wc-public.php:109
 msgid "Already in wishlist"
 msgstr ""
 
@@ -147,9 +155,9 @@ msgid ""
 "link to make payment when you’re ready: %2$s"
 msgstr ""
 
+#: resources/views/woocommerce/cart/cart.blade.php:166
 #: resources/views/woocommerce/checkout/form-coupon.php:38
-#: resources/views/woocommerce/cart/cart.blade.php:166
-#: resources/views/woocommerce/cart/cart.blade.php:166
+#: resources/views/woocommerce/checkout/form-coupon.php:38
 msgid "Apply coupon"
 msgstr ""
 
@@ -177,9 +185,9 @@ msgstr ""
 msgid "Average"
 msgstr ""
 
+#: resources/views/partials/single-product/gallery/type-3.php:51
 #: resources/views/partials/single-product/gallery/type-1.php:15
 #: resources/views/partials/single-product/gallery/type-5.php:15
-#: resources/views/partials/single-product/gallery/type-3.php:51
 msgid "Awaiting product image"
 msgstr ""
 
@@ -192,7 +200,7 @@ msgstr ""
 msgid "Below \"Add to cart\""
 msgstr ""
 
-#: includes/helpers/partials/order.php:30
+#: includes/helpers/partials/order.php:29
 msgid "Below are the details of your order."
 msgstr ""
 
@@ -214,6 +222,10 @@ msgstr ""
 msgid "Billing details"
 msgstr ""
 
+#: resources/views/woocommerce/myaccount/subscriptions.php:28
+msgid "Cancel"
+msgstr ""
+
 #: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:38
 msgid "Carbon offset"
 msgstr ""
@@ -224,6 +236,10 @@ msgstr ""
 
 #: includes/customizer/sections/thankyou.php:49
 msgid "Centered"
+msgstr ""
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:23
+msgid "Change"
 msgstr ""
 
 #: includes/customizer/sections/product-preview.php:42
@@ -246,8 +262,8 @@ msgstr ""
 msgid "Choose file"
 msgstr ""
 
-#: includes/customizer/sections/product.php:530
 #: includes/customizer/sections/catalog.php:33
+#: includes/customizer/sections/product.php:530
 msgid "Choose how products should be displayed"
 msgstr ""
 
@@ -279,6 +295,10 @@ msgstr ""
 msgid "Choose shop sidebar position"
 msgstr ""
 
+#: includes/customizer/sections/checkout.php:214
+msgid "City"
+msgstr ""
+
 #: resources/views/partials/sidebar-shop.php:5
 msgid "Clear all"
 msgstr ""
@@ -295,8 +315,12 @@ msgstr ""
 msgid "Confirm new password"
 msgstr ""
 
-#: resources/views/woocommerce/checkout/form-coupon.php:34
+#: includes/customizer/sections/checkout.php:110
+msgid "Country"
+msgstr ""
+
 #: resources/views/woocommerce/cart/cart.blade.php:165
+#: resources/views/woocommerce/checkout/form-coupon.php:34
 msgid "Coupon code"
 msgstr ""
 
@@ -304,7 +328,7 @@ msgstr ""
 msgid "Coupons"
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:303
+#: includes/customizer/sections/checkout.php:425
 msgid "Create account checkbox checked by default."
 msgstr ""
 
@@ -342,12 +366,15 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
+#: resources/views/woocommerce/myaccount/subscriptions.php:11
+msgid "Details"
+msgstr ""
+
 #: includes/customizer/sections/catalog.php:74
 msgid "Disable access to \"shop\" page"
 msgstr ""
 
 #: includes/customizer/sections/product.php:45
-#: includes/customizer/sections/product.php:81
 msgid "Disabled"
 msgstr ""
 
@@ -375,17 +402,25 @@ msgstr ""
 msgid "Downloads"
 msgstr ""
 
+#: includes/methods/admin/product/sections/data-subscription.php:84
+msgid "Duration"
+msgstr ""
+
 #: resources/views/woocommerce/myaccount/my-address.blade.php:63
 msgid "Edit"
 msgstr ""
 
+#: resources/views/components/modal/subscription.php:9
+msgid "Elevate your chat experience with our subscription!"
+msgstr ""
+
 #: resources/views/woocommerce/single-product-reviews.php:91
-#: includes/customizer/sections/checkout.php:66
+#: includes/customizer/sections/checkout.php:84
 msgid "Email"
 msgstr ""
 
-#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:34
 #: resources/views/woocommerce/myaccount/form-login.blade.php:110
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:34
 msgid "Email address"
 msgstr ""
 
@@ -523,21 +558,33 @@ msgstr ""
 msgid "Enable/disable wishlist."
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:159
+#: includes/customizer/sections/product.php:81
+msgid "Enabled"
+msgstr ""
+
+#: includes/customizer/sections/checkout.php:42
+msgid "Enabled/disable billing fields"
+msgstr ""
+
+#: includes/customizer/sections/checkout.php:281
 msgid "Enabled/disable order review heading"
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:120
+#: includes/customizer/sections/checkout.php:242
 msgid "Enabled/disable order review table"
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:177
+#: includes/customizer/sections/checkout.php:299
 msgid "Enabled/disable payment methods background"
 msgstr ""
 
 #: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:301
 msgctxt "enhanced select"
 msgid "No matches found"
+msgstr ""
+
+#: resources/views/components/modal/subscription.php:10
+msgid "Enjoy benefits like:"
 msgstr ""
 
 #: resources/views/woocommerce/cart/cart.blade.php:164
@@ -640,8 +687,8 @@ msgid "Here are the details of your order placed on %s:"
 msgstr ""
 
 #. %s: Customer first name
-#: resources/views/woocommerce/emails/customer-completed-order.php:35
 #: resources/views/woocommerce/emails/customer-invoice.php:52
+#: resources/views/woocommerce/emails/customer-completed-order.php:35
 #, php-format
 msgid "Hi %s,"
 msgstr ""
@@ -658,7 +705,7 @@ msgstr ""
 msgid "Hide uncategorized"
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:136
+#: includes/customizer/sections/checkout.php:258
 msgid "Highlight optional fields with label"
 msgstr ""
 
@@ -700,7 +747,7 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
-#: includes/methods/product/class-growtype-wc-product.php:585
+#: includes/methods/product/class-growtype-wc-product.php:568
 msgid "L"
 msgstr ""
 
@@ -796,8 +843,8 @@ msgid "Method is visible in frontend"
 msgstr ""
 
 #: includes/methods/payments/gateways/wc-gateway-free.php:66
-#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:35
 #: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Method.php:35
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:35
 msgid "Method title"
 msgstr ""
 
@@ -852,6 +899,14 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+#: resources/views/woocommerce/myaccount/subscriptions.php:16
+msgid "Next charge"
+msgstr ""
+
+#: resources/views/partials/content/404.php:5
+msgid "No content found"
+msgstr ""
+
 #: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:316
 msgid "No product categories exist."
 msgstr ""
@@ -864,14 +919,14 @@ msgstr ""
 msgid "No saved methods found."
 msgstr ""
 
-#: public/class-growtype-wc-public.php:94
+#: public/class-growtype-wc-public.php:112
 msgid "No wishlist found"
 msgstr ""
 
+#: includes/methods/cart/actions/update-cart.php:58
+#: includes/methods/cart/actions/update-cart.php:73
 #: includes/methods/cart/actions/add-to-cart.php:56
 #: includes/methods/cart/actions/add-to-cart.php:103
-#: includes/methods/cart/actions/update-cart.php:40
-#: includes/methods/cart/actions/update-cart.php:55
 msgid "Not enough items exist in stock."
 msgstr ""
 
@@ -890,6 +945,10 @@ msgstr ""
 
 #: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:75
 msgid "Only show children of the current category"
+msgstr ""
+
+#: includes/methods/subscriptions/index.php:261
+msgid "Order"
 msgstr ""
 
 #: resources/views/woocommerce/order/order-again.blade.php:23
@@ -912,7 +971,7 @@ msgstr ""
 msgid "Order details"
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:40
+#: includes/customizer/sections/checkout.php:58
 msgid "Order notes"
 msgstr ""
 
@@ -961,7 +1020,16 @@ msgstr ""
 msgid "Perfect"
 msgstr ""
 
-#: public/class-growtype-wc-public.php:95
+#: includes/methods/admin/product/sections/data-subscription.php:75
+msgid "Period"
+msgstr ""
+
+#: includes/customizer/sections/checkout.php:400
+#: includes/methods/pages/checkout.php:44
+msgid "Place order"
+msgstr ""
+
+#: public/class-growtype-wc-public.php:113
 msgid "Please fill all required fields"
 msgstr ""
 
@@ -981,7 +1049,7 @@ msgstr ""
 msgid "Please select products..."
 msgstr ""
 
-#: includes/customizer/sections/checkout.php:92
+#: includes/customizer/sections/checkout.php:162
 msgid "Postcode"
 msgstr ""
 
@@ -1002,15 +1070,21 @@ msgid "Previous"
 msgstr ""
 
 #: resources/views/woocommerce/cart/cart.blade.php:77
+#: resources/views/woocommerce/myaccount/subscriptions.php:13
+#: includes/methods/admin/product/sections/data-subscription.php:70
 msgid "Price"
+msgstr ""
+
+#: includes/methods/emails/settings/email.php:11
+msgid "Print emails information to log file"
 msgstr ""
 
 #: resources/views/woocommerce/cart/proceed-to-checkout-button.blade.php:26
 msgid "Proceed to checkout"
 msgstr ""
 
-#: resources/views/woocommerce/order/order-details.blade.php:54
 #: resources/views/woocommerce/cart/cart.blade.php:84
+#: resources/views/woocommerce/order/order-details.blade.php:54
 msgid "Product"
 msgstr ""
 
@@ -1042,8 +1116,8 @@ msgstr ""
 msgid "Product Single Page"
 msgstr ""
 
-#: includes/customizer/sections/product.php:529
 #: includes/customizer/sections/catalog.php:32
+#: includes/customizer/sections/product.php:529
 msgid "Products preview style"
 msgstr ""
 
@@ -1108,7 +1182,7 @@ msgstr ""
 msgid "Remove filter"
 msgstr ""
 
-#: public/class-growtype-wc-public.php:92
+#: public/class-growtype-wc-public.php:110
 msgid "Remove from wishlist"
 msgstr ""
 
@@ -1120,6 +1194,10 @@ msgstr ""
 #: resources/views/woocommerce/myaccount/form-lost-password.blade.php:44
 #: resources/views/woocommerce/myaccount/form-lost-password.blade.php:45
 msgid "Reset password"
+msgstr ""
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:28
+msgid "Resume"
 msgstr ""
 
 #: resources/views/woocommerce/checkout/cart-errors.blade.php:25
@@ -1270,7 +1348,7 @@ msgstr ""
 msgid "Slide"
 msgstr ""
 
-#: public/class-growtype-wc-public.php:93
+#: public/class-growtype-wc-public.php:111
 msgid "Something went wrong, please contact our support"
 msgstr ""
 
@@ -1295,6 +1373,14 @@ msgstr ""
 msgid "Standard"
 msgstr ""
 
+#: includes/customizer/sections/checkout.php:188
+msgid "State"
+msgstr ""
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:14
+msgid "Status"
+msgstr ""
+
 #: includes/customizer/index.php:150
 msgid "Store"
 msgstr ""
@@ -1311,12 +1397,52 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
+#: includes/methods/subscriptions/index.php:259
 #: includes/methods/pages/account/main.php:30
 msgid "Subscription"
 msgstr ""
 
 #: includes/methods/pages/account/main.php:30
 msgid "Subscription details"
+msgstr ""
+
+#: includes/methods/admin/product/sections/data-subscription.php:42
+msgid "Subscription settings"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:199
+msgctxt "Subscription status"
+msgid "Active"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:201
+msgctxt "Subscription status"
+msgid "Cancelled"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:203
+msgctxt "Subscription status"
+msgid "Expired"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:200
+msgctxt "Subscription status"
+msgid "On hold"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:198
+msgctxt "Subscription status"
+msgid "Pending"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:204
+msgctxt "Subscription status"
+msgid "Pending Cancellation"
+msgstr ""
+
+#: includes/helpers/partials/subscription.php:202
+msgctxt "Subscription status"
+msgid "Switched"
 msgstr ""
 
 #: includes/helpers/partials/cart.php:93
@@ -1337,7 +1463,7 @@ msgstr ""
 msgid "Thank You Page"
 msgstr ""
 
-#: includes/helpers/partials/order.php:26
+#: includes/helpers/partials/order.php:25
 msgid "Thank you. Your order has been received."
 msgstr ""
 
@@ -1345,7 +1471,7 @@ msgstr ""
 msgid "The following addresses will be used on the checkout page by default."
 msgstr ""
 
-#: includes/methods/cart/actions/add-to-cart.php:183
+#: includes/methods/cart/actions/add-to-cart.php:179
 msgid "The selected product is out of stock."
 msgstr ""
 
@@ -1361,8 +1487,8 @@ msgid ""
 msgstr ""
 
 #: includes/methods/payments/gateways/wc-gateway-free.php:68
-#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:37
 #: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Method.php:37
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:37
 msgid "This controls the title which the user sees during checkout."
 msgstr ""
 
@@ -1384,15 +1510,16 @@ msgstr ""
 msgid "This product is currently out of stock and unavailable."
 msgstr ""
 
+#: resources/views/woocommerce/myaccount/subscriptions.php:12
 #: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:46
 #: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:28
 msgid "Title"
 msgstr ""
 
-#: resources/views/woocommerce/order/order-details.blade.php:55
 #: resources/views/woocommerce/cart/cart-totals.blade.php:25
 #: resources/views/woocommerce/cart/cart-totals.blade.php:98
 #: resources/views/woocommerce/cart/cart-totals.blade.php:99
+#: resources/views/woocommerce/order/order-details.blade.php:55
 msgid "Total"
 msgstr ""
 
@@ -1400,7 +1527,11 @@ msgstr ""
 msgid "Total:"
 msgstr ""
 
-#: includes/helpers/partials/order.php:32
+#: resources/views/partials/content/404.php:6
+msgid "Unfortunately no content was found"
+msgstr ""
+
+#: includes/helpers/partials/order.php:31
 msgid "Unfortunately we do not received information about your payment yet."
 msgstr ""
 
@@ -1411,7 +1542,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: includes/methods/product/class-growtype-wc-product.php:540
+#: includes/methods/product/class-growtype-wc-product.php:523
 msgid "units"
 msgstr ""
 
@@ -1423,12 +1554,24 @@ msgstr ""
 msgid "Update totals"
 msgstr ""
 
+#: resources/views/components/modal/subscription.php:14
+msgid "Upgrade to Premium"
+msgstr ""
+
+#: resources/views/components/modal/subscription.php:5
+msgid "Upgrade to Unlock"
+msgstr ""
+
 #: resources/views/woocommerce/myaccount/uploaded-products.blade.php:6
 msgid "Upload a new product"
 msgstr ""
 
 #: includes/methods/pages/account/main.php:29
 msgid "Uploaded products"
+msgstr ""
+
+#: includes/methods/subscriptions/index.php:260
+msgid "User"
 msgstr ""
 
 #: includes/customizer/index.php:52
@@ -1451,8 +1594,8 @@ msgstr ""
 msgid "Username or email address"
 msgstr ""
 
-#: includes/customizer/sections/product.php:193
 #: includes/customizer/sections/checkout.php:23
+#: includes/customizer/sections/product.php:193
 msgid "Vertical"
 msgstr ""
 
@@ -1481,15 +1624,19 @@ msgid "Wishlist"
 msgstr ""
 
 #: includes/customizer/sections/product.php:83
-msgid "Woocommerce breadcrumb is disabled"
+msgid "Woocommerce breadcrumb"
 msgstr ""
 
 #: includes/methods/cart/actions/add-to-cart.php:106
 msgid "You already placed an order to buy this product."
 msgstr ""
 
-#: includes/methods/shortcodes/partials/product.php:35
+#: includes/methods/shortcodes/partials/product.php:30
 msgid "You have no products."
+msgstr ""
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:36
+msgid "You have no subscriptions."
 msgstr ""
 
 #: resources/views/woocommerce/myaccount/my-address.blade.php:67
@@ -1506,7 +1653,7 @@ msgstr ""
 msgid "You must be logged in to checkout."
 msgstr ""
 
-#: resources/views/woocommerce/checkout/form-checkout.php:62
+#: resources/views/woocommerce/checkout/form-checkout.php:64
 msgid "Your order"
 msgstr ""
 

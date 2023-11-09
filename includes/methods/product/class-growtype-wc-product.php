@@ -363,10 +363,10 @@ class Growtype_Wc_Product
             $items = $order->get_items();
             foreach ($items as $item) {
                 $product_id = $item->get_product_id();
-                $product = wc_get_product($product_id);
 
                 if (!empty($product_types)) {
-                    if (in_array($product->get_type(), $product_types)) {
+                    $subscription = get_post_meta($product_id, Growtype_Wc_Subscription::META_KEY, true);
+                    if ($subscription && in_array('subscription', $product_types)) {
                         $product_ids[] = $product_id;
                     }
                 } else {
@@ -449,42 +449,25 @@ class Growtype_Wc_Product
     public static function get_subscriptions_ids()
     {
         $args = array (
-            'limit' => -1,
-            'type' => 'subscription',
-            'return' => 'ids'
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'meta_query' => array (
+                array (
+                    'key' => Growtype_Wc_Subscription::META_KEY,
+                    'value' => 'yes',
+                    'compare' => '='
+                ),
+            ),
+            'orderby' => 'menu_order',
+            'order' => 'ASC',
+            'return' => 'ids',
         );
 
-        $product_ids = wc_get_products($args);
+        $product = new WP_Query($args);
+        $product_ids = wp_list_pluck($product->get_posts(), 'ID');
 
         return !empty($product_ids) ? $product_ids : null;
-    }
-
-    /**
-     * @return void
-     */
-    public static function get_user_subscriptions($user_id = null): array
-    {
-        $user_id = !empty($user_id) ? $user_id : get_current_user_id();
-
-        if (empty($user_id)) {
-            return [];
-        }
-
-        $user_products_ids = self::get_user_purchased_products_ids($user_id, ['subscription']);
-
-        if (empty($user_products_ids)) {
-            return [];
-        }
-
-        $products = [];
-        foreach ($user_products_ids as $product_id) {
-            $product = wc_get_product($product_id);
-            if ($product->is_type('subscription')) {
-                array_push($products, $product);
-            }
-        }
-
-        return !empty($products) ? $products : [];
     }
 
     /**
@@ -733,10 +716,49 @@ class Growtype_Wc_Product
         $promo_label = self::get_promo_label($product_id);
 
         if (!empty($promo_label)) {
-            return '<span class="badge badge-promo bg-primary">' . $promo_label . '</span>';
+            return '<span class="badge badge-promo">' . $promo_label . '</span>';
         }
 
         return '';
+    }
+
+    /**
+     * @param $product_id
+     * @return bool
+     */
+    public static function get_discount_percentage_label_formatted($product_id = null): string
+    {
+        global $product;
+
+        $product = !empty($product_id) ? wc_get_product($product_id) : $product;
+
+        $percentage = self::get_discount_percentage($product->get_id());
+
+        if (!empty($percentage)) {
+            return '<span class="badge badge-percentage">' . sprintf('%s off', $percentage) . '</span>';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param $product_id
+     * @return bool
+     */
+    public static function get_discount_percentage($product_id = null): string
+    {
+        global $product;
+
+        $product = !empty($product_id) ? wc_get_product($product_id) : $product;
+
+        $regular_price = (float)$product->get_regular_price();
+        $sale_price = (float)$product->get_sale_price();
+
+        if ($sale_price != 0 || !empty($sale_price)) {
+            $percentage = round(100 - ($sale_price / $regular_price * 100)) . '%';
+        }
+
+        return isset($percentage) ? $percentage : '';
     }
 
     /**

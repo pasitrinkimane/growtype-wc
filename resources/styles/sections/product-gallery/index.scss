@@ -61,7 +61,7 @@ Style 1, thumbnails bottom
 .woocommerce div.product .woocommerce-tabs ul.tabs li {
   &.active {
     a {
-      color: $color-text;
+      color: var(--text-color);
       font-weight: 500;
     }
   }

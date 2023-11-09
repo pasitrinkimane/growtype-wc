@@ -1,4 +1,5 @@
 (function ($) {
+    document.addEventListener('filterProducts', wishlistInit)
     document.addEventListener('filterProductsByOrder', wishlistInit)
     document.addEventListener('filterProductsByPrice', wishlistInit)
 

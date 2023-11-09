@@ -104,16 +104,16 @@ $wp_customize->add_control(new Skyrocket_TinyMCE_Custom_control($wp_customize, '
 /**
  *
  */
-$wp_customize->add_setting('woocommerce_thankyou_page_order_overview_disabled',
+$wp_customize->add_setting('woocommerce_thankyou_page_order_overview',
     array (
-        'default' => 0,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_overview_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_overview',
     array (
-        'label' => esc_html__('Order Overview Disabled'),
+        'label' => esc_html__('Order Overview'),
         'section' => 'woocommerce_thankyou_page',
         'description' => __('Enable/disable order overview.', 'growtype-wc'),
     )
@@ -122,16 +122,16 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  *
  */
-$wp_customize->add_setting('woocommerce_thankyou_page_order_details_disabled',
+$wp_customize->add_setting('woocommerce_thankyou_page_order_details',
     array (
-        'default' => 0,
+        'default' => 1,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_details_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_details',
     array (
-        'label' => esc_html__('Order Details Disabled'),
+        'label' => esc_html__('Order Details'),
         'section' => 'woocommerce_thankyou_page',
         'description' => __('Enable/disable order details.', 'growtype-wc'),
     )
@@ -140,16 +140,16 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  *
  */
-$wp_customize->add_setting('woocommerce_thankyou_page_customer_details_disabled',
+$wp_customize->add_setting('woocommerce_thankyou_page_customer_details',
     array (
-        'default' => 0,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_customer_details_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_customer_details',
     array (
-        'label' => esc_html__('Customer Details Disabled'),
+        'label' => esc_html__('Customer Details'),
         'section' => 'woocommerce_thankyou_page',
         'description' => __('Enable/disable customer details.', 'growtype-wc'),
     )
@@ -158,16 +158,16 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  *
  */
-$wp_customize->add_setting('woocommerce_thankyou_page_download_details_disabled',
+$wp_customize->add_setting('woocommerce_thankyou_page_download_details',
     array (
-        'default' => 0,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_download_details_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_download_details',
     array (
-        'label' => esc_html__('Download Details Disabled'),
+        'label' => esc_html__('Download Details'),
         'section' => 'woocommerce_thankyou_page',
         'description' => __('Enable/disable download details.', 'growtype-wc'),
     )
@@ -176,16 +176,16 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  *
  */
-$wp_customize->add_setting('woocommerce_thankyou_page_order_again_disabled',
+$wp_customize->add_setting('woocommerce_thankyou_page_order_again',
     array (
-        'default' => 0,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_again_disabled',
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_thankyou_page_order_again',
     array (
-        'label' => esc_html__('Order Again Disabled'),
+        'label' => esc_html__('Order Again'),
         'section' => 'woocommerce_thankyou_page',
         'description' => __('Enable/disable order again link.', 'growtype-wc'),
     )

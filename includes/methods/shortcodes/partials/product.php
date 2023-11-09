@@ -3,19 +3,14 @@
 /**
  * Woocommerce custom products shortcode
  */
-add_shortcode('growtype_products', 'growtype_products_shortcode');
-function growtype_products_shortcode($atts, $content = null)
+add_shortcode('growtype_wc_products', 'growtype_wc_products_shortcode');
+function growtype_wc_products_shortcode($atts, $content = null)
 {
-    global $woocommerce_loop, $wpdb;
-
     if (!function_exists('wc_get_products')) {
         return '';
     }
 
-    /**
-     * Get properties from shortcode
-     */
-    extract(shortcode_atts(array (
+    $shortcode_params = shortcode_atts(array (
         'ids' => '',
         'category' => '',
         'posts_per_page' => wc_get_default_products_per_row() * wc_get_default_product_rows_per_page(),
@@ -36,7 +31,12 @@ function growtype_products_shortcode($atts, $content = null)
         'not_found_cta' => '',
         'ids_required' => 'false',
         'meta_key' => '',
-    ), $atts));
+    ), $atts);
+
+    /**
+     * Get properties from shortcode
+     */
+    extract($shortcode_params);
 
     $growtype_wc_get_orderby_params = growtype_wc_get_orderby_params($orderby);
 
@@ -65,7 +65,7 @@ function growtype_products_shortcode($atts, $content = null)
     /**
      * Check if ids specified
      */
-    $not_found_message_content = $not_found_message === 'true' ? App\template('partials.content.404.general', ['cta' => urldecode($not_found_cta), 'subtitle' => $not_found_subtitle]) : '';
+    $not_found_message_html = $not_found_message === 'true' ? App\template('partials.content.404.general', ['cta' => urldecode($not_found_cta), 'subtitle' => $not_found_subtitle]) : '';
 
     if (!empty($ids)) {
         $args['post__in'] = explode(',', $ids);
@@ -158,65 +158,22 @@ function growtype_products_shortcode($atts, $content = null)
      * Check if still empty post ids
      */
     if ($ids_required === 'true' && (!isset($args['post__in']) || empty($args['post__in']))) {
-        return $not_found_message_content;
+        return $not_found_message_html;
     }
 
     /**
-     * Get products
+     * Render products
      */
-    $products = new WP_Query($args);
-
-    if ($products->have_posts()) {
-        wc_set_loop_prop('current_page', $paged);
-        wc_set_loop_prop('is_paginated', wc_string_to_bool(true));
-        wc_set_loop_prop('page_template', get_page_template_slug());
-        wc_set_loop_prop('per_page', $posts_per_page);
-        wc_set_loop_prop('total', $products->post_count);
-        wc_set_loop_prop('total_pages', $products->max_num_pages);
-
-        if (!empty($columns)) {
-            $woocommerce_loop['columns'] = $columns;
-        }
-
-        if ($cta_btn) {
-            set_query_var('cta_btn', $cta_btn);
-        }
-
-        /**
-         * Render
-         */
-        ob_start();
-
-        if (isset($before_shop_loop) && $before_shop_loop === 'true') {
-            do_action('woocommerce_before_shop_loop');
-        }
-
-        wc_get_template('loop/loop-start.php', ['preview_style' => $preview_style, 'products_group' => $products_group]);
-
-        set_query_var('visibility', $visibility);
-
-        if ($edit_product === 'true') {
-            set_query_var('preview_permalink', true);
-        }
-
-        if ($preview_style === 'table') {
-            echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
-        } else {
-            while ($products->have_posts()) : $products->the_post();
-                echo growtype_wc_include_view('woocommerce.content-product');
-            endwhile;
-        }
-
-        wc_get_template('loop/loop-end.php');
-
-        if (isset($after_shop_loop) && $after_shop_loop) {
-            do_action('woocommerce_after_shop_loop');
-        }
-
-        wp_reset_postdata();
-
-        $render = '<div class="woocommerce">' . ob_get_clean() . '</div>';
-    }
-
-    return isset($render) && !empty($render) ? $render : $not_found_message_content;
+    return growtype_wc_render_products($args, [
+        'current_page' => $paged,
+        'cta_btn' => $cta_btn,
+        'preview_style' => $preview_style,
+        'products_group' => $products_group,
+        'visibility' => $visibility,
+        'edit_product' => $edit_product,
+        'not_found_message_html' => $not_found_message_html,
+        'columns' => $columns,
+        'before_shop_loop' => $before_shop_loop,
+        'product_type' => $product_type
+    ]);
 }

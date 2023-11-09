@@ -20,3 +20,11 @@ add_filter('growtype_wp_ajax_qtranslate_fields_theme_mods', function ($theme_mod
 
     return $theme_mods;
 });
+
+add_filter('manage_edit-growtype_wc_subs_columns', 'growtype_wc_growtype_qtranslate_columns');
+function growtype_wc_growtype_qtranslate_columns($columns)
+{
+    unset($columns['language']);
+
+    return $columns;
+}

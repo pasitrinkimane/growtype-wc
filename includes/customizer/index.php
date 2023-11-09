@@ -40,7 +40,7 @@ class Growtype_Wc_Customizer_Extend
              */
             $wp_customize->add_setting('theme_access_user_must_have_products',
                 array (
-                    'default' => 0,
+                    'default' => false,
                     'transport' => 'refresh',
                 )
             );
@@ -314,13 +314,13 @@ class Growtype_Wc_Customizer_Extend
             });
         </script>
         <script type="text/javascript">
-            window.preview_order_id = '<?php echo get_user_first_order() ? get_user_first_order()->get_id() : '';?>'
+            window.preview_order_id = '<?php echo growtype_wc_get_user_first_order() ? growtype_wc_get_user_first_order()->get_id() : '';?>'
             jQuery(document).ready(function ($) {
                 wp.customize.section('woocommerce_email_page', function (section) {
                     section.expanded.bind(function (isExpanded) {
                         if (isExpanded) {
                             var template = $('#customize-control-woocommerce_email_page_template select').val();
-                            var templateUrl = '<?php echo home_url('/growtype-wc/documentation/examples/email/preview?email_type=WC_Email_Customer_Processing_Order&order_id=' . (get_user_first_order() ? get_user_first_order()->get_id() : '')); ?>';
+                            var templateUrl = '<?php echo home_url('/growtype-wc/documentation/examples/email/preview?email_type=WC_Email_Customer_Processing_Order&order_id=' . (growtype_wc_get_user_first_order() ? growtype_wc_get_user_first_order()->get_id() : '')); ?>';
                             templateUrl = templateUrl.replace("WC_Email_Customer_Processing_Order", template);
                             wp.customize.previewer.previewUrl(templateUrl);
                             $("#sub-accordion-section-woocommerce_email_page li[id*='main_content']").hide();

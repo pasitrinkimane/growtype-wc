@@ -3,7 +3,7 @@
 /**
  * Wc growtype
  */
-add_action('init', 'growtype_wc_register_subscription_type');
+//add_action('init', 'growtype_wc_register_subscription_type');
 function growtype_wc_register_subscription_type()
 {
     class WC_Product_Subscription extends WC_Product
@@ -35,7 +35,7 @@ function growtype_wc_register_subscription_type()
 /**
  *
  */
-add_filter('product_type_selector', 'growtype_wc_product_type_selector');
+//add_filter('product_type_selector', 'growtype_wc_product_type_selector');
 function growtype_wc_product_type_selector($type)
 {
     $type['subscription'] = __('Subscription');

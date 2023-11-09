@@ -127,17 +127,17 @@ Pagination
       }
 
       .prev, .next {
-        border: 1px solid $color-text;
+        border: 1px solid var(--text-color);
         border-radius: $border-radius-btn;
         display: flex;
         align-items: center;
-        color: $color-text;
+        color: var(--text-color);
 
         span {
           padding: 0;
           padding-left: 5px;
           padding-right: 5px;
-          color: $color-text;
+          color: var(--text-color);
         }
       }
 

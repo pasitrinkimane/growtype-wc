@@ -2,6 +2,8 @@ function countdown() {
 
     document.addEventListener('filterProductsByOrder', initCountdown)
 
+    initCountdown();
+
     function initCountdown() {
         if (jQuery(".auction-time-countdown").length > 0 && $.SAcountdown !== 'undefined') {
             jQuery(".auction-time-countdown").each(function (index) {
@@ -11,6 +13,17 @@ function countdown() {
 
                 if (format == '') {
                     format = 'yowdHMS';
+                }
+
+                /**
+                 * Check if defined data
+                 */
+                if (typeof data === 'undefined') {
+                    var data = {
+                        started: 'Started',
+                        checking: 'Started',
+                        compact_counter: jQuery(this).data('compact-counter') ?? 'yes',
+                    }
                 }
 
                 if (data.compact_counter == 'yes') {
@@ -26,9 +39,9 @@ function countdown() {
                     var etext = '<div class="over">' + data.checking + '</div>';
                 }
 
-                if (!jQuery(' body').hasClass('logged-in')) {
-                    time = $.SAcountdown.UTCDate(-(new Date().getTimezoneOffset()), new Date(time * 1000));
-                }
+                // if (!jQuery(' body').hasClass('logged-in')) {
+                //     time = $.SAcountdown.UTCDate(-(new Date().getTimezoneOffset()), new Date(time * 1000));
+                // }
 
                 jQuery(this).SAcountdown({
                     until: time,

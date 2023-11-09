@@ -26,6 +26,24 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
+ * Billing fields
+ */
+$wp_customize->add_setting('woocommerce_checkout_billing_fields',
+    array (
+        'default' => true,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_billing_fields',
+    array (
+        'label' => esc_html__('Billing fields'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Enabled/disable billing fields', 'growtype-wc'),
+    )
+));
+
+/**
  * Order notes
  */
 $wp_customize->add_setting('woocommerce_checkout_order_notes',
@@ -54,14 +72,14 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 /**
  * Email
  */
-$wp_customize->add_setting('woocommerce_checkout_email',
+$wp_customize->add_setting('woocommerce_checkout_billing_email',
     array (
         'default' => 'required',
         'transport' => 'refresh'
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_email',
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_email',
     array (
         'label' => __('Email', 'growtype-wc'),
         'section' => 'woocommerce_checkout',
@@ -78,18 +96,122 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
- * Postcode
+ * Country
  */
-$wp_customize->add_setting('woocommerce_checkout_postcode',
+$wp_customize->add_setting('woocommerce_checkout_billing_country',
     array (
         'default' => 'required',
         'transport' => 'refresh'
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_postcode',
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_country',
+    array (
+        'label' => __('Country', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => [
+            'hidden' => 'Hidden',
+            'optional' => 'Optional',
+            'required' => 'Required'
+        ],
+        'priority' => 10
+    )
+));
+
+/**
+ * Address
+ */
+$wp_customize->add_setting('woocommerce_checkout_billing_address_1',
+    array (
+        'default' => 'required',
+        'transport' => 'refresh'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_address_1',
+    array (
+        'label' => __('Address 1', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => [
+            'hidden' => 'Hidden',
+            'optional' => 'Optional',
+            'required' => 'Required'
+        ],
+        'priority' => 10
+    )
+));
+
+/**
+ * Postcode
+ */
+$wp_customize->add_setting('woocommerce_checkout_billing_postcode',
+    array (
+        'default' => 'required',
+        'transport' => 'refresh'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_postcode',
     array (
         'label' => __('Postcode', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => [
+            'hidden' => 'Hidden',
+            'optional' => 'Optional',
+            'required' => 'Required'
+        ],
+        'priority' => 10
+    )
+));
+
+/**
+ * State
+ */
+$wp_customize->add_setting('woocommerce_checkout_billing_state',
+    array (
+        'default' => 'required',
+        'transport' => 'refresh'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_state',
+    array (
+        'label' => __('State', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => [
+            'hidden' => 'Hidden',
+            'optional' => 'Optional',
+            'required' => 'Required'
+        ],
+        'priority' => 10
+    )
+));
+
+/**
+ * billing_city
+ */
+$wp_customize->add_setting('woocommerce_checkout_billing_city',
+    array (
+        'default' => 'required',
+        'transport' => 'refresh'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_billing_city',
+    array (
+        'label' => __('City', 'growtype-wc'),
         'section' => 'woocommerce_checkout',
         'input_attrs' => array (
             'multiselect' => false,
@@ -108,7 +230,7 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
  */
 $wp_customize->add_setting('woocommerce_checkout_order_review_table',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -125,7 +247,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  * Show 'optional' input labels
  */
 $wp_customize->add_setting('woocommerce_checkout_optional_label', array (
-    'default' => '0'
+    'default' => false
 ));
 
 $wp_customize->add_control(
@@ -147,7 +269,7 @@ $wp_customize->add_control(
  */
 $wp_customize->add_setting('woocommerce_checkout_order_review_heading',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -165,7 +287,7 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
  */
 $wp_customize->add_setting('woocommerce_checkout_order_review_background',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );
@@ -275,7 +397,7 @@ $wp_customize->add_control('woocommerce_checkout_account_section_title', array (
  */
 $wp_customize->add_setting('woocommerce_checkout_place_order_button_title', array (
     'capability' => 'edit_theme_options',
-    'default' => 'Place order',
+    'default' => __('Place order', 'growtype-wc'),
     'sanitize_callback' => array ($this, 'woocommerce_checkout_place_order_button_title_translation')
 ));
 
@@ -291,7 +413,7 @@ $wp_customize->add_control('woocommerce_checkout_place_order_button_title', arra
  */
 $wp_customize->add_setting('woocommerce_checkout_create_account_checked',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );

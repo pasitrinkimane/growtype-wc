@@ -52,7 +52,7 @@ class Growtype_Wc_Admin
      */
     public function __construct($growtype_wc, $version)
     {
-        $this->Growtype_Wc = $growtype_wc;
+        $this->growtype_wc = $growtype_wc;
         $this->version = $version;
 
         $this->load_methods();
@@ -65,7 +65,7 @@ class Growtype_Wc_Admin
      */
     public function enqueue_styles()
     {
-        wp_enqueue_style($this->Growtype_Wc, plugin_dir_url(__FILE__) . 'css/growtype-wc-admin.css', array (), $this->version, 'all');
+        wp_enqueue_style($this->growtype_wc, plugin_dir_url(__FILE__) . 'css/growtype-wc-admin.css', array (), $this->version, 'all');
     }
 
     /**
@@ -75,7 +75,7 @@ class Growtype_Wc_Admin
      */
     public function enqueue_scripts()
     {
-        wp_enqueue_script($this->Growtype_Wc, plugin_dir_url(__FILE__) . 'js/growtype-wc-admin.js', array ('jquery'), $this->version, false);
+        wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'js/growtype-wc-admin.js', array ('jquery'), $this->version, false);
     }
 
     function load_methods()

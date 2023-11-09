@@ -1,5 +1,14 @@
+import {message} from "./components/message";
+
 (function ($) {
     "use strict";
+
+    jQuery('form.checkout').on('submit', function (event) {
+    });
+
+    jQuery(document.body).on('checkout_error', function () {
+        message();
+    });
 
     /**
      * Update state select after country change

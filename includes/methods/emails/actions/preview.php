@@ -23,7 +23,7 @@ function growtype_wc_preview_email()
     $in_email_type = isset($_GET['email_type']) ? $_GET['email_type'] : '';
 
     if (empty($order_id)) {
-        $order_id = get_user_first_order()->get_id();
+        $order_id = growtype_wc_get_user_first_order()->get_id();
     }
 
     $order_number = is_numeric($order_id) ? (int)$order_id : '';

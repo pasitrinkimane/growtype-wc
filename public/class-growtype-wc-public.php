@@ -65,6 +65,14 @@ class Growtype_Wc_Public
     public function enqueue_styles()
     {
         wp_enqueue_style($this->growtype_wc, GROWTYPE_WC_URL_PUBLIC . 'styles/growtype-wc.css', array (), $this->version, 'all');
+
+        /**
+         * libs
+         */
+        /**
+         * Countdown
+         */
+        wp_enqueue_style('growtype-wc-countdown', GROWTYPE_WC_URL_PUBLIC . 'libs/jquery-countdown/jquery.countdown.css', array (), $this->version, 'all');
     }
 
     /**
@@ -75,6 +83,16 @@ class Growtype_Wc_Public
     public function enqueue_scripts()
     {
         wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', array ('jquery'), $this->version, false);
+
+        /**
+         * libs
+         */
+        /**
+         * Countdown
+         */
+        wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', array ('jquery'), $this->version, false);
+        wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', array ('jquery', 'simple-auction-countdown'), $this->version, false);
+
 
         $ajax_url = admin_url('admin-ajax.php');
 

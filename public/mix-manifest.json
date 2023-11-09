@@ -1,12 +1,12 @@
 {
     "/scripts/wc-cart.js": "/scripts/wc-cart.js?id=bb0d3ab906c18c8e546cce6d5b2a036e",
     "/scripts/wc-widgets.js": "/scripts/wc-widgets.js?id=138445a6311f43a31bbb549dabcdc88e",
-    "/scripts/wc-wishlist.js": "/scripts/wc-wishlist.js?id=1522631f638f4fcde4727fc79c3c9ac7",
-    "/scripts/wc-checkout.js": "/scripts/wc-checkout.js?id=fb15d74b781d52eef3a31451396b64cd",
+    "/scripts/wc-wishlist.js": "/scripts/wc-wishlist.js?id=927f37f22c3a4f9d110d2ad07b147521",
+    "/scripts/wc-checkout.js": "/scripts/wc-checkout.js?id=f4fc85d447758d11fc7ad265c5f53cee",
     "/scripts/wc-login.js": "/scripts/wc-login.js?id=413bbe0b72154d65023a7810b475500c",
     "/scripts/wc-coupon.js": "/scripts/wc-coupon.js?id=7f6c223be47a302a90a75be62ba92064",
-    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=9c7f28c5eb4f10a0f64f5a3ec44bcfb2",
-    "/styles/growtype-wc.css": "/styles/growtype-wc.css?id=6bc271961c345f9d8edea043517a68c4",
+    "/scripts/growtype-wc.js": "/scripts/growtype-wc.js?id=c9fcaa3328cc20bdce7d3c7e89f942cc",
+    "/styles/growtype-wc.css": "/styles/growtype-wc.css?id=e7b6631101bd7dbbf27c88992debcde5",
     "/styles/fonts/WooCommerce.eot": "/styles/fonts/WooCommerce.eot?id=97b9b3354d6b0c57fa261641c437a7b9",
     "/styles/fonts/WooCommerce.svg": "/styles/fonts/WooCommerce.svg?id=d9b7a6d9164deb672b462edc5e90621e",
     "/styles/fonts/WooCommerce.ttf": "/styles/fonts/WooCommerce.ttf?id=960a1d0007f9bd64cb369ecf960ef96b",
@@ -33,5 +33,9 @@
     "/icons/credit-cards/paypal.svg": "/icons/credit-cards/paypal.svg?id=b5d69e1f5dd21bdd550d5f3aa3cbd6f4",
     "/icons/credit-cards/visa.png": "/icons/credit-cards/visa.png?id=75b77d31ea4618b5d0916c656d19b87b",
     "/icons/credit-cards/visa.svg": "/icons/credit-cards/visa.svg?id=7983b6eb576bf04dbb018536bdcade7a",
-    "/icons/loader.svg": "/icons/loader.svg?id=72376329015bc6d0d20c77b4f10c5ed1"
+    "/icons/loader.svg": "/icons/loader.svg?id=72376329015bc6d0d20c77b4f10c5ed1",
+    "/libs/jquery-countdown/jquery.countdown.css": "/libs/jquery-countdown/jquery.countdown.css?id=012169327d6c32dbd6b70fb73ee54ea6",
+    "/libs/jquery-countdown/jquery.countdown.language.js": "/libs/jquery-countdown/jquery.countdown.language.js?id=51f00db20f053eb2ed259a09fb69b295",
+    "/libs/jquery-countdown/jquery.countdown.min.js": "/libs/jquery-countdown/jquery.countdown.min.js?id=bb70786637775c01f9c313a21891ba08",
+    "/libs/jquery-countdown/jquery.countdowncss": "/libs/jquery-countdown/jquery.countdowncss?id=51f00db20f053eb2ed259a09fb69b295"
 }

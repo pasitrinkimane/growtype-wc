@@ -25,6 +25,30 @@ add_action('template_redirect', function () {
      */
     growtype_custom_page_redirect();
 
+    $user_can_buy = get_theme_mod('only_registered_users_can_buy') ? is_user_logged_in() : true;
+
+    if (
+        !$user_can_buy
+        &&
+        (
+            (is_woocommerce() || is_cart() || is_checkout())
+            ||
+            isset($_GET['add-to-cart']) && !empty($_GET['add-to-cart'])
+        )
+    ) {
+        $redirect_url = home_url();
+
+        if (function_exists('growtype_form_login_page_url')) {
+            wc_clear_notices();
+            $redirect_url = growtype_form_login_page_url([
+                'redirect_after' => get_permalink()
+            ]);
+        }
+
+        wp_redirect($redirect_url);
+        exit;
+    }
+
     /**
      * Load example templates
      * {domain}/growtype-wc/documentation/examples/email/preview/?action=preview_email&email_type=WC_Email_New_Order&order_id=159

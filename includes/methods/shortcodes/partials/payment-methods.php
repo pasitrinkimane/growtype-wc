@@ -3,9 +3,13 @@
 /**
  * Woocommerce payment methods shortcode
  */
-add_shortcode('growtype_wc_payment_methods', 'growtype_wc_payment_methods_shorcode');
+add_shortcode('growtype_wc_payment_methods_icons', 'growtype_wc_payment_methods_shorcode');
 function growtype_wc_payment_methods_shorcode($atts)
 {
+    $params = shortcode_atts(array (
+        'justify-content' => 'flex-start',
+    ), $atts);
+
     $items = [
         'visa' => [
             'class' => 'border',
@@ -26,6 +30,7 @@ function growtype_wc_payment_methods_shorcode($atts)
     ];
 
     return growtype_wc_include_view('shortcodes.payment-methods', [
+        'params' => $params,
         'items' => $items,
     ]);
 }
