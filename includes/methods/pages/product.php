@@ -66,7 +66,7 @@ function growtype_wc_after_add_to_cart_button()
 add_action('wp_loaded', 'growtype_wc_remove_breadcrumbs');
 function growtype_wc_remove_breadcrumbs()
 {
-    if (get_theme_mod('woocommerce_product_page_breadcrumb_disabled')) {
+    if (!get_theme_mod('woocommerce_product_page_breadcrumb', true)) {
         remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20, 0);
     }
 }

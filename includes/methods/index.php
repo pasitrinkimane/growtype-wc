@@ -55,6 +55,7 @@ include('admin/product/sections/data-advanced.php');
 include('admin/product/sections/data-inventory.php');
 include('admin/product/sections/data-shipping.php');
 include('admin/product/sections/data-variation.php');
+include('admin/product/sections/data-subscription.php');
 include('admin/product/sections/description.php');
 
 include('admin/product/types/subscription.php');
@@ -68,6 +69,7 @@ include('orders/orders.php');
 /**
  * Product single
  */
+include('components/modal.php');
 include('components/message.php');
 include('components/product-single-meta.php');
 include('components/product-single-intro.php');
@@ -134,3 +136,8 @@ include('layout/index.php');
  * Users
  */
 include('users/index.php');
+
+/**
+ * Subscriptions
+ */
+include('subscriptions/index.php');

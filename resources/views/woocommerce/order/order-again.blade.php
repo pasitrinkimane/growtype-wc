@@ -18,7 +18,7 @@
 defined('ABSPATH') || exit;
 ?>
 
-<?php if (!get_theme_mod('woocommerce_thankyou_page_order_again_disabled')){ ?>
+<?php if (get_theme_mod('woocommerce_thankyou_page_order_again', true)){ ?>
 <p class="order-again">
     <a href="<?php echo esc_url($order_again_url); ?>" class="btn btn-primary"><?php esc_html_e('Order again',
             'growtype-wc'); ?></a>

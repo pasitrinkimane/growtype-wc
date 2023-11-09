@@ -3,9 +3,9 @@ msgstr ""
 "Project-Id-Version: Growtype - Wc\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-09-08 14:01+0000\n"
-"PO-Revision-Date: 2021-11-11 07:56+0000\n"
+"PO-Revision-Date: 2023-10-25 10:30+0000\n"
 "Last-Translator: \n"
-"Language-Team: Lithuanian\n"
+"Language-Team: Lietuvių kalba\n"
 "Language: lt_LT\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10 >= 2 "
 "&&(n%100<10||n%100 >= 20)? 1 : 2);\n"
@@ -16,119 +16,1695 @@ msgstr ""
 "X-Loco-Version: 2.5.3; wp-5.8\n"
 "X-Domain: growtype-wc"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:186
-msgid "Birthday"
-msgstr "Gimimo metai"
+#: includes/methods/components/product-price.php:36
+#, php-format
+msgid " %s"
+msgstr " %s"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:193
-msgid "Child first and last name"
-msgstr "Vaiko vardas ir pavardė"
+#: includes/customizer/index.php:68
+msgid "\"Must have products\" redirect page"
+msgstr "Peradresavimo puslapis „Būtina turėti produktus“."
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:187
+#: includes/customizer/sections/catalog.php:192
+msgid "\"Shop\" Sidebar Position"
+msgstr "„Parduotuvė“ šoninės juostos padėtis"
+
+#. 1: credit card type 2: last 4 digits
+#: resources/views/woocommerce/myaccount/payment-methods.blade.php:49
+#, php-format
+msgid "%1$s ending in %2$s"
+msgstr "%1$s, kuris baigiasi %2$s"
+
+#. %s location.
+#: resources/views/woocommerce/cart/cart-totals.blade.php:72
+#, php-format
+msgid "(estimated for %s)"
+msgstr "(numatoma %s)"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:39
+msgid "A list or dropdown of product categories."
+msgstr "Produktų kategorijų sąrašas arba išskleidžiamasis meniu."
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:125
+msgid "A password will be sent to your email address."
+msgstr "Jūsų el. pašto adresu bus išsiųstas slaptažodis."
+
+#: resources/views/woocommerce/single-product/short-description.php:34
+msgid "About"
+msgstr "Apie"
+
+#: includes/customizer/sections/product.php:385
+msgid "Above \"Add to cart\""
+msgstr "Virš \"Įdėti į krepšelį\""
+
+#: includes/customizer/sections/account.php:6
+msgid "Account"
+msgstr "sąskaita"
+
+#: resources/views/woocommerce/checkout/form-billing.blade.php:25
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:29
+msgid "Account details"
+msgstr "Sąskaitos informacija"
+
+#: includes/methods/subscriptions/index.php:111
+msgid "Actions"
+msgstr "Veiksmai"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:27
+msgid "Active filters"
+msgstr "Aktyvūs filtrai"
+
+#: includes/customizer/sections/product.php:276
+msgid "Adaptive gallery thumbnails height"
+msgstr "Prisitaikantis galerijos miniatiūrų aukštis"
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:63
+msgid "Add"
+msgstr "Papildyti"
+
+#. %s is product title
+#: resources/views/woocommerce/single-product-reviews.php:70
+msgid "Add a review"
+msgstr "Pridėti apžvalgą"
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:39
+msgid "Add File"
+msgstr "Pridėti failą"
+
+#: resources/views/woocommerce/myaccount/payment-methods.blade.php:77
+msgid "Add payment method"
+msgstr "Pridėti mokėjimo metodą"
+
+#: includes/methods/product/class-growtype-wc-product.php:222
+msgid "Add to cart"
+msgstr "Į krepšelį"
+
+#: includes/methods/widgets/widgets.php:38
+msgid "Add widgets here."
+msgstr "Čia pridėkite valdiklius."
+
+#: includes/methods/cart/actions/add-to-cart.php:168
+msgid "Added"
+msgstr "Pridėta"
+
+#: includes/customizer/sections/checkout.php:136
+msgid "Address 1"
+msgstr "1 Adresas"
+
+#: includes/methods/pages/account/main.php:26
+msgid "Addresses"
+msgstr "Adresai"
+
+#: includes/methods/pages/account/main.php:34
+msgid "Adjust billing address details"
+msgstr "Koreguokite išsamią atsiskaitymo adreso informaciją"
+
+#: includes/methods/pages/account/main.php:32
+msgid "Adjust payment method"
+msgstr "Koreguokite mokėjimo būdą"
+
+#: includes/methods/pages/account/main.php:35
+msgid "Adjust shipping address details"
+msgstr "Koreguokite pristatymo adreso informaciją"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:100
+msgid "Allow children elements collapse"
+msgstr "Leisti vaikams elementams sugriūti"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:90
+msgid "Allow multiple categories"
+msgstr "Leisti kelias kategorijas"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:30
+msgid "Allow to make orders without charging any money."
+msgstr "Leisti atlikti užsakymus neapmokestinant pinigų."
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:144
+msgid "Already have an account?"
+msgstr "Jau turite paskyrą?"
+
+#: public/class-growtype-wc-public.php:109
+msgid "Already in wishlist"
+msgstr "Jau pageidavimų sąraše"
+
+#. %1$s Site title, %2$s Order pay link
+#: resources/views/woocommerce/emails/customer-invoice.php:59
+#, php-format
+msgid ""
+"An order has been created for you on %1$s. Your invoice is below, with a "
+"link to make payment when you’re ready: %2$s"
+msgstr ""
+"%1$s jums buvo sukurtas užsakymas. Sąskaita faktūra pateikiama toliau su "
+"nuoroda, skirta sumokėti, kai būsite pasiruošę: %2$s"
+
+#: resources/views/woocommerce/cart/cart.blade.php:166
+#: resources/views/woocommerce/checkout/form-coupon.php:38
+#: resources/views/woocommerce/checkout/form-coupon.php:38
+msgid "Apply coupon"
+msgstr "Taikyti kuponą"
+
+#: includes/methods/pages/account/main.php:27
+msgid "Auctions"
+msgstr "Aukcionai"
+
+#: includes/methods/pages/account/main.php:27
+msgid "Auctions settings"
+msgstr "Aukcionų nustatymai"
+
+#: resources/views/woocommerce/single-product/meta.php:52
+msgid "Author"
+msgstr "Autorius"
+
+#: resources/views/woocommerce/cart/cart.blade.php:103
+msgid "Available on backorder"
+msgstr "Galimas pagal užsakymus"
+
+#: includes/methods/pages/account/main.php:31
+msgid "Available to download products"
+msgstr "Galima atsisiųsti produktus"
+
+#: resources/views/woocommerce/single-product-reviews.php:124
+msgid "Average"
+msgstr "Vidutinis"
+
+#: resources/views/partials/single-product/gallery/type-3.php:51
+#: resources/views/partials/single-product/gallery/type-1.php:15
+#: resources/views/partials/single-product/gallery/type-5.php:15
+msgid "Awaiting product image"
+msgstr "Laukiama produkto vaizdo"
+
+#: resources/views/woocommerce/single-product-reviews.php:70
+#, php-format
+msgid "Be the first to review &ldquo;%s&rdquo;"
+msgstr "Būkite pirmas, įvertinęs „%s“"
+
+#: includes/customizer/sections/product.php:386
+msgid "Below \"Add to cart\""
+msgstr "Žemiau \"Įdėti į krepšelį\""
+
+#: includes/helpers/partials/order.php:29
+msgid "Below are the details of your order."
+msgstr "Žemiau pateikiama išsami jūsų užsakymo informacija."
+
+#: includes/methods/cart/actions/add-to-cart.php:68
+msgid "Bid added."
+msgstr "Pasiūlymas pridėtas."
+
+#: resources/views/woocommerce/checkout/form-billing.blade.php:21
+msgid "Billing &amp; Shipping"
+msgstr "Atsiskaitymas ir pristatymas"
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:26
+#: resources/views/woocommerce/myaccount/my-address.blade.php:35
+#: includes/methods/pages/account/main.php:34
+msgid "Billing address"
+msgstr "Atsiskaitymo adresas"
+
+#: resources/views/woocommerce/checkout/form-billing.blade.php:23
+msgid "Billing details"
+msgstr "Atsiskaitymo informacija"
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:28
+msgid "Cancel"
+msgstr "Atšaukti"
+
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:38
+msgid "Carbon offset"
+msgstr "Anglies kompensavimas"
+
+#: includes/customizer/sections/cart.php:6
+msgid "Cart"
+msgstr "Krepšelis"
+
+#: includes/customizer/sections/thankyou.php:49
+msgid "Centered"
+msgstr "Centruota"
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:23
+msgid "Change"
+msgstr "Keisti"
+
+#: includes/customizer/sections/product-preview.php:42
+msgid "Change product preview style."
+msgstr "Pakeiskite produkto peržiūros stilių."
+
+#: includes/helpers/partials/cart.php:97
+msgid "Checkout"
+msgstr "Atsiskaitymas"
+
+#: includes/customizer/sections/checkout.php:15
+msgid "Checkout style"
+msgstr "Atsiskaitymo stilius"
+
+#: includes/customizer/sections/coupons.php:25
+msgid "Choose featured coupon"
+msgstr "Pasirinkite kuponą"
+
+#: includes/methods/admin/product/sections/shipping/documents-table-row.php:9
+msgid "Choose file"
+msgstr "Pasirinkti failą"
+
+#: includes/customizer/sections/catalog.php:33
+#: includes/customizer/sections/product.php:530
+msgid "Choose how products should be displayed"
+msgstr "Pasirinkite, kaip produktai turi būti rodomi"
+
+#: includes/customizer/sections/general.php:25
+msgid "Choose if store will be selling single or multiple products"
+msgstr ""
+"Pasirinkite, ar parduotuvėje bus prekiaujama vienu ar keliais produktais"
+
+#: includes/customizer/sections/thankyou.php:42
+msgid "Choose page style"
+msgstr "Pasirinkite puslapio stilių"
+
+#: includes/customizer/sections/catalog.php:196
+msgid "Choose position..."
+msgstr "Pasirinkite poziciją..."
+
+#: includes/customizer/sections/product.php:214
+msgid "Choose product gallery animation"
+msgstr "Pasirinkite produktų galerijos animaciją"
+
+#: includes/customizer/sections/product.php:186
+msgid "Choose product gallery type"
+msgstr "Pasirinkite prekių galerijos tipą"
+
+#: includes/customizer/sections/product.php:379
+msgid "Choose product summary/excerpt position"
+msgstr "Pasirinkite produkto santraukos / ištraukos poziciją"
+
+#: includes/customizer/sections/catalog.php:193
+msgid "Choose shop sidebar position"
+msgstr "Pasirinkite parduotuvės šoninės juostos padėtį"
+
+#: includes/customizer/sections/checkout.php:214
 msgid "City"
 msgstr "Miestas"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:189
+#: resources/views/partials/sidebar-shop.php:5
+msgid "Clear all"
+msgstr "Išvalyti viską"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:328
+msgid "Clear selected options"
+msgstr "Išvalykite pasirinktas parinktis"
+
+#: resources/views/woocommerce/checkout/form-coupon.php:26
+msgid "Click here to enter your code"
+msgstr "Spustelėkite čia, kad įvestumėte savo kodą"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:76
+msgid "Confirm new password"
+msgstr "Patvirtinti naują slaptažodį"
+
+#: includes/customizer/sections/checkout.php:110
 msgid "Country"
 msgstr "Šalis"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:179
+#: resources/views/woocommerce/cart/cart.blade.php:165
+#: resources/views/woocommerce/checkout/form-coupon.php:34
+msgid "Coupon code"
+msgstr "Kupono kodas"
+
+#: includes/customizer/sections/coupons.php:6
+msgid "Coupons"
+msgstr "Kuponai"
+
+#: includes/customizer/sections/checkout.php:425
+msgid "Create account checkbox checked by default."
+msgstr ""
+"Sukurti paskyrą žymimasis laukelis pažymėtas pagal numatytuosius nustatymus."
+
+#: resources/views/woocommerce/checkout/form-billing.blade.php:65
+msgid "Create an account?"
+msgstr "Sukurti paskyrą?"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:80
+msgid "Create here"
+msgstr "Sukurti čia"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:64
+msgid "Current password (leave blank to leave unchanged)"
+msgstr "Dabartinis slaptažodis (palikite tuščią, kad nepakeistumėte)"
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:58
+msgid "Date:"
+msgstr "Data:"
+
+#: includes/customizer/sections/thankyou.php:48
+#: includes/customizer/sections/checkout.php:22
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Tag_Cloud.php:39
+msgid "Default"
+msgstr "Numatytas"
+
+#: includes/methods/admin/product/sections/shipping/documents-table-row.php:10
+msgid "Delete"
+msgstr "Ištrinti"
+
+#: includes/methods/pages/account/subpages/edit-account.php:57
+msgid "Delete Account"
+msgstr "Ištrinti paskyrą"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:73
+msgid "Description"
+msgstr "apibūdinimas"
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:11
+msgid "Details"
+msgstr "Detalės"
+
+#: includes/customizer/sections/catalog.php:74
+msgid "Disable access to \"shop\" page"
+msgstr "Išjungti prieigą prie „parduotuvės“ puslapio"
+
+#: includes/customizer/sections/product.php:45
+msgid "Disabled"
+msgstr "Išjungta"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:21
+msgid "Display a list of active product filters."
+msgstr "Rodyti aktyvių produktų filtrų sąrašą."
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:52
+msgid "Display name"
+msgstr "Rodomas pavadinimas"
+
+#: resources/views/woocommerce/cart/cart.blade.php:161
+msgid "Do you have a coupon code?"
+msgstr "Ar turite kupono kodą?"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:79
+msgid "Don't have an account?"
+msgstr "Neturite paskyros?"
+
+#: includes/methods/components/product-single-button.php:37
+msgid "Download"
+msgstr "parsisiųsti"
+
+#: includes/methods/pages/account/main.php:31
+msgid "Downloads"
+msgstr "Atsisiuntimai"
+
+#: includes/methods/admin/product/sections/data-subscription.php:84
+msgid "Duration"
+msgstr "Trukmė"
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:63
+msgid "Edit"
+msgstr "Redaguoti"
+
+#: resources/views/components/modal/subscription.php:9
+msgid "Elevate your chat experience with our subscription!"
+msgstr "Pagerinkite savo pokalbių patirtį užsiprenumeravę!"
+
+#: resources/views/woocommerce/single-product-reviews.php:91
+#: includes/customizer/sections/checkout.php:84
+msgid "Email"
+msgstr "El. paštas"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:110
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:34
 msgid "Email address"
 msgstr "El. paštas"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:203
-msgid "Enter your"
-msgstr "Jūsų"
+#: resources/views/woocommerce/checkout/thankyou.blade.php:64
+msgid "Email:"
+msgstr "El. paštas:"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:184
-msgid "First and Last name"
-msgstr "Vardas pavardė"
+#: includes/customizer/sections/email.php:6
+msgid "Emails"
+msgstr "Laiškai"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:182
+#: includes/customizer/sections/catalog.php:256
+msgid ""
+"Enable shop \"featured image\" as shop page intro image, if featured image "
+"is not empty."
+msgstr ""
+"Įgalinti parduotuvės „panašų vaizdą“ kaip parduotuvės puslapio įvadinį "
+"vaizdą, jei rodomo vaizdo laukas nėra tuščias."
+
+#: includes/customizer/sections/catalog.php:238
+msgid "Enable shop \"products Header\"."
+msgstr "Įgalinti parduotuvės „produktų antraštę“."
+
+#: includes/customizer/sections/general.php:52
+msgid "Enable that only registered users would be able to buy products."
+msgstr "Įjunkite, kad tik registruoti vartotojai galėtų pirkti produktus."
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:54
+msgid "Enable/Disable"
+msgstr "Įjungti išjungti"
+
+#: includes/customizer/sections/account.php:168
+msgid "Enable/disable addresses tab in user account."
+msgstr "Įjungti / išjungti adresų skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/email.php:210
+msgid "Enable/disable billing details for all email templates."
+msgstr "Įgalinti / išjungti visų el. pašto šablonų atsiskaitymo informaciją."
+
+#: includes/customizer/sections/cart.php:42
+msgid "Enable/disable cart page icon."
+msgstr "Įjungti / išjungti krepšelio puslapio piktogramą."
+
+#: includes/customizer/sections/cart.php:24
+msgid "Enable/disable cart preview sidebar."
+msgstr "Įgalinti / išjungti krepšelio peržiūros šoninę juostą."
+
+#: includes/customizer/sections/product-preview.php:85
+msgid "Enable/disable cta button."
+msgstr "Įjungti / išjungti raginimo veikti mygtuką."
+
+#: includes/customizer/sections/thankyou.php:154
+msgid "Enable/disable customer details."
+msgstr "Įgalinti / išjungti išsamią kliento informaciją."
+
+#: includes/customizer/sections/thankyou.php:172
+msgid "Enable/disable download details."
+msgstr "Įgalinti / išjungti išsamią atsisiuntimo informaciją."
+
+#: includes/customizer/sections/account.php:78
+msgid "Enable/disable downloads tab in user account."
+msgstr "Įgalinti / išjungti atsisiuntimų skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/email.php:174
+msgid "Enable/disable email header tittle."
+msgstr "Įgalinti / išjungti el. pašto antraštės pavadinimą."
+
+#: includes/customizer/sections/account.php:150
+msgid "Enable/disable logout tab in user account."
+msgstr "Įjungti / išjungti atsijungimo skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/product.php:423
+msgid "Enable/disable long description section title."
+msgstr "Įgalinti / išjungti ilgo aprašo skyriaus pavadinimą."
+
+#: includes/customizer/sections/product.php:441
+msgid "Enable/disable meta data."
+msgstr "Įjungti / išjungti meta duomenis."
+
+#: includes/customizer/sections/thankyou.php:190
+msgid "Enable/disable order again link."
+msgstr "Įjungti / išjungti užsakymą dar kartą nuoroda."
+
+#: includes/customizer/sections/thankyou.php:136
+msgid "Enable/disable order details."
+msgstr "Įgalinti / išjungti išsamią užsakymo informaciją."
+
+#: includes/customizer/sections/email.php:192
+msgid "Enable/disable order overview for all email templates."
+msgstr "Įgalinti / išjungti visų el. pašto šablonų užsakymų apžvalgą."
+
+#: includes/customizer/sections/thankyou.php:118
+msgid "Enable/disable order overview."
+msgstr "Įjungti / išjungti užsakymo apžvalgą."
+
+#: includes/customizer/sections/account.php:60
+msgid "Enable/disable orders tab in user account."
+msgstr "Įjungti / išjungti užsakymų skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/product-preview.php:138
+msgid "Enable/disable product price."
+msgstr "Įjungti / išjungti produkto kainą."
+
+#: includes/customizer/sections/product-preview.php:68
+msgid "Enable/disable product title."
+msgstr "Įjungti / išjungti produkto pavadinimą."
+
+#: includes/customizer/sections/account.php:96
+msgid "Enable/disable purchased products tab in user account."
+msgstr "Įgalinti / išjungti įsigytų produktų skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/product.php:477
+msgid "Enable/disable quantity selector."
+msgstr "Įjungti / išjungti kiekio parinkiklį."
+
+#: includes/customizer/sections/product-preview.php:208
+msgid "Enable/disable sale badge (flash)."
+msgstr "Įjungti / išjungti pardavimo ženklelį (flash)."
+
+#: includes/customizer/sections/product.php:459
+msgid "Enable/disable sale flash (badge)."
+msgstr "Įjungti / išjungti pardavimo blykstę (ženklelį)."
+
+#: includes/customizer/sections/product.php:405
+msgid "Enable/disable short description section title."
+msgstr "Įgalinti / išjungti trumpo aprašo skyriaus pavadinimą."
+
+#: includes/customizer/sections/account.php:132
+msgid "Enable/disable subscriptions tab in user account."
+msgstr "Įgalinti / išjungti prenumeratos skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/account.php:114
+msgid "Enable/disable uploaded products tab in user account."
+msgstr "Įgalinti / išjungti įkeltų produktų skirtuką vartotojo paskyroje."
+
+#: includes/customizer/sections/wishlist.php:42
+msgid "Enable/disable wishlist."
+msgstr "Įjungti / išjungti pageidavimų sąrašą."
+
+#: includes/customizer/sections/product.php:81
+msgid "Enabled"
+msgstr "Įjungtas"
+
+#: includes/customizer/sections/checkout.php:42
+msgid "Enabled/disable billing fields"
+msgstr "Įjungti / išjungti atsiskaitymo laukai"
+
+#: includes/customizer/sections/checkout.php:281
+msgid "Enabled/disable order review heading"
+msgstr "Įjungta / išjungta užsakymo peržiūros antraštė"
+
+#: includes/customizer/sections/checkout.php:242
+msgid "Enabled/disable order review table"
+msgstr "Įjungta / išjungta užsakymų peržiūros lentelė"
+
+#: includes/customizer/sections/checkout.php:299
+msgid "Enabled/disable payment methods background"
+msgstr "Įgalinti / išjungti mokėjimo metodai fone"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:301
+msgctxt "enhanced select"
+msgid "No matches found"
+msgstr "Atitikčių nerasta"
+
+#: resources/views/components/modal/subscription.php:10
+msgid "Enjoy benefits like:"
+msgstr "Mėgaukitės tokiais privalumais kaip:"
+
+#: resources/views/woocommerce/cart/cart.blade.php:164
+msgid "Enter your coupon code here:"
+msgstr "Įveskite savo kupono kodą čia:"
+
+#: includes/customizer/sections/product.php:378
+msgid "Excerpt Position"
+msgstr "Ištraukos pozicija"
+
+#. Description of the plugin
+msgid "Extended Woocommerce functionality."
+msgstr "Išplėstas Woocommerce funkcionalumas."
+
+#: includes/customizer/sections/product.php:221
+#, fuzzy
+#| msgid "Grade"
+msgid "Fade"
+msgstr "Klasė"
+
+#: includes/customizer/sections/coupons.php:24
+msgid "Featured coupon"
+msgstr "Teminis kuponas"
+
+#: includes/methods/admin/product/sections/shipping/documents-table-row.php:4
+msgid "File name"
+msgstr "Failo pavadinimas"
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:9
+msgid "File URL"
+msgstr "Failo URL"
+
+#: resources/views/partials/sidebar-shop.php:4
+#: includes/methods/pages/catalog.php:126
+msgid "Filter"
+msgstr "Filtras"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:40
 msgid "First name"
 msgstr "Vardas"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:191
-msgid "Grade"
-msgstr "Klasė"
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Tag_Cloud.php:37
+msgid "Format"
+msgstr "Formatas"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:192
-msgid "Grade group"
-msgstr "Klasė"
+#: includes/methods/payments/gateways/wc-gateway-free.php:29
+#: includes/methods/payments/gateways/wc-gateway-free.php:69
+msgid "Free"
+msgstr "Laisvas"
+
+#: includes/customizer/sections/product.php:195
+msgid "Full width"
+msgstr "Visas plotis"
+
+#: includes/customizer/sections/product.php:213
+msgid "Gallery Animation"
+msgstr "Galerija Animacija"
+
+#: includes/customizer/sections/general.php:6
+msgid "General"
+msgstr "Generolas"
+
+#: includes/helpers/partials/cart.php:107
+msgid "Go to shop"
+msgstr "Eik į parduotuvę"
+
+#: resources/views/woocommerce/single-product-reviews.php:123
+msgid "Good"
+msgstr "Gerai"
+
+#: includes/customizer/index.php:137
+#: includes/customizer/sections/product.php:194
+msgid "Grid"
+msgstr "Tinklelis"
 
 #. Author of the plugin
 msgid "Growtype"
 msgstr "Augimo tipas"
 
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:41
+msgid "Growtype - Filter Products by Category"
+msgstr "Augimo tipas – filtruokite produktus pagal kategoriją"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:23
+msgid "Growtype - Show Active Filters"
+msgstr "Augimo tipas – Rodyti aktyvius filtrus"
+
 #. Name of the plugin
+#: admin/pages/settings/growtype-wc-admin-settings.php:24
+#: admin/pages/settings/growtype-wc-admin-settings.php:25
 msgid "Growtype - Wc"
 msgstr "Augimo tipas - WC"
+
+#: resources/views/woocommerce/checkout/form-coupon.php:26
+msgid "Have a coupon?"
+msgstr "Turi kuponą?"
+
+#. %s Order date
+#: resources/views/woocommerce/emails/customer-invoice.php:86
+#, php-format
+msgid "Here are the details of your order placed on %s:"
+msgstr "Štai jūsų užsakymo, pateikto %s, informacija:"
+
+#. %s: Customer first name
+#: resources/views/woocommerce/emails/customer-invoice.php:52
+#: resources/views/woocommerce/emails/customer-completed-order.php:35
+#, php-format
+msgid "Hi %s,"
+msgstr "Sveiki, %s,"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:80
+msgid "Hide empty categories"
+msgstr "Slėpti tuščias kategorijas"
+
+#: includes/customizer/sections/catalog.php:16
+msgid "Hide products result count label."
+msgstr "Slėpti produktų rezultatų skaičiaus etiketę."
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:85
+msgid "Hide uncategorized"
+msgstr "Slėpti nekategorizuotą"
+
+#: includes/customizer/sections/checkout.php:258
+msgid "Highlight optional fields with label"
+msgstr "Pažymėkite pasirenkamus laukus etikete"
+
+#: includes/customizer/sections/product.php:192
+msgid "Horizontal"
+msgstr "Horizontalus"
+
+#: includes/methods/admin/product/sections/shipping/documents-table-row.php:7
+msgid "http://"
+msgstr "http://"
 
 #. URI of the plugin
 #. Author URI of the plugin
 msgid "http://newcoolstudio.com/"
 msgstr "http://newcoolstudio.com/"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:183
+#: includes/customizer/sections/wishlist.php:41
+msgid "Icon"
+msgstr "Piktograma"
+
+#: includes/customizer/sections/product.php:294
+msgid "Icon which zooms image"
+msgstr "Piktograma, kuri padidina vaizdą"
+
+#: resources/views/woocommerce/checkout/form-coupon.php:31
+msgid "If you have a coupon code, please apply it below."
+msgstr "Jei turite kupono kodą, pritaikykite jį žemiau."
+
+#: includes/customizer/sections/product.php:116
+#: includes/customizer/sections/product.php:132
+msgid "In pixels"
+msgstr "Pikseliais"
+
+#: includes/methods/admin/product/sections/shipping/documents-table-row.php:9
+msgid "Insert file URL"
+msgstr "Įterpti failo URL"
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:10
+msgid "Key"
+msgstr "Raktas"
+
+#: includes/methods/product/class-growtype-wc-product.php:568
+msgid "L"
+msgstr "L"
+
+#: includes/methods/admin/product/sections/data-attributes.php:12
+msgid "Label hidden"
+msgstr "Etiketė paslėpta"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:46
 msgid "Last name"
 msgstr "Pavardė"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:316
-msgid "Missing required values"
-msgstr "Trūksta būtinų verčių"
+#. %s is product title
+#: resources/views/woocommerce/single-product-reviews.php:72
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Palikite atsakymą %s"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:188
-msgid "Occupation"
-msgstr "Tipas"
+#: includes/customizer/sections/catalog.php:200
+msgid "Left"
+msgstr "Kairė"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:180
+#: includes/customizer/sections/product.php:256
+msgid "Lightbox"
+msgstr "Lengva dėžė"
+
+#: includes/customizer/sections/product.php:258
+msgid "Lightbox enabled/disabled"
+msgstr "„Lightbox“ įjungta / išjungta"
+
+#: includes/customizer/index.php:138
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Tag_Cloud.php:40
+msgid "List"
+msgstr "Sąrašas"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:67
+#: resources/views/woocommerce/myaccount/form-login.blade.php:68
+msgid "Log in"
+msgstr "Prisijungti"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:145
+msgid "Login here"
+msgstr "Prisijunkite čia"
+
+#: includes/methods/pages/account/main.php:33
+msgid "Logout"
+msgstr "Atsijungti"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:59
+msgid "Lost your password?"
+msgstr "Pamiršote slaptažodį?"
+
+#: resources/views/woocommerce/myaccount/form-lost-password.blade.php:30
+msgid ""
+"Lost your password? Please enter your username or email address. You will "
+"receive a link to create a new password via email."
+msgstr ""
+"Pamiršote slaptažodį? Įveskite savo vartotojo vardą arba el. pašto adresą. "
+"El. paštu gausite nuorodą, leidžiančią sukurti naują slaptažodį."
+
+#: includes/customizer/sections/product.php:196
+msgid "Main image constant"
+msgstr "Pagrindinė vaizdo konstanta"
+
+#: includes/customizer/sections/product.php:131
+msgid "Main IMG Height"
+msgstr "Pagrindinis IMG aukštis"
+
+#: includes/customizer/sections/product.php:151
+msgid "Main IMG is cropped"
+msgstr "Pagrindinis IMG apkarpytas"
+
+#: includes/customizer/sections/product.php:115
+msgid "Main IMG Width"
+msgstr "Pagrindinis IMG plotis"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:95
+#, php-format
+msgid "Max %s"
+msgstr "Maks. %s"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:105
+msgid "Maximum depth"
+msgstr "Didžiausias gylis"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:53
+msgid "Menu order"
+msgstr "Meniu tvarka"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:56
+msgid "Method is enabled"
+msgstr "Metodas įjungtas"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:62
+msgid "Method is visible in frontend"
+msgstr "Metodas matomas priekinėje dalyje"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:66
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Method.php:35
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:35
+msgid "Method title"
+msgstr "Metodo pavadinimas"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:89
+#, php-format
+msgid "Min %s"
+msgstr "Min %s"
+
+#: includes/methods/cart/actions/add-to-cart.php:19
+msgid "Missing info."
+msgstr "Trūksta informacijos."
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:95
+msgid "Multiple categories include parent category"
+msgstr "Kelios kategorijos apima pirminę kategoriją"
+
+#: includes/customizer/sections/general.php:31
+msgid "Multiple products"
+msgstr "Keli produktai"
+
+#: includes/customizer/sections/accesses.php:15
+msgid "Must have products"
+msgstr "Produktai turi būti"
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:38
+msgid "My account"
+msgstr "Mano sąskaita"
+
+#: resources/views/woocommerce/cart/cart.blade.php:27
+msgid "My Bag"
+msgstr "Mano krepšys"
+
+#: resources/views/woocommerce/single-product/meta.php:31
+msgid "N/A"
+msgstr "N/A"
+
+#: resources/views/woocommerce/single-product-reviews.php:85
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:54
+#: includes/methods/admin/product/sections/shipping/documents-table.php:8
+msgid "Name"
+msgstr "vardas"
+
+#: includes/customizer/sections/product.php:240
+msgid "Navigation arrows"
+msgstr "Navigacijos rodyklės"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:70
+msgid "New password (leave blank to leave unchanged)"
+msgstr "Naujas slaptažodis (palikite tuščią, kad nepakeistumėte)"
+
+#: resources/views/woocommerce/loop/pagination.blade.php:44
+msgid "Next"
+msgstr "Kitas"
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:16
+msgid "Next charge"
+msgstr "Kitas mokestis"
+
+#: resources/views/partials/content/404.php:5
+msgid "No content found"
+msgstr "Nerasta jokio turinio"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:316
+msgid "No product categories exist."
+msgstr "Produktų kategorijų nėra."
+
+#: includes/helpers/partials/cart.php:106
+msgid "No products in the cart."
+msgstr "Prekių krepšelyje nėra."
+
+#: resources/views/woocommerce/myaccount/payment-methods.blade.php:70
+msgid "No saved methods found."
+msgstr "Nerasta jokių išsaugotų metodų."
+
+#: public/class-growtype-wc-public.php:112
+msgid "No wishlist found"
+msgstr "Norų sąrašo nerasta"
+
+#: includes/methods/cart/actions/update-cart.php:58
+#: includes/methods/cart/actions/update-cart.php:73
+#: includes/methods/cart/actions/add-to-cart.php:56
+#: includes/methods/cart/actions/add-to-cart.php:103
+msgid "Not enough items exist in stock."
+msgstr "Sandėlyje nėra pakankamai prekių."
+
+#: resources/views/woocommerce/single-product-reviews.php:125
+msgid "Not that bad"
+msgstr "Ne taip jau blogai"
+
+#: resources/views/woocommerce/order/order-details.blade.php:96
+msgid "Note:"
+msgstr "Pastaba:"
+
+#: resources/views/woocommerce/single-product-reviews.php:137
+msgid ""
+"Only logged in customers who have purchased this product may leave a review."
+msgstr ""
+"Atsiliepimus gali palikti tik prisijungę klientai, kurie įsigijo šią prekę."
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:75
+msgid "Only show children of the current category"
+msgstr "Rodyti tik dabartinės kategorijos vaikus"
+
+#: includes/methods/subscriptions/index.php:261
+msgid "Order"
+msgstr "Įsakymas"
+
+#: resources/views/woocommerce/order/order-again.blade.php:23
+msgid "Order again"
+msgstr "Užsisakykite dar kartą"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:51
+msgid "Order by"
+msgstr "Rūšiuoti pagal"
+
+#: includes/customizer/sections/catalog.php:126
+msgid "Order By - Disabled Options"
+msgstr "Užsakyti pagal – išjungtos parinktys"
+
+#: includes/customizer/sections/catalog.php:110
+msgid "Order by enabled"
+msgstr "Užsakyti įjungus"
+
+#: resources/views/woocommerce/order/order-details.blade.php:46
+msgid "Order details"
+msgstr "Užsakymo detalės"
+
+#: includes/customizer/sections/checkout.php:58
+msgid "Order notes"
+msgstr "Užsakymo užrašai"
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:53
+msgid "Order number:"
+msgstr "Užsakymo numeris:"
+
+#: includes/methods/pages/account/main.php:24
+msgid "Orders"
+msgstr "Užsakymai"
+
+#: includes/customizer/sections/thankyou.php:41
+msgid "Page Style"
+msgstr "Puslapio stilius"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:44
+#: resources/views/woocommerce/myaccount/form-login.blade.php:118
 msgid "Password"
 msgstr "Slaptažodis"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:323
-msgid "Passwords do not match"
-msgstr "Slaptažodžiai nesutampa!"
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:59
+msgid "Password details"
+msgstr "Slaptažodžio informacija"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:185
-msgid "Phone"
-msgstr "Telefonas"
+#: resources/views/woocommerce/checkout/thankyou.blade.php:35
+msgid "Pay"
+msgstr "Mokėti"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:90
-msgid "Please fill all required fields."
+#: resources/views/woocommerce/emails/customer-invoice.php:67
+msgid "Pay for this order"
+msgstr "Mokėkite už šį užsakymą"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:75
+msgid "Payment method description that the customer will see on your checkout."
+msgstr "Mokėjimo būdo aprašymas, kurį klientas matys atsiskaitydamas."
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:76
+msgid "Payment method:"
+msgstr "Mokėjimo būdas:"
+
+#: includes/methods/pages/account/main.php:32
+msgid "Payment methods"
+msgstr "Mokėjimo metodai"
+
+#: resources/views/woocommerce/single-product-reviews.php:122
+msgid "Perfect"
+msgstr "Puikus"
+
+#: includes/methods/admin/product/sections/data-subscription.php:75
+msgid "Period"
+msgstr "Laikotarpis"
+
+#: includes/customizer/sections/checkout.php:400
+#: includes/methods/pages/checkout.php:44
+msgid "Place order"
+msgstr "Pateikti užsakymą"
+
+#: public/class-growtype-wc-public.php:113
+#, fuzzy
+#| msgid "Please fill all required fields."
+msgid "Please fill all required fields"
 msgstr "Prašome užpildyti visus būtinus laukus."
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:349
-msgid "Profile already registered."
-msgstr "Toks profilis jau egzistuoja."
+#: resources/views/woocommerce/checkout/payment.blade.php:33
+msgid "Please fill in your details above to see available payment methods."
+msgstr ""
+"Įveskite savo duomenis aukščiau, kad pamatytumėte galimus mokėjimo būdus."
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:377
-msgid "Registration successful."
-msgstr "Registracija sėkminga."
+#: includes/customizer/sections/catalog.php:130
+msgid "Please select options..."
+msgstr "Prašome pasirinkti parinktis..."
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:181
-msgid "Repeat Password"
+#: includes/methods/cart/actions/add-to-cart.php:138
+msgid "Please select product amount"
+msgstr "Prašome pasirinkti produkto kiekį"
+
+#: includes/customizer/sections/accesses.php:19
+msgid "Please select products..."
+msgstr "Prašome pasirinkti produktus..."
+
+#: includes/customizer/sections/checkout.php:162
+msgid "Postcode"
+msgstr "Pašto indeksas"
+
+#: resources/views/woocommerce/cart/cart.blade.php:162
+msgid "Press here."
+msgstr "Spauskite čia."
+
+#: includes/methods/components/product-single-button.php:40
+msgid "Preview"
+msgstr "Peržiūra"
+
+#: includes/customizer/sections/email.php:41
+msgid "Preview Email Template"
+msgstr "Peržiūrėti el. pašto šabloną"
+
+#: resources/views/woocommerce/loop/pagination.blade.php:43
+msgid "Previous"
+msgstr "Ankstesnis"
+
+#: resources/views/woocommerce/cart/cart.blade.php:77
+#: resources/views/woocommerce/myaccount/subscriptions.php:13
+#: includes/methods/admin/product/sections/data-subscription.php:70
+msgid "Price"
+msgstr "Kaina"
+
+#: includes/methods/emails/settings/email.php:11
+msgid "Print emails information to log file"
+msgstr "Spausdinkite el. laiškų informaciją į žurnalo failą"
+
+#: resources/views/woocommerce/cart/proceed-to-checkout-button.blade.php:26
+msgid "Proceed to checkout"
+msgstr "Pereikite prie apmokėjimo"
+
+#: resources/views/woocommerce/cart/cart.blade.php:84
+#: resources/views/woocommerce/order/order-details.blade.php:54
+msgid "Product"
+msgstr "Produktas"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:45
+msgid "Product categories"
+msgstr "Produktų kategorijos"
+
+#: resources/views/woocommerce/components/product-single-description.blade.php:5
+msgid "Product details"
+msgstr "Produkto Aprašymas"
+
+#: includes/customizer/sections/product.php:185
+msgid "Product Gallery Type"
+msgstr "Produktų galerijos tipas"
+
+#: includes/customizer/sections/product.php:47
+msgid "Product page is disabled"
+msgstr "Produkto puslapis išjungtas"
+
+#: includes/customizer/sections/product-preview.php:6
+msgid "Product Preview"
+msgstr "Produkto peržiūra"
+
+#: includes/customizer/sections/product-preview.php:41
+msgid "Product Preview Style"
+msgstr "Produkto peržiūros stilius"
+
+#: includes/customizer/sections/product.php:9
+msgid "Product Single Page"
+msgstr "Produkto vienas puslapis"
+
+#: includes/customizer/sections/catalog.php:32
+#: includes/customizer/sections/product.php:529
+msgid "Products preview style"
+msgstr "Produktų peržiūros stilius"
+
+#: includes/methods/pages/account/main.php:25
+msgid "Profile"
+msgstr "Profilis"
+
+#: includes/methods/pages/account/main.php:25
+msgid "Profile & business details"
+msgstr "Profilis ir įmonės informacija"
+
+#: includes/methods/pages/account/main.php:24
+msgid "Purchase history"
+msgstr "Pirkimo istorija"
+
+#: includes/methods/pages/account/main.php:28
+msgid "Purchased products"
+msgstr "Nupirkti produktai"
+
+#: resources/views/woocommerce/cart/cart.blade.php:109
+msgid "Quantity"
+msgstr "Kiekis"
+
+#: includes/methods/admin/product/sections/data-attributes.php:8
+msgid "Radio select"
+msgstr "Radijo pasirinkimas"
+
+#: resources/views/woocommerce/single-product-reviews.php:121
+msgid "Rate&hellip;"
+msgstr "Įvertinti…"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:104
+#, php-format
+msgid "Rated %s out of 5"
+msgstr "Įvertintas %s iš 5"
+
+#: includes/customizer/index.php:69
+msgid "Redirect to specific page if user does not have specific products."
+msgstr ""
+"Jei vartotojas neturi konkrečių produktų, nukreipkite į konkretų puslapį."
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:92
+#: resources/views/woocommerce/myaccount/form-login.blade.php:134
+#: resources/views/woocommerce/myaccount/form-login.blade.php:135
+msgid "Register"
+msgstr "Registruotis"
+
+#: includes/customizer/sections/product.php:513
+msgid "Related products are enabled."
+msgstr "Susiję produktai įjungti."
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:54
+msgid "Remember me"
+msgstr "Prisimink mane"
+
+#. %s: minimum price
+#. %s: maximum price
+#. %s: rating
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:81
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:89
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:95
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:104
+msgid "Remove filter"
+msgstr "Išimkite filtrą"
+
+#: public/class-growtype-wc-public.php:110
+msgid "Remove from wishlist"
+msgstr "Pašalinti iš pageidavimų sąrašo"
+
+#: includes/helpers/partials/cart.php:34
+#: resources/views/woocommerce/cart/cart.blade.php:54
+msgid "Remove this item"
+msgstr "Pašalinti šį elementą"
+
+#: resources/views/woocommerce/myaccount/form-lost-password.blade.php:44
+#: resources/views/woocommerce/myaccount/form-lost-password.blade.php:45
+#, fuzzy
+#| msgid "Repeat Password"
+msgid "Reset password"
 msgstr "Pakartokite slaptažodį"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:190
-msgid "School"
-msgstr "Mokykla"
+#: resources/views/woocommerce/myaccount/subscriptions.php:28
+msgid "Resume"
+msgstr "Aprašymas"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:195
-msgid "Subject"
-msgstr "Tema"
+#: resources/views/woocommerce/checkout/cart-errors.blade.php:25
+msgid "Return to cart"
+msgstr "Grįžti į krepšelį"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:282
-msgid "Upload"
-msgstr "Įkelti"
+#: resources/views/woocommerce/cart/cart-empty.blade.php:28
+msgid "Return to shop"
+msgstr "Grįžti į parduotuvę"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:129
-msgid "Upload content"
-msgstr "Įkelti turinį"
+#: resources/views/woocommerce/single-product-reviews.php:32
+msgid "Reviews"
+msgstr "Atsiliepimai"
 
-#: ../../../../../packages/growtype-wc/includes/methods/upload.php:194
-msgid "User name"
+#: includes/customizer/sections/catalog.php:201
+msgid "Right"
+msgstr "Teisingai"
+
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:86
+#: resources/views/woocommerce/myaccount/form-edit-account.blade.php:87
+msgid "Save changes"
+msgstr "Išsaugoti pakeitimus"
+
+#: includes/methods/product/class-growtype-wc-product.php:248
+msgid "Select"
+msgstr "Pasirinkite"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:295
+msgid "Select a category"
+msgstr "Pasirinkite kategoriją"
+
+#: includes/methods/admin/product/sections/data-shipping.php:29
+msgid "Select a country / region&hellip;"
+msgstr "Pasirinkite šalį / regioną…"
+
+#: includes/customizer/sections/general.php:24
+msgid "Selling model"
+msgstr "Parduodamas modelis"
+
+#: resources/views/woocommerce/checkout/form-shipping.blade.php:31
+msgid "Ship to a different address?"
+msgstr "Siųsti kitu adresu?"
+
+#: resources/views/woocommerce/cart/cart-totals.blade.php:52
+#: resources/views/woocommerce/cart/cart-totals.blade.php:53
+msgid "Shipping"
+msgstr "Siuntimas"
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:27
+#: includes/methods/pages/account/main.php:35
+msgid "Shipping address"
+msgstr "Pristatymo adresas"
+
+#: includes/methods/pages/account/main.php:26
+msgid "Shipping and billing details"
+msgstr "Pristatymo ir atsiskaitymo informacija"
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:3
+msgid "Shipping documents"
+msgstr "Siuntimo dokumentai"
+
+#: includes/methods/shipping/printful/index.php:50
+msgid "Shipping price:"
+msgstr "Siuntimo kaina:"
+
+#: includes/methods/widgets/widgets.php:46
+msgid "Shop sidebar"
+msgstr "Parduotuvės šoninė juosta"
+
+#: resources/views/components/cart.php:4
+msgid "Shopping bag"
+msgstr "Pirkinių krepšys"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:60
+msgid "Show as dropdown"
+msgstr "Rodyti kaip išskleidžiamąjį meniu"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Tag_Cloud.php:46
+msgid "Show count"
+msgstr "Rodyti skaičių"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:70
+msgid "Show hierarchy"
+msgstr "Rodyti hierarchiją"
+
+#: resources/views/partials/single-product/gallery/type-3.php:43
+msgid "Show more photos"
+msgstr "Rodyti daugiau nuotraukų"
+
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:65
+msgid "Show product counts"
+msgstr "Rodyti produktų skaičių"
+
+#: includes/customizer/sections/product-preview.php:156
+msgid "Show product preview single price only."
+msgstr "Rodyti tik produkto peržiūros vieną kainą."
+
+#: includes/customizer/sections/product-preview.php:226
+msgid "Show sale badge as percentage."
+msgstr "Rodyti pardavimo ženklelį procentais."
+
+#: includes/customizer/sections/catalog.php:176
+msgid "Sidebar enabled/disabled"
+msgstr "Šoninė juosta įjungta / išjungta"
+
+#: includes/customizer/sections/product.php:585
+msgid "Sidebar is enabled"
+msgstr "Šoninė juosta įjungta"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:29
+msgid "Sign in"
+msgstr "Prisijungti"
+
+#: includes/methods/pages/account/main.php:33
+msgid "Sign out from system"
+msgstr "Atsijungti nuo sistemos"
+
+#. $1 and $2 opening and closing emphasis tags respectively
+#: resources/views/woocommerce/checkout/payment.blade.php:42
+#, php-format
+msgid ""
+"Since your browser does not support JavaScript, or it is disabled, please "
+"ensure you click the %1$sUpdate Totals%2$s button before placing your order. "
+"You may be charged more than the amount stated above if you fail to do so."
+msgstr ""
+"Kadangi jūsų naršyklė nepalaiko „JavaScript“ arba ji išjungta, prieš "
+"pateikdami užsakymą spustelėkite mygtuką %1$sUpdate Totals%2$s. Jei to "
+"nepadarysite, galite būti apmokestinti didesne suma, nei nurodyta anksčiau."
+
+#: includes/customizer/sections/general.php:33
+msgid "Single item"
+msgstr "Pavienis daiktas"
+
+#: includes/customizer/sections/general.php:32
+msgid "Single product"
+msgstr "Vienetinis produktas"
+
+#: resources/views/woocommerce/single-product/add-to-cart/variable.php:83
+msgid "Size"
+msgstr "Dydis"
+
+#: includes/customizer/sections/cart.php:60
+msgid "Skip cart page and go directly to checkout"
+msgstr "Praleiskite krepšelio puslapį ir eikite tiesiai į apmokėjimą"
+
+#: resources/views/woocommerce/single-product/meta.php:30
+msgid "SKU:"
+msgstr "SKU:"
+
+#: includes/customizer/sections/product.php:220
+msgid "Slide"
+msgstr "Skaidrė"
+
+#: public/class-growtype-wc-public.php:111
+msgid "Something went wrong, please contact our support"
+msgstr "Kažkas ne taip, susisiekite su mūsų palaikymo komanda"
+
+#: includes/methods/cart/actions/add-to-cart.php:77
+msgid "Something went wrong. We can not reserve your order."
+msgstr "Kažkas nutiko. Mes negalime rezervuoti jūsų užsakymo."
+
+#: includes/methods/cart/actions/add-to-cart.php:93
+msgid ""
+"Sorry to tell you, but this auction is already reserved for another user. "
+"Best of luck next time."
+msgstr ""
+"Atsiprašome, bet šis aukcionas jau rezervuotas kitam vartotojui. Sėkmės kitą "
+"kartą."
+
+#: resources/views/woocommerce/checkout/payment.blade.php:33
+msgid ""
+"Sorry, it seems that there are no available payment methods for your state. "
+"Please contact us if you require assistance or wish to make alternate "
+"arrangements."
+msgstr ""
+"Atsiprašome, atrodo, kad jūsų valstijoje nėra galimų mokėjimo metodų. "
+"Susisiekite su mumis, jei jums reikia pagalbos arba norite susitarti kitaip."
+
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Method.php:38
+msgid "Standard"
+msgstr "Standartinis"
+
+#: includes/customizer/sections/checkout.php:188
+msgid "State"
+msgstr "valstybė"
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:14
+msgid "Status"
+msgstr "Būsena"
+
+#: includes/customizer/index.php:150
+msgid "Store"
+msgstr "Parduotuvė"
+
+#: includes/customizer/sections/product-preview.php:48
+msgid "Style 1"
+msgstr "1 stilius"
+
+#: includes/customizer/sections/product-preview.php:49
+msgid "Style 2"
+msgstr "2 stilius"
+
+#: resources/views/woocommerce/single-product-reviews.php:76
+msgid "Submit"
+msgstr "Pateikti"
+
+#: includes/methods/subscriptions/index.php:259
+#: includes/methods/pages/account/main.php:30
+msgid "Subscription"
+msgstr "Prenumerata"
+
+#: includes/methods/pages/account/main.php:30
+msgid "Subscription details"
+msgstr "Prenumeratos informacija"
+
+#: includes/methods/admin/product/sections/data-subscription.php:42
+msgid "Subscription settings"
+msgstr "Prenumeratos nustatymai"
+
+#: includes/helpers/partials/subscription.php:199
+msgctxt "Subscription status"
+msgid "Active"
+msgstr "Aktyvus"
+
+#: includes/helpers/partials/subscription.php:201
+msgctxt "Subscription status"
+msgid "Cancelled"
+msgstr "Atšauktas"
+
+#: includes/helpers/partials/subscription.php:203
+msgctxt "Subscription status"
+msgid "Expired"
+msgstr "Baigėsi galiojimo laikas"
+
+#: includes/helpers/partials/subscription.php:200
+msgctxt "Subscription status"
+msgid "On hold"
+msgstr "Sulaikyta"
+
+#: includes/helpers/partials/subscription.php:198
+msgctxt "Subscription status"
+msgid "Pending"
+msgstr "Kol"
+
+#: includes/helpers/partials/subscription.php:204
+msgctxt "Subscription status"
+msgid "Pending Cancellation"
+msgstr "Laukiama atšaukimo"
+
+#: includes/helpers/partials/subscription.php:202
+msgctxt "Subscription status"
+msgid "Switched"
+msgstr "Perjungta"
+
+#: includes/helpers/partials/cart.php:93
+#: resources/views/woocommerce/cart/cart-totals.blade.php:30
+#: resources/views/woocommerce/cart/cart-totals.blade.php:31
+msgid "Subtotal"
+msgstr "Tarpinė suma"
+
+#: includes/customizer/index.php:139
+msgid "Table"
+msgstr "Lentelė"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:76
+msgid "Test payment process without paying any money."
+msgstr "Išbandykite mokėjimo procesą nemokėdami pinigų."
+
+#: includes/customizer/sections/thankyou.php:6
+msgid "Thank You Page"
+msgstr "Ačiū Puslapiui"
+
+#: includes/helpers/partials/order.php:25
+msgid "Thank you. Your order has been received."
+msgstr "Ačiū. Jūsų užsakymas buvo priimtas."
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:46
+msgid "The following addresses will be used on the checkout page by default."
+msgstr ""
+"Pagal numatytuosius nustatymus atsiskaitymo puslapyje bus naudojami šie "
+"adresai."
+
+#: includes/methods/cart/actions/add-to-cart.php:179
+msgid "The selected product is out of stock."
+msgstr "Pasirinktos prekės nėra sandėlyje."
+
+#: resources/views/woocommerce/single-product-reviews.php:58
+msgid "There are no reviews yet."
+msgstr "Kol kas atsiliepimų nėra."
+
+#: resources/views/woocommerce/checkout/cart-errors.blade.php:21
+msgid ""
+"There are some issues with the items in your cart. Probably we do not have "
+"enough items in our stock. Please go back to the cart page and resolve these "
+"issues before checking out."
+msgstr ""
+"Yra keletas problemų, susijusių su jūsų krepšelyje esančiomis prekėmis. "
+"Tikriausiai neturime pakankamai prekių savo sandėlyje. Grįžkite į krepšelio "
+"puslapį ir prieš atsiskaitydami išspręskite šias problemas."
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:68
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Method.php:37
+#: includes/methods/shipping/printful/partials/WC_Printful_Shipping_Standard_Carbon_Offset_Method.php:37
+msgid "This controls the title which the user sees during checkout."
+msgstr "Tai valdo pavadinimą, kurį vartotojas mato atsiskaitydamas."
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:10
+msgid "This is the key of the product."
+msgstr "Tai yra produkto raktas."
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:8
+msgid "This is the name of the download shown to the customer."
+msgstr "Tai klientui rodomo atsisiuntimo pavadinimas."
+
+#: includes/methods/admin/product/sections/shipping/documents-table.php:9
+msgid ""
+"This is the URL or absolute path to the file which customers will get access "
+"to. URLs entered here should already be encoded."
+msgstr ""
+"Tai URL arba absoliutus kelias į failą, prie kurio klientai turės prieigą. "
+"Čia įvesti URL jau turėtų būti užkoduoti."
+
+#: resources/views/woocommerce/single-product/add-to-cart/variable.php:35
+msgid "This product is currently out of stock and unavailable."
+msgstr "Šio produkto šiuo metu nėra sandėlyje ir jis neprieinamas."
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:12
+#: includes/methods/widgets/components/Custom_WC_Widget_Product_Categories.php:46
+#: includes/methods/widgets/components/Custom_WC_Widget_Layered_Nav_Filters.php:28
+msgid "Title"
+msgstr "Pavadinimas"
+
+#: resources/views/woocommerce/cart/cart-totals.blade.php:25
+#: resources/views/woocommerce/cart/cart-totals.blade.php:98
+#: resources/views/woocommerce/cart/cart-totals.blade.php:99
+#: resources/views/woocommerce/order/order-details.blade.php:55
+msgid "Total"
+msgstr "Iš viso"
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:70
+msgid "Total:"
+msgstr "Iš viso:"
+
+#: resources/views/partials/content/404.php:6
+msgid "Unfortunately no content was found"
+msgstr "Deja, turinio nerasta"
+
+#: includes/helpers/partials/order.php:31
+msgid "Unfortunately we do not received information about your payment yet."
+msgstr "Deja, dar negavome informacijos apie jūsų mokėjimą."
+
+#: resources/views/woocommerce/checkout/thankyou.blade.php:31
+msgid ""
+"Unfortunately your order cannot be processed as the originating "
+"bank/merchant has declined your transaction. Please attempt your purchase "
+"again."
+msgstr ""
+"Deja, jūsų užsakymas negali būti apdorotas, nes bankas / prekybininkas "
+"atmetė jūsų operaciją. Bandykite pirkti dar kartą."
+
+#: includes/methods/product/class-growtype-wc-product.php:523
+msgid "units"
+msgstr "vienetų"
+
+#: resources/views/woocommerce/cart/cart.blade.php:146
+msgid "Update cart"
+msgstr "Krepšelio atnaujinimas"
+
+#: resources/views/woocommerce/checkout/payment.blade.php:44
+msgid "Update totals"
+msgstr "Atnaujinti sumas"
+
+#: resources/views/components/modal/subscription.php:14
+msgid "Upgrade to Premium"
+msgstr "Naujovinkite į Premium"
+
+#: resources/views/components/modal/subscription.php:5
+msgid "Upgrade to Unlock"
+msgstr "Atnaujinkite į atrakinimą"
+
+#: resources/views/woocommerce/myaccount/uploaded-products.blade.php:6
+msgid "Upload a new product"
+msgstr "Įkelkite naują produktą"
+
+#: includes/methods/pages/account/main.php:29
+msgid "Uploaded products"
+msgstr "Įkelti produktai"
+
+#: includes/methods/subscriptions/index.php:260
+msgid "User"
+msgstr "Vartotojas"
+
+#: includes/customizer/index.php:52
+msgid "User must have specific products before continuing."
+msgstr "Prieš tęsdamas vartotojas turi turėti konkrečius produktus."
+
+#: includes/customizer/sections/accesses.php:16
+msgid "User must order specific products to proceed. "
+msgstr "Norėdami tęsti, vartotojas turi užsisakyti konkrečius produktus."
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:102
+#, fuzzy
+#| msgid "User name"
+msgid "Username"
 msgstr "Vartotojo vardas"
 
-#. Description of the plugin
-msgid "Woocommerce extra functionality for \"Growtype\" theme"
-msgstr "„Woocommerce“ papildomos funkcijos „Growtype“ temai"
+#: resources/views/woocommerce/myaccount/form-lost-password.blade.php:34
+msgid "Username or email"
+msgstr "Vartotojo vardas arba elektroninio pašto adresas"
+
+#: resources/views/woocommerce/myaccount/form-login.blade.php:38
+msgid "Username or email address"
+msgstr "Vartotojo vardas arba elektroninio pašto adresas"
+
+#: includes/customizer/sections/checkout.php:23
+#: includes/customizer/sections/product.php:193
+msgid "Vertical"
+msgstr "Vertikalus"
+
+#: resources/views/woocommerce/single-product-reviews.php:126
+msgid "Very poor"
+msgstr "Labai prastas"
+
+#: includes/helpers/partials/cart.php:99
+msgid "View cart"
+msgstr "Peržiūrėti krepšelį"
+
+#: includes/methods/payments/gateways/wc-gateway-free.php:60
+msgid "Visibility"
+msgstr "Matomumas"
+
+#: resources/views/woocommerce/emails/customer-completed-order.php:36
+msgid "We have finished processing your order."
+msgstr "Baigėme apdoroti jūsų užsakymą."
+
+#: includes/customizer/sections/catalog.php:127
+msgid "Which order by options should be disabled."
+msgstr "Kuri tvarka pagal parinktis turėtų būti išjungta."
+
+#: includes/customizer/sections/wishlist.php:6
+msgid "Wishlist"
+msgstr "Norų sąrašas"
+
+#: includes/customizer/sections/product.php:83
+msgid "Woocommerce breadcrumb"
+msgstr "Woocommerce džiūvėsėlis"
+
+#: includes/methods/cart/actions/add-to-cart.php:106
+msgid "You already placed an order to buy this product."
+msgstr "Jau pateikėte užsakymą įsigyti šį produktą."
+
+#: includes/methods/shortcodes/partials/product.php:30
+msgid "You have no products."
+msgstr "Jūs neturite produktų."
+
+#: resources/views/woocommerce/myaccount/subscriptions.php:36
+msgid "You have no subscriptions."
+msgstr "Neturite prenumeratų."
+
+#: resources/views/woocommerce/myaccount/my-address.blade.php:67
+msgid "You have not set up this type of address yet."
+msgstr "Dar nenustatėte tokio tipo adreso."
+
+#. %s opening and closing link tags respectively
+#: resources/views/woocommerce/single-product-reviews.php:116
+#, php-format
+msgid "You must be %1$slogged in%2$s to post a review."
+msgstr ""
+"Turite būti %1$ssiregistravę %2$s, kad galėtumėte paskelbti atsiliepimą."
+
+#: resources/views/woocommerce/checkout/form-checkout.php:26
+msgid "You must be logged in to checkout."
+msgstr "Norėdami atsiskaityti, turite būti prisijungę."
+
+#: resources/views/woocommerce/checkout/form-checkout.php:64
+msgid "Your order"
+msgstr "Jūsų užsakymas"
+
+#: includes/methods/pages/account/main.php:28
+msgid "Your products"
+msgstr "Jūsų produktai"
+
+#: resources/views/woocommerce/single-product-reviews.php:120
+msgid "Your rating"
+msgstr "Jūsų įvertinimas"
+
+#: resources/views/woocommerce/single-product-reviews.php:130
+msgid "Your review"
+msgstr "Tavo atsiliepimas"
+
+#: includes/methods/pages/account/main.php:29
+msgid "Your uploads"
+msgstr "Jūsų įkėlimai"

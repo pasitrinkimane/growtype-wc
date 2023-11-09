@@ -1,0 +1,22 @@
+.auction-time-countdown {
+    font-size: 14px;
+    line-height: 16px;
+    padding: 0;
+    margin: 0;
+}
+
+.auction-time-countdown .countdown_row {
+    display: flex;
+    gap: 10px;
+}
+
+.countdown_section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+}
+
+.countdown_section br {
+    display: none;
+}

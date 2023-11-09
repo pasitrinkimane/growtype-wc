@@ -1917,16 +1917,18 @@ p.demo_store,
         text-align: left;
         margin: 0;
 
-        &:first-child {
-          padding-top: 20px;
-        }
-
         input {
           margin: 0 1em 0 0;
         }
 
         img + img {
           margin-left: 2px;
+        }
+      }
+
+      & > li {
+        &:first-child {
+          padding-top: 20px;
         }
       }
 

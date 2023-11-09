@@ -5,16 +5,13 @@ import {inputQuantity} from "./components/input-quantity"
 import {countdown} from "./components/countdown"
 import {productVariation} from "./components/product-variation"
 import {selectCart} from "./components/select-cart";
+import {message} from "./components/message";
 import {sidebar} from "./sidebar";
 
 window.growtypeWc = {}
 
 jQuery(document).ready(() => {
-
-    $('.woocommerce-error .btn-close, .woocommerce-info .btn-close, .woocommerce-message .btn-close').click(function () {
-        $(this).parent().fadeOut();
-    })
-
+    message();
     productSlider();
     productsSlider();
     productGalleryExtend();

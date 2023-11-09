@@ -4,7 +4,7 @@ mix
     .sass('resources/styles/growtype-wc.scss', 'styles')
 
 mix.setPublicPath('./public');
-mix.setResourceRoot('./')
+mix.setResourceRoot('./../');
 
 // mix.autoload({
 //     jquery: ['$', 'window.jQuery']
@@ -24,6 +24,7 @@ mix
      */
     .copyDirectory('resources/fonts', 'public/styles/fonts')
     .copyDirectory('resources/icons', 'public/icons')
+    .copyDirectory('resources/libs', 'public/libs')
 
 mix
     .sourceMaps()

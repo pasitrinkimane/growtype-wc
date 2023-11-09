@@ -244,11 +244,6 @@ li.product {
     li {
       &.product {
         width: calc(100% / 2 - 20px);
-        @include bp-phone-xl() {
-          width: calc(50% - 15px);
-          margin-left: 5px;
-          margin-right: 5px;
-        }
       }
     }
   }
@@ -278,7 +273,6 @@ li.product {
 
 .product {
   .badge {
-    position: absolute;
     text-align: center;
     background-color: #77a464;
     color: #fff;
@@ -286,16 +280,70 @@ li.product {
     border-radius: 5px;
     margin: -10px;
     font-size: 12px;
-    padding: 10px 15px;
-    right: 0;
+    padding: 6px 15px;
     top: 0;
     left: initial;
     min-width: 80px;
     min-height: initial;
     font-weight: 500;
     line-height: 16px;
+    position: absolute;
+    border-radius: 30px;
     @include bp-phone-xl() {
       margin: -5px;
+    }
+
+    & + .woocommerce-loop-product__title {
+      padding-top: 40px;
+    }
+  }
+
+  .badge-promo {
+    right: 0;
+  }
+
+  .badge-percentage {
+    left: 0;
+  }
+
+  &[data-type="subscription"] {
+    .content-wrapper {
+      padding: 15px;
+      border-radius: 5px;
+
+      .woocommerce-loop-product__title {
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      ins {
+        text-decoration: none;
+
+        bdi {
+          font-size: 32px;
+          font-weight: bold;
+        }
+      }
+
+      .badge-percentage {
+        left: 30px;
+      }
+
+      .badge-promo {
+        top: 20px;
+        right: 20px;
+      }
+
+      p {
+        font-size: 12px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        opacity: 0.9;
+      }
+
+      .btn {
+        width: 100%;
+      }
     }
   }
 }
@@ -343,10 +391,6 @@ li.product {
 
   .content-wrapper {
     margin-bottom: 10px;
-    @include bp-phone-xl() {
-      padding-left: 5px;
-      padding-right: 5px;
-    }
 
     &:empty {
       margin-bottom: 0;
@@ -397,7 +441,7 @@ li.product {
 }
 
 .woocommerce ul.products li.product .price {
-  color: $color-text;
+  color: var(--text-color);
   font-size: 15px;
   margin-bottom: 0;
   font-weight: 500;
@@ -430,7 +474,7 @@ li.product {
 .woocommerce-loop-product__link {
   &:hover {
     .content-wrapper {
-      color: $color-text;
+      color: var(--text-color);
     }
   }
 }

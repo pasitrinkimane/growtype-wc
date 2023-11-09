@@ -3,8 +3,8 @@
 /**
  * Coupon scripts
  */
-add_action('wp_enqueue_scripts', 'coupon_scripts_styles');
-function coupon_scripts_styles()
+add_action('wp_enqueue_scripts', 'growtype_wc_coupon_scripts_styles');
+function growtype_wc_coupon_scripts_styles()
 {
     if (class_exists('woocommerce') && is_cart()) {
         if (wc_coupons_enabled()) {

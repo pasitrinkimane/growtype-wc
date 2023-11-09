@@ -82,7 +82,7 @@ function growtype_wc_extend_body_classes($classes)
     if (is_single()) {
         $classes[] = get_theme_mod('woocommerce_product_page_gallery_type', 'woocommerce-product-gallery-type-2');
 
-        $single_item_available = growtype_wc_single_item_available(get_the_ID());
+        $single_item_available = growtype_wc_product_is_sold_individually(get_the_ID());
 
         if ($single_item_available) {
             $classes[] = 'single-item-available';

@@ -1,5 +1,9 @@
 function inputQuantity() {
     function changeInputQuantityWithArrows() {
+        if (jQuery('.addtocart-wrapper .quantity .btn').length === 0) {
+            $('.addtocart-wrapper .quantity').hide();
+        }
+
         jQuery('.quantity .btn').click(function () {
             var currentQuantityInput = jQuery(this).closest('.quantity').find('.qty');
             var currentQuantity = currentQuantityInput.val().length > 0 ? currentQuantityInput.val() : 0;

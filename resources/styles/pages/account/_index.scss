@@ -1,3 +1,5 @@
+@import "subpages/subscription";
+
 .woocommerce-account {
   .woocommerce-MyAccount-navigation {
     width: 100%;
@@ -53,7 +55,7 @@
               padding: 3px 10px;
               border-radius: 5px;
               font-size: 22px;
-              color: $color-text;
+              color: var(--text-color);
             }
           }
 
@@ -89,13 +91,12 @@
         }
 
         a {
-          color: $color-text;
+          color: var(--text-color);
           font-size: $font-size-body;
           padding: 15px;
           display: inline-block;
           width: 100%;
           background: white;
-          box-shadow: 1px 3px 14px 0px #eeeeee;
           border-radius: 5px;
           padding-left: 70px;
           position: relative;
@@ -204,6 +205,9 @@
     border-radius: 10px;
     padding: 25px 30px;
     margin-bottom: 35px;
+    @include bp-phone-xl() {
+      padding: 15px;
+    }
 
     .b-info-header-cta {
       margin-right: 20px;

@@ -21,10 +21,10 @@ class Growtype_Wc_Admin_Settings
     function admin_menu_pages()
     {
         add_options_page(
-            __('Growtype - Wc', 'growtype-wc'),
-            __('Growtype - Wc', 'growtype-wc'),
+            'Growtype - Wc',
+            'Growtype - Wc',
             'manage_options',
-            'growtype-wc-settings',
+            self::PAGE_NAME,
             array ($this, 'options_page_content'),
             1
         );

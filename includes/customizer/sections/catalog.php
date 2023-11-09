@@ -4,7 +4,7 @@
  */
 $wp_customize->add_setting('wc_catalog_result_count_hide',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -62,7 +62,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('catalog_disable_access',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -98,7 +98,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('wc_catalog_orderby_disable',
     array (
-        'default' => 0,
+        'default' => false,
         'transport' => 'refresh',
     )
 );
@@ -164,7 +164,7 @@ $wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_custom
  */
 $wp_customize->add_setting('catalog_sidebar_enabled',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );

@@ -114,8 +114,11 @@ function growtype_wc_get_wishlist_html($wishlist_ids)
     return $content;
 }
 
-add_action('admin_post_nopriv_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
-add_action('admin_post_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
+/**
+ * Wishlist update
+ */
+add_action('wp_ajax_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
+add_action('wp_ajax_nopriv_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
 function growtype_wc_update_wishlist_ajax()
 {
     if (isset($_POST["user_id"]) && !empty($_POST["user_id"])) {
@@ -125,5 +128,10 @@ function growtype_wc_update_wishlist_ajax()
             update_user_meta($user_id, 'wishlist_ids', $_POST["wishlist_ids"]);
         }
     }
-    die();
+
+    echo wp_send_json(
+        [
+            'success' => true
+        ]
+    );
 }

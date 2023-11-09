@@ -41,7 +41,7 @@ function growtype_wc_create_account_default_checked()
 add_filter('woocommerce_order_button_text', 'growtype_wc_order_button_text');
 function growtype_wc_order_button_text($button_text)
 {
-    $woocommerce_checkout_billing_section_title = !empty(get_theme_mod('woocommerce_checkout_place_order_button_title')) ? get_theme_mod('woocommerce_checkout_place_order_button_title') : 'Place order';
+    $woocommerce_checkout_billing_section_title = !empty(get_theme_mod('woocommerce_checkout_place_order_button_title')) ? get_theme_mod('woocommerce_checkout_place_order_button_title') : __('Place order', 'growtype-wc');
     return $woocommerce_checkout_billing_section_title;
 }
 
@@ -98,9 +98,35 @@ add_filter('woocommerce_billing_fields', 'growtype_wc_billing_fields');
 function growtype_wc_billing_fields($fields)
 {
     /**
+     * City
+     */
+    $state = get_theme_mod('woocommerce_checkout_billing_city', 'required');
+
+    switch ($state) {
+        case 'required':
+            $fields['billing_city']['required'] = true;
+            break;
+        case 'hidden':
+            unset($fields['billing_city']);
+    }
+
+    /**
+     * State
+     */
+    $state = get_theme_mod('woocommerce_checkout_billing_state', 'required');
+
+    switch ($state) {
+        case 'required':
+            $fields['billing_state']['required'] = true;
+            break;
+        case 'hidden':
+            unset($fields['billing_state']);
+    }
+
+    /**
      * Email
      */
-    $email = get_theme_mod('woocommerce_checkout_email');
+    $email = get_theme_mod('woocommerce_checkout_billing_email', 'required');
 
     switch ($email) {
         case 'required':
@@ -114,9 +140,35 @@ function growtype_wc_billing_fields($fields)
     }
 
     /**
+     * country
+     */
+    $country = get_theme_mod('woocommerce_checkout_billing_country', 'required');
+
+    switch ($country) {
+        case 'required':
+            $fields['billing_country']['required'] = true;
+            break;
+        case 'hidden':
+            unset($fields['billing_country']);
+    }
+
+    /**
+     * Address 1
+     */
+    $address_1 = get_theme_mod('woocommerce_checkout_billing_address_1', 'required');
+
+    switch ($address_1) {
+        case 'required':
+            $fields['billing_address_1']['required'] = true;
+            break;
+        case 'hidden':
+            unset($fields['billing_address_1']);
+    }
+
+    /**
      * Postcode
      */
-    $postcode = get_theme_mod('woocommerce_checkout_postcode');
+    $postcode = get_theme_mod('woocommerce_checkout_billing_postcode', 'required');
 
     switch ($postcode) {
         case 'required':
@@ -145,6 +197,21 @@ function growtype_wc_billing_fields($fields)
         if (!empty(get_user_meta(get_current_user_id(), 'postcode', true))) {
             $fields['billing_postcode']['default'] = get_user_meta(get_current_user_id(), 'postcode', true);
         }
+    }
+
+    /**
+     * Billing fields
+     */
+    if (!get_theme_mod('woocommerce_checkout_billing_fields', true)) {
+        unset($fields['billing_company']);
+        unset($fields['billing_city']);
+        unset($fields['billing_postcode']);
+        unset($fields['billing_country']);
+        unset($fields['billing_state']);
+        unset($fields['billing_address_1']);
+        unset($fields['billing_address_2']);
+        unset($fields['billing_first_name']);
+        unset($fields['billing_last_name']);
     }
 
     return $fields;

@@ -14,7 +14,7 @@
             <div class="woocommerce container">
                 <?php
                 if (growtype_wc_user_can_manage_shop()) {
-                    $order = get_user_first_order();
+                    $order = growtype_wc_get_user_first_order();
                     echo growtype_wc_include_view('woocommerce.checkout.thankyou', ['order' => $order]);
                 }
                 ?>

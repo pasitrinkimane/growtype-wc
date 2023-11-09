@@ -5,6 +5,8 @@
   margin-bottom: 20px;
 
   li {
+    margin: 0;
+
     &:last-child {
       margin-bottom: 0;
     }
@@ -14,8 +16,11 @@
     content: "\E828";
     font-family: growtype-icons;
     font-size: 18px;
-    top: 12px;
+    top: 0;
     left: 20px;
+    bottom: 0;
+    margin: auto;
+    height: 27px;
   }
 
   .btn-close {
@@ -23,7 +28,7 @@
     right: 35px;
     top: 17px;
     font-size: 18px;
-    color: $color-text;
+    color: var(--text-color);
     cursor: pointer;
   }
 }

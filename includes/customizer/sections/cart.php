@@ -13,7 +13,7 @@ $wp_customize->add_section(
  */
 $wp_customize->add_setting('woocommerce_cart_enabled',
     array (
-        'default' => 1,
+        'default' => true,
         'transport' => 'refresh',
     )
 );

@@ -1,3 +1,9 @@
+.logged-in{
+  .hide-if-login{
+    display: none;
+  }
+}
+
 .btn-primary {
   cursor: pointer;
 }

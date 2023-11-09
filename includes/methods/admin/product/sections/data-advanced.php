@@ -124,7 +124,7 @@ function growtype_wc_product_options_advanced()
     // External Url
     woocommerce_wp_text_input(array (
         'id' => '_price_details',
-        'label' => 'Extra details about price',
+        'label' => 'Extra details about price (f.e. month, year)',
         'description' => 'F.e. how ofter this price will be charged',
         'desc_tip' => 'true'
     ));
