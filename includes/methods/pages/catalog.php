@@ -3,7 +3,7 @@
 add_filter('growtype_page_is_among_enabled_pages', 'growtype_wc_page_is_among_enabled_pages');
 function growtype_wc_page_is_among_enabled_pages($enabled_pages)
 {
-    if (class_exists('woocommerce')) {
+    if (class_exists('woocommerce') && !empty($enabled_pages)) {
         if (
             (is_product() && in_array('single_shop_page', $enabled_pages))
             ||
@@ -108,8 +108,8 @@ function growtype_catalog_disable_access()
 /**
  * Remove product count label
  */
-add_action('wp_loaded', 'woocommerce_template_loop_result_count_remove');
-function woocommerce_template_loop_result_count_remove()
+add_action('wp_loaded', 'growtype_wc_woocommerce_template_loop_result_count_remove');
+function growtype_wc_woocommerce_template_loop_result_count_remove()
 {
     if (get_theme_mod('wc_catalog_result_count_hide')) {
         remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);

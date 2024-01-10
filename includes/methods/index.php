@@ -58,8 +58,6 @@ include('admin/product/sections/data-variation.php');
 include('admin/product/sections/data-subscription.php');
 include('admin/product/sections/description.php');
 
-include('admin/product/types/subscription.php');
-
 include('scripts/scripts.php');
 
 include('emails/index.php');

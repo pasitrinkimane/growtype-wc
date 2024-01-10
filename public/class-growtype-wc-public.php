@@ -54,7 +54,6 @@ class Growtype_Wc_Public
     {
         $this->growtype_wc = $growtype_wc;
         $this->version = $version;
-
     }
 
     /**
@@ -111,6 +110,7 @@ class Growtype_Wc_Public
             'error_text' => esc_html__("Something went wrong, please contact our support", "growtype-wc"),
             'no_wishlist_text' => esc_html__("No wishlist found", "growtype-wc"),
             'fill_required_fields_text' => esc_html__("Please fill all required fields", "growtype-wc"),
+            'wc_version' => defined('WC_VERSION') ? WC_VERSION : null,
         ));
     }
 

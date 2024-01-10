@@ -10,7 +10,7 @@
             url: growtype_wc_ajax.url,
             type: "post",
             data: {
-                action: 'growtype_load_cart'
+                action: 'growtype_wc_load_cart'
             }
         }).done(function (data) {
             jQuery('.e-cart').attr('data-amount', data.cart_contents_count);

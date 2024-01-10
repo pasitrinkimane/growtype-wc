@@ -1,5 +1,5 @@
 function productVariation() {
-    if (!jQuery('body').hasClass('single-product') || window.growtypeWc['productVariations'] === undefined) {
+    if (!jQuery('body').hasClass('single-product')) {
         return;
     }
 
@@ -12,7 +12,7 @@ function productVariation() {
     let product_id = variation_form.data('product_id');
 
     if (product_id !== undefined) {
-        window.growtypeWc['productVariations'] = window['product_variations_' + product_id + ''];
+        window.growtype_wc['productVariations'] = window['product_variations_' + product_id + ''];
     }
 
     jQuery(document).ready(function ($) {
@@ -20,7 +20,9 @@ function productVariation() {
         /**
          * Initial select
          */
-        selectVariation();
+        if (jQuery('.variations_form').length > 0) {
+            selectVariation();
+        }
 
         /**
          * Radio select
@@ -44,8 +46,8 @@ function productVariation() {
         /**
          * Select
          */
-        if (window.growtypeWcCartSelect.length > 0) {
-            window.growtypeWcCartSelect.change(function (e) {
+        if (window.growtype_wc_cart_select.length > 0) {
+            window.growtype_wc_cart_select.change(function (e) {
                 selectVariation($(this));
             });
         }
@@ -314,8 +316,8 @@ function productVariation() {
         let parentVariationType = formatVariationTypeAttribute(parentVariation.attr('data-type'));
 
         let validParentVariations = [];
-        if (window.growtypeWc['productVariations'] !== undefined) {
-            Object.entries(window.growtypeWc['productVariations']).map(function (variation) {
+        if (window.growtype_wc['productVariations'] !== undefined) {
+            Object.entries(window.growtype_wc['productVariations']).map(function (variation) {
                 Object.entries(variation[1]['attributes']).map(function (element, index) {
                     if (element[0] === parentVariationType && element[1] === parentVariationActiveOption['option'].val()) {
                         validParentVariations.push(variation[1])

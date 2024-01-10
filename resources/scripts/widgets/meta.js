@@ -1,5 +1,5 @@
 function meta() {
-    window.growtypeWc['widgets']['meta'] = {};
+    window.growtype_wc['widgets']['meta'] = {};
 
     const filterProductsByMetaEvent = new Event('filterProductsByMeta');
 
@@ -11,10 +11,10 @@ function meta() {
 
         let metaKey = $('.widget_product_meta_filter .b-content').attr('data-key');
 
-        window.growtypeWc['widgets']['meta']['values'] = [];
+        window.growtype_wc['widgets']['meta']['values'] = [];
         $('.widget_product_meta_filter .b-options-single.is-active').map(function (index, element) {
             let value = $(element).attr('data-value');
-            window.growtypeWc['widgets']['meta']['values'].push(value);
+            window.growtype_wc['widgets']['meta']['values'].push(value);
         })
 
         $.ajax({
@@ -23,7 +23,7 @@ function meta() {
             data: {
                 action: 'filter_products',
                 meta_key: metaKey,
-                meta_values: JSON.stringify(window.growtypeWc['widgets']['meta']['values']),
+                meta_values: JSON.stringify(window.growtype_wc['widgets']['meta']['values']),
                 categories_ids: woocommerce_params_widgets.categories_ids,
             },
             beforeSend: function (xhr) {

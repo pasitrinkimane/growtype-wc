@@ -1,56 +1,75 @@
 function countdown() {
 
+    window.growtype_wc.countdown = {
+        started: 'Started',
+        checking: 'Checking',
+        over: 'Ended'
+    }
+
     document.addEventListener('filterProductsByOrder', initCountdown)
 
-    initCountdown();
+    $(document).ready(function () {
+        initCountdown();
+    });
 
     function initCountdown() {
         if (jQuery(".auction-time-countdown").length > 0 && $.SAcountdown !== 'undefined') {
             jQuery(".auction-time-countdown").each(function (index) {
-                var time = jQuery(this).data('time');
-                var format = jQuery(this).data('format');
-                var compact = false;
+                let until = jQuery(this).attr('data-time');
+                let format = jQuery(this).attr('data-format') ?? 'yowdHMS';
+                let compact = jQuery(this).attr('data-compact') === 'true' ? true : false;
+                let expiryText = '';
 
-                if (format == '') {
-                    format = 'yowdHMS';
+                if (jQuery(this).hasClass('future')) {
+                    expiryText = '<span class="value started">' + window.growtype_wc.countdown.started + '</span>';
+                } else {
+                    expiryText = '<span class="value over">' + window.growtype_wc.countdown.over + '</span>';
                 }
 
-                /**
-                 * Check if defined data
-                 */
-                if (typeof data === 'undefined') {
-                    var data = {
-                        started: 'Started',
-                        checking: 'Started',
-                        compact_counter: jQuery(this).data('compact-counter') ?? 'yes',
+                if (cookieCustom.getCookie('growtype_wc_countdown_time') !== null) {
+                    until = convertStringToSeconds(cookieCustom.getCookie('growtype_wc_countdown_time'));
+
+                    if (until === 0) {
+                        $('.auction-time-countdown').html(expiryText)
+                        return;
                     }
                 }
 
-                if (data.compact_counter == 'yes') {
-                    compact = true;
-                } else {
-                    compact = false;
-                }
-
-                var etext = '';
-                if (jQuery(this).hasClass('future')) {
-                    var etext = '<div class="started">' + data.started + '</div>';
-                } else {
-                    var etext = '<div class="over">' + data.checking + '</div>';
-                }
-
-                // if (!jQuery(' body').hasClass('logged-in')) {
-                //     time = $.SAcountdown.UTCDate(-(new Date().getTimezoneOffset()), new Date(time * 1000));
-                // }
-
                 jQuery(this).SAcountdown({
-                    until: time,
+                    until: until,
                     format: format,
                     compact: compact,
-                    expiryText: etext
+                    expiryText: expiryText,
+                    onTick: function (event) {
+                        if (event[6] >= 0) {
+                            cookieCustom.setCookie('growtype_wc_countdown_time', event);
+                        }
+                    },
                 });
             });
         }
+    }
+
+    function convertStringToSeconds(timeString) {
+        const timeArray = timeString.split(',').map(Number);
+
+        const secondsInYear = 365 * 24 * 60 * 60;
+        const secondsInMonth = 30 * 24 * 60 * 60;
+        const secondsInWeek = 7 * 24 * 60 * 60;
+        const secondsInDay = 24 * 60 * 60;
+        const secondsInHour = 60 * 60;
+        const secondsInMinute = 60;
+
+        const totalSeconds =
+            timeArray[0] * secondsInYear +
+            timeArray[1] * secondsInMonth +
+            timeArray[2] * secondsInWeek +
+            timeArray[3] * secondsInDay +
+            timeArray[4] * secondsInHour +
+            timeArray[5] * secondsInMinute +
+            timeArray[6];
+
+        return totalSeconds;
     }
 }
 

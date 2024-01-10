@@ -1,6 +1,31 @@
 <?php
 
 /**
+ * Check if image should be resized
+ */
+add_filter('woocommerce_resize_images', static function ($status) {
+    global $product;
+
+    $product = is_object($product) ? $product : wc_get_product();
+
+    if (!empty($product)) {
+        $image_id = $product->get_image_id();
+
+        $image_url = wp_get_attachment_url($image_id);
+
+        if (!empty($image_url)) {
+            $ext = pathinfo($image_url, PATHINFO_EXTENSION);
+
+            if (in_array($ext, ['gif', 'svg'])) {
+                $status = false;
+            }
+        }
+    }
+
+    return $status;
+});
+
+/**
  * Photoswipe
  */
 add_filter('woocommerce_single_product_photoswipe_options', 'growtype_wc_single_product_photoswipe_options');

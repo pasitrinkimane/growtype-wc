@@ -217,12 +217,12 @@ class Growtype_Wc_Product
      * @param $product
      * @return mixed|string|void
      */
-    public static function get_add_to_cart_btn_text($product = null, $default_label = null)
+    public static function get_add_to_cart_btn_label($product = null, $default_label = null)
     {
         $add_to_cart_button_label = !empty($default_label) ? $default_label : __('Add to cart', 'growtype-wc');
 
         /**
-         * Default custom label
+         * Product preview custom label
          */
         if (!empty($default_label) && !str_contains($default_label, 'cart')) {
             $add_to_cart_button_label_custom_default = get_theme_mod('woocommerce_product_preview_cta_label');
@@ -248,7 +248,7 @@ class Growtype_Wc_Product
             $add_to_cart_button_label = __('Select', 'growtype-wc');
         }
 
-        return $add_to_cart_button_label;
+        return apply_filters('growtype_wc_product_add_to_cart_label', $add_to_cart_button_label, $product);
     }
 
     /**
@@ -673,6 +673,66 @@ class Growtype_Wc_Product
 
     /**
      * @param $product_id
+     * @return string
+     */
+    public static function get_price_details_formatted($product_id = null): string
+    {
+        global $product;
+
+        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+
+        $details = self::get_price_details($product_id);
+
+        return !empty($details) ? '<div class="e-extratext">' . $details . '</div>' : '';
+    }
+
+    /**
+     * @param $product_id
+     * @return string
+     */
+    public static function get_extra_details($product_id = null): string
+    {
+        global $product;
+
+        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+
+        if (!empty($product_id)) {
+            $details = get_post_meta($product_id, '_extra_details', true);
+        }
+
+        return $details ?? '';
+    }
+
+    /**
+     * @param $product_id
+     * @return string
+     */
+    public static function get_extra_details_formatted($product_id = null): string
+    {
+        global $product;
+
+        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+
+        $details = self::get_extra_details($product_id);
+
+        if (!empty($details)) {
+            $details = explode(PHP_EOL, $details);
+
+            ob_start();
+            echo '<ul class="list-check">';
+            foreach ($details as $detail) {
+                echo '<li>' . trim($detail) . '</li>';
+            }
+            echo '</ul>';
+
+            $details = ob_get_clean();
+        }
+
+        return $details;
+    }
+
+    /**
+     * @param $product_id
      * @return bool
      */
     public static function price_is_hidden($product_id = null): bool
@@ -713,10 +773,12 @@ class Growtype_Wc_Product
     {
         global $product;
 
+        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+
         $promo_label = self::get_promo_label($product_id);
 
         if (!empty($promo_label)) {
-            return '<span class="badge badge-promo">' . $promo_label . '</span>';
+            return '<div class="badge-wrapper"><div class="badge badge-promo">' . $promo_label . '</div></div>';
         }
 
         return '';
@@ -1120,16 +1182,12 @@ class Growtype_Wc_Product
 
                     if (empty($gallery_image_id)) {
                         $gallery_image_id = $this->upload_image($gallery_image_url);
-
-//                        var_dump($gallery_image_id);
                     }
 
                     array_push($gallery_image_ids, $gallery_image_id);
                 }
 
                 $product->set_gallery_image_ids($gallery_image_ids);
-
-//                d($gallery_image_ids);
             }
         }
 

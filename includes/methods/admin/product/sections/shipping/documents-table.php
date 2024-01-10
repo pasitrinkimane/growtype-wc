@@ -1,6 +1,6 @@
 <div class="options_group">
     <div class="form-field downloadable_files">
-        <label><?php esc_html_e('Shipping documents', 'growtype-wc'); ?></label>
+        <label><?php esc_html_e('Additional documents', 'growtype-wc'); ?></label>
         <table class="widefat">
             <thead>
             <tr>

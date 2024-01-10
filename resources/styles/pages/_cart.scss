@@ -87,7 +87,6 @@
   }
 
   .woocommerce button.button {
-    @extend .btn-primary;
     padding: 10px 15px;
     min-width: initial;
     font-size: $font-size-body;
@@ -98,7 +97,6 @@
     padding-bottom: 5px;
 
     .checkout-button.button.alt {
-      @extend .btn-primary;
       margin-bottom: 0;
     }
   }
@@ -249,7 +247,6 @@
     align-items: center;
 
     label {
-      font-size: 14px !important;
       display: flex !important;
       align-items: center;
       margin-bottom: 0;

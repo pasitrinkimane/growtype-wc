@@ -5,7 +5,7 @@
 
     "use strict";
     let loadingAnimation = "<span class='spinner-border'><div></div><div></div></span>";
-    let wishlist_container = jQuery('.wishlist main .content');
+    let wishlistContainer = jQuery('.wishlist main .content');
 
     Array.prototype.unique = function () {
         return this.filter(function (value, index, self) {
@@ -44,46 +44,43 @@
         loggedIn = (jQuery('body').hasClass('logged-in')) ? true : false,
         userData = '';
 
-    if (loggedIn) {
-        // Fetch current user data
-        fetchWishlistUserData();
-    } else {
+    if (!loggedIn) {
         if (typeof (ls) != 'undefined' && ls != null) {
             ls = ls.split(',');
             ls = ls.unique();
             wishlistIds = ls;
         }
+    }
 
-        if (wishlist_container.length > 0) {
-            fetchWishlistUserData();
-        } else {
-            wishlistInit();
-        }
+    if (wishlistContainer.length > 0) {
+        fetchWishlistUserData();
+    } else {
+        wishlistInit();
     }
 
     function fetchWishlistUserData() {
 
-        wishlist_container.append(loadingAnimation);
+        wishlistContainer.append(loadingAnimation);
 
         $.ajax({
             type: 'POST',
             url: growtype_wc_ajax.url,
             data: {
-                'action': 'fetch_user_data',
+                'action': 'growtype_wc_fetch_user_data',
                 'dataType': 'json',
                 'wishlist_ids': wishlistIds
             },
             success: function (data) {
-                wishlist_container.find('.spinner-border').remove();
+                wishlistContainer.find('.spinner-border').remove();
 
                 userData = JSON.parse(data);
                 wishlistIds = userData['wishlist_ids'];
 
-                if (wishlist_container.length > 0) {
-                    if (wishlist_container.find('.products').length === 0) {
-                        wishlist_container.hide().html(userData['wishlist']).fadeIn();
+                if (wishlistContainer.length > 0) {
+                    if (wishlistContainer.find('.products').length === 0) {
+                        wishlistContainer.hide().html(userData['wishlist']).fadeIn();
                     } else {
-                        wishlist_container.html(userData['wishlist']);
+                        wishlistContainer.html(userData['wishlist']);
                     }
                 }
 
@@ -128,8 +125,8 @@
                     return v !== ''
                 });
 
-                if (wishlistIds.length === 0 && wishlist_container.length > 0) {
-                    wishlist_container.append(loadingAnimation);
+                if (wishlistIds.length === 0 && wishlistContainer.length > 0) {
+                    wishlistContainer.append(loadingAnimation);
                 }
 
                 jQuery('.e-wishlist').attr('data-amount', wishlistIds.length)
@@ -167,10 +164,16 @@
     wishListTrigger(jQuery('.wishlist-toggle'));
 
     function wishlistInit() {
+        if (jQuery('.wishlist-toggle').length === 0) {
+            return
+        }
+
         wishlistIds = wishlistIds.filter(function (el) {
             return el != "";
         });
+
         jQuery('.e-wishlist').attr('data-amount', wishlistIds.length)
+
         jQuery('.wishlist-toggle').each(function () {
             let $this = jQuery(this);
 
