@@ -6,11 +6,13 @@ import {countdown} from "./components/countdown"
 import {productVariation} from "./components/product-variation"
 import {selectCart} from "./components/select-cart";
 import {message} from "./components/message";
+import {justpurchased} from "./components/popup/justpurchased";
 import {sidebar} from "./sidebar";
 
-window.growtypeWc = {}
+window.growtype_wc = {}
 
 jQuery(document).ready(() => {
+    justpurchased();
     message();
     productSlider();
     productsSlider();

@@ -11,7 +11,11 @@ function growtype_wc_woocommerce_post_class($classes, $product)
     $preview_style = get_post_meta($product->get_id(), '_preview_style', true);
 
     if ($preview_style === 'plan') {
-        $classes[] = 'wc-block-grid__product_plan';
+        $classes[] = 'previewstyle-plan';
+    }
+
+    if (growtype_wc_product_is_subscription($product->get_id())) {
+        $classes[] = 'subscription';
     }
 
     return $classes;
@@ -43,8 +47,8 @@ function growtype_wc_woocommerce_blocks_product_grid_item_html($content, $data, 
     $default_add_to_cart_text = '';
     $default_add_to_cart_text = apply_filters('woocommerce_product_single_add_to_cart_text', $default_add_to_cart_text);
 
-    if (!empty(Growtype_Wc_Product::get_add_to_cart_btn_text($product))) {
-        $data->button = str_replace($default_add_to_cart_text, Growtype_Wc_Product::get_add_to_cart_btn_text($product), $data->button);
+    if (!empty(Growtype_Wc_Product::get_add_to_cart_btn_label($product))) {
+        $data->button = str_replace($default_add_to_cart_text, Growtype_Wc_Product::get_add_to_cart_btn_label($product), $data->button);
     }
 
     if (Growtype_Wc_Product::price_is_hidden($product->get_id())) {

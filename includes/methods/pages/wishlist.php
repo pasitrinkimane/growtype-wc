@@ -3,7 +3,7 @@
 /**
  * Display 4 product rows
  */
-if (!function_exists('loop_columns') && isset($_POST['action']) && $_POST['action'] === 'fetch_user_data') {
+if (!function_exists('loop_columns') && isset($_POST['action']) && $_POST['action'] === 'growtype_wc_fetch_user_data') {
     add_filter('loop_shop_columns', 'loop_columns', 999);
     function loop_columns()
     {
@@ -23,8 +23,8 @@ function wc_wishlist_scripts()
 /**
  * Get current user data
  */
-add_action('wp_ajax_fetch_user_data', 'growtype_wc_fetch_user_data');
-add_action('wp_ajax_nopriv_fetch_user_data', 'growtype_wc_fetch_user_data');
+add_action('wp_ajax_growtype_wc_fetch_user_data', 'growtype_wc_fetch_user_data');
+add_action('wp_ajax_nopriv_growtype_wc_fetch_user_data', 'growtype_wc_fetch_user_data');
 function growtype_wc_fetch_user_data()
 {
     if (is_user_logged_in()) {

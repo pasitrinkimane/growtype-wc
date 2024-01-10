@@ -1,33 +1,26 @@
 <?php
 
+add_filter('woocommerce_enqueue_styles', 'magik_dequeue_styles');
+function magik_dequeue_styles($enqueue_styles)
+{
+    unset($enqueue_styles['woocommerce-general']);
+    unset($enqueue_styles['woocommerce-layout']);
+    unset($enqueue_styles['woocommerce-smallscreen']);
+
+    return $enqueue_styles;
+}
+
 /*
  * Disable default woocommerce scripts
  */
 add_action('wp_enqueue_scripts', 'growtype_disable_woocommerce_scripts');
 function growtype_disable_woocommerce_scripts()
 {
-    ## Dequeue WooCommerce styles
-    wp_dequeue_style('woocommerce-general');
-    wp_dequeue_style('woocommerce-layout');
-    wp_dequeue_style('woocommerce-smallscreen');
-
-    ## Dequeue WooCommerce scripts
-//        wp_dequeue_script('wc-cart-fragments');
-//        wp_dequeue_script('woocommerce');
-//        wp_dequeue_script('wc-add-to-cart');
-//        wp_deregister_script('js-cookie');
-//        wp_dequeue_script('js-cookie');
-
     /**
      * Deregister default wc variations script. Custom scripts "wc-main.js -> select-variation.js" script is used. If enabled, on select error occurs.
      */
     wp_deregister_script('wc-add-to-cart-variation');
     wp_dequeue_script('wc-add-to-cart-variation');
-
-    /**
-     * Flexslider
-     */
-    //remove_theme_support( 'wc-product-gallery-slider' );
 
     /**
      * Select

@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 ?>
-<li class="wc_payment_method payment_method_<?php echo esc_attr($gateway->id); ?>" <?php isset($gateway->settings['visible_in_frontend']) && $gateway->settings['visible_in_frontend'] === 'no' ? 'hidden' : '' ?>>
+<li class="wc_payment_method payment_method_<?php echo esc_attr($gateway->id); ?> <?php echo isset($gateway->settings['visible_in_frontend']) && $gateway->settings['visible_in_frontend'] === 'no' ? 'is-hidden' : '' ?>">
     <input id="payment_method_<?php echo esc_attr($gateway->id); ?>" type="radio" class="input-radio" name="payment_method" value="<?php echo esc_attr($gateway->id); ?>" <?php checked($gateway->chosen,
         true); ?> data-order_button_text="<?php echo esc_attr($gateway->order_button_text); ?>"/>
 
@@ -30,7 +30,7 @@ if (!defined('ABSPATH')) {
     </label>
     <?php } ?>
 
-    <?php if ($gateway->has_fields() || $gateway->get_description()) : ?>
+    <?php if ($gateway->has_fields() || !empty($gateway->get_description())) : ?>
     <div class="payment_box payment_method_<?php echo esc_attr($gateway->id); ?>" <?php if (!$gateway->chosen) : /* phpcs:ignore Squiz.ControlStructures.ControlSignature.NewlineAfterOpenBrace */ ?>style="display:none;"<?php endif; /* phpcs:ignore Squiz.ControlStructures.ControlSignature.NewlineAfterOpenBrace */ ?>>
             <?php $gateway->payment_fields(); ?>
     </div>

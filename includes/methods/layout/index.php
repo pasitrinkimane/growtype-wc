@@ -71,6 +71,11 @@ function growtype_wc_extend_body_classes($classes)
         $classes[] = 'ajaxcart-enabled';
     }
 
+    if (is_checkout()) {
+        $classes[] = 'woocommerce-checkout-' . get_theme_mod('woocommerce_checkout_style_select');
+        $classes[] = 'woocommerce-checkout-input-label-style-' . get_theme_mod('woocommerce_checkout_input_label_style');
+    }
+
     if (get_theme_mod('woocommerce_cart_enabled', true)) {
         $classes[] = 'cart-enabled';
     }

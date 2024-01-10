@@ -22,20 +22,22 @@ class Growtype_Wc_Subscription_Benefits_Shortcode
         return self::benefits();
     }
 
-
+    /**
+     * @return false|string
+     */
     public static function benefits()
     {
         ob_start();
 
+        $benefits = [];
+
+        $benefits = apply_filters('growtype_wc_subscription_benefits', $benefits);
+
         ?>
         <ul class="list-check">
-            <li>Unlock a vast library of intimate AI characters</li>
-            <li>Access exclusive images without blur</li>
-            <li>Receive thoughtful, evaluation-based responses for more satisfying interactions</li>
-            <li>Experience the thrill of audio answers</li>
-            <li>Receive 100 FREE tokens each month</li>
-            <li>Unlock advanced character customization</li>
-            <li>Stay ahead with early access to new chat features and updates</li>
+            <?php foreach ($benefits as $benefit) { ?>
+                <li><?php echo $benefit ?></li>
+            <?php } ?>
         </ul>
         <?php
 

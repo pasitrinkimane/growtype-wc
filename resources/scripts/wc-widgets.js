@@ -3,7 +3,7 @@ import {price} from "./widgets/price";
 import {categories} from "./widgets/categories";
 import {meta} from "./widgets/meta";
 
-window.growtypeWc['widgets'] = {};
+window.growtype_wc['widgets'] = {};
 
 document.addEventListener('filterProductsByPrice', setWidgetsParams)
 document.addEventListener('filterProductsByCategories', setWidgetsParams)

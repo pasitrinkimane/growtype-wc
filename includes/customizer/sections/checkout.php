@@ -20,8 +20,73 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
         ),
         'choices' => array (
             'default' => __('Default', 'growtype-wc'),
-            'vertical' => __('Vertical', 'growtype-wc')
+            'vertical' => __('Vertical', 'growtype-wc'),
+            'steps' => __('Steps', 'growtype-wc'),
         )
+    )
+));
+
+/**
+ * Input label style
+ */
+$wp_customize->add_setting('woocommerce_checkout_input_label_style',
+    array (
+        'default' => 'default',
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_input_label_style',
+    array (
+        'label' => __('Input label style', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'priority' => 9,
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => array (
+            'default' => __('Default', 'growtype-wc'),
+            'floating' => __('Floating', 'growtype-wc')
+        )
+    )
+));
+
+/**
+ * Show 'optional' input labels
+ */
+$wp_customize->add_setting('woocommerce_checkout_optional_label', array (
+    'default' => false
+));
+
+$wp_customize->add_control(
+    new WP_Customize_Control(
+        $wp_customize,
+        'woocommerce_checkout_optional_label',
+        array (
+            'label' => __('Highlight optional fields with label', 'growtype-wc'),
+            'section' => 'woocommerce_checkout',
+            'settings' => 'woocommerce_checkout_optional_label',
+            'type' => 'checkbox',
+            'priority' => 9,
+        )
+    )
+);
+
+/**
+ * Terms checked by default
+ */
+$wp_customize->add_setting('woocommerce_checkout_terms_is_checked_by_default',
+    array (
+        'default' => false,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_terms_is_checked_by_default',
+    array (
+        'label' => esc_html__('Terms checked'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Terms checked by default.', 'growtype-wc'),
     )
 ));
 
@@ -226,6 +291,24 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
 ));
 
 /**
+ * Intro
+ */
+$wp_customize->add_setting('woocommerce_checkout_order_review_table_notice',
+    array (
+        'default' => '',
+        'transport' => 'postMessage'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_checkout_order_review_table_notice',
+    array (
+        'label' => __('Order review table'),
+        'description' => __('Below you can change order review table'),
+        'section' => 'woocommerce_checkout'
+    )
+));
+
+/**
  * Order review
  */
 $wp_customize->add_setting('woocommerce_checkout_order_review_table',
@@ -237,32 +320,11 @@ $wp_customize->add_setting('woocommerce_checkout_order_review_table',
 
 $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_order_review_table',
     array (
-        'label' => esc_html__('Order review table'),
+        'label' => esc_html__('Enabled'),
         'section' => 'woocommerce_checkout',
         'description' => __('Enabled/disable order review table', 'growtype-wc'),
     )
 ));
-
-/**
- * Show 'optional' input labels
- */
-$wp_customize->add_setting('woocommerce_checkout_optional_label', array (
-    'default' => false
-));
-
-$wp_customize->add_control(
-    new WP_Customize_Control(
-        $wp_customize,
-        'woocommerce_checkout_optional_label',
-        array (
-            'label' => __('Highlight optional fields with label', 'growtype-wc'),
-            'section' => 'woocommerce_checkout',
-            'settings' => 'woocommerce_checkout_optional_label',
-            'type' => 'checkbox',
-            'priority' => 9,
-        )
-    )
-);
 
 /**
  * Order review heading
@@ -276,9 +338,45 @@ $wp_customize->add_setting('woocommerce_checkout_order_review_heading',
 
 $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_order_review_heading',
     array (
-        'label' => esc_html__('Order review heading'),
+        'label' => esc_html__('Heading'),
         'section' => 'woocommerce_checkout',
         'description' => __('Enabled/disable order review heading', 'growtype-wc'),
+    )
+));
+
+/**
+ * Show table head
+ */
+$wp_customize->add_setting('woocommerce_checkout_order_review_table_show_head',
+    array (
+        'default' => true,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_order_review_table_show_head',
+    array (
+        'label' => esc_html__('Table head'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Show table head', 'growtype-wc'),
+    )
+));
+
+/**
+ * Show subtotal
+ */
+$wp_customize->add_setting('woocommerce_checkout_order_review_table_show_subtotal',
+    array (
+        'default' => true,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_order_review_table_show_subtotal',
+    array (
+        'label' => esc_html__('Subtotal'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Show subtotal price', 'growtype-wc'),
     )
 ));
 
@@ -296,7 +394,31 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
     array (
         'label' => esc_html__('Payments background'),
         'section' => 'woocommerce_checkout',
-        'description' => __('Enabled/disable payment methods background', 'growtype-wc'),
+        'description' => __('Enabled/disable payment methods background color', 'growtype-wc'),
+    )
+));
+
+/**
+ * Orde review Cart item style
+ */
+$wp_customize->add_setting('woocommerce_checkout_order_review_cart_item_style',
+    array (
+        'default' => 'default',
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_order_review_cart_item_style',
+    array (
+        'label' => __('Cart item style', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => array (
+            'default' => __('Default', 'growtype-wc'),
+            'detailed' => __('Detailed', 'growtype-wc')
+        )
     )
 ));
 

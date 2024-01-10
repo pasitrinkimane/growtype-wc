@@ -1,8 +1,8 @@
 function selectCart() {
     (function ($) {
-        window.growtypeWcCartSelect = jQuery('.cart select');
+        window.growtype_wc_cart_select = jQuery('.cart select');
 
-        window.growtypeWcSelectCartArgs = {
+        window.growtype_wc_select_cart_args = {
             disable_search_threshold: 20
         };
 
@@ -15,8 +15,8 @@ function selectCart() {
                     return !this.value || $.trim(this.value).length === 0 || $.trim(this.text).length === 0;
                 });
 
-            if (window.growtypeWcCartSelect.length > 0 && window.growtypeWcCartSelect.chosen) {
-                window.growtypeWcCartSelect.chosen(window.growtypeWcSelectCartArgs);
+            if (window.growtype_wc_cart_select.length > 0 && window.growtype_wc_cart_select.chosen) {
+                window.growtype_wc_cart_select.chosen(window.growtype_wc_select_cart_args);
             }
         });
 

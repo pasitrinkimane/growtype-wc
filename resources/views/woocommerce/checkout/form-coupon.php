@@ -15,28 +15,29 @@
  * @version 3.4.4
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-if ( ! wc_coupons_enabled() ) { // @codingStandardsIgnoreLine.
-	return;
+if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
+    return;
 }
 
 ?>
 <div class="woocommerce-form-coupon-toggle">
-	<?php wc_print_notice( apply_filters( 'woocommerce_checkout_coupon_message', esc_html__( 'Have a coupon?', 'growtype-wc' ) . ' <a href="#" class="showcoupon">' . esc_html__( 'Click here to enter your code', 'growtype-wc' ) . '</a>' ), 'notice' ); ?>
+    <?php wc_print_notice(apply_filters('woocommerce_checkout_coupon_message', esc_html__('Have a coupon?', 'growtype-wc') . ' <a href="#" class="showcoupon">' . esc_html__('Click here to enter your code', 'growtype-wc') . '</a>'), 'notice'); ?>
 </div>
 
 <form class="checkout_coupon woocommerce-form-coupon" method="post" style="display:none">
 
-	<p><?php esc_html_e( 'If you have a coupon code, please apply it below.', 'growtype-wc' ); ?></p>
+    <p><?php esc_html_e('If you have a coupon code, please apply it below.', 'growtype-wc'); ?></p>
 
-	<p class="form-row form-row-first">
-		<input type="text" name="coupon_code" class="input-text" placeholder="<?php esc_attr_e( 'Coupon code', 'growtype-wc' ); ?>" id="coupon_code" value="" />
-	</p>
+    <div class="row pt-2">
+        <div class="col-9">
+            <input type="text" name="coupon_code" class="input-text h-100" placeholder="<?php esc_attr_e('Coupon code', 'growtype-wc'); ?>" id="coupon_code" value=""/>
+        </div>
+        <div class="col-3">
+            <button type="submit" class="button btn btn-primary w-100" name="apply_coupon" value="<?php esc_attr_e('Apply coupon', 'growtype-wc'); ?>"><?php esc_html_e('Apply coupon', 'growtype-wc'); ?></button>
+        </div>
+    </div>
 
-	<p class="form-row form-row-last">
-		<button type="submit" class="button btn btn-primary" name="apply_coupon" value="<?php esc_attr_e( 'Apply coupon', 'growtype-wc' ); ?>"><?php esc_html_e( 'Apply coupon', 'growtype-wc' ); ?></button>
-	</p>
-
-	<div class="clear"></div>
+    <div class="clear"></div>
 </form>

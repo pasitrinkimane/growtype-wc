@@ -118,7 +118,7 @@ function growtype_wc_get_breadcrumb($crumbs, $breadcrumb)
 add_filter('woocommerce_register_post_type_product', 'growtype_wc_register_post_type_product', 12, 1);
 function growtype_wc_register_post_type_product($args)
 {
-    if (get_theme_mod('woocommerce_product_page_access_disabled')) {
+    if (get_theme_mod('woocommerce_product_page_access_disabled', false)) {
         $args["publicly_queryable"] = false;
         $args["public"] = false;
     }

@@ -9,7 +9,7 @@ function woocommerce_product_add_to_cart_text_custom($default_label)
 {
     global $product;
 
-    return Growtype_Wc_Product::get_add_to_cart_btn_text($product, $default_label);
+    return Growtype_Wc_Product::get_add_to_cart_btn_label($product, $default_label);
 }
 
 /**

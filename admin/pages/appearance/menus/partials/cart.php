@@ -7,7 +7,7 @@ if (!class_exists('Growtype_Wc_Nav_Cart')) {
         {
             add_meta_box(
                 'growtype_wc_nav_link',
-                __('Growtype Wc'),
+                'Growtype Wc',
                 array ($this, 'nav_menu_link'),
                 'nav-menus',
                 'side',

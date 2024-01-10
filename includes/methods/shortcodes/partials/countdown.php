@@ -7,8 +7,8 @@ add_shortcode('growtype_wc_countdown', 'growtype_wc_countdown_callback');
 function growtype_wc_countdown_callback($atts)
 {
     $time = $atts['time'] ?? "60";
-    $compact = $atts['compact'] ?? "true";
+    $compact = $atts['compact'] ?? "false";
     $format = $atts['format'] ?? "d H:m:s";
 
-    return '<div class="auction-time-countdown" data-time="' . $time . '" data-format="' . $format . '" data-compact-counter="' . $compact . '"></div>';
+    return '<div class="auction-time-countdown" data-time="' . $time . '" data-format="' . $format . '" data-compact="' . $compact . '"></div>';
 }

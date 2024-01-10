@@ -80,8 +80,10 @@ function growtype_wc_create_subscription_order_object($args = array ())
         return new WP_Error('woocommerce_subscription_invalid_start_date_format', _x('Invalid date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
     }
 
-    if (empty($args['customer_id']) || !is_numeric($args['customer_id']) || $args['customer_id'] <= 0) {
-        return new WP_Error('woocommerce_subscription_invalid_customer_id', _x('Invalid subscription customer_id.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+    if (get_option('woocommerce_enable_guest_checkout') === 'no') {
+        if (empty($args['customer_id']) || !is_numeric($args['customer_id']) || $args['customer_id'] <= 0) {
+            return new WP_Error('woocommerce_subscription_invalid_customer_id', _x('Invalid subscription customer_id.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+        }
     }
 
     if (empty($args['billing_period']) || !array_key_exists(strtolower($args['billing_period']), growtype_wc_sub_get_subscription_period_strings())) {

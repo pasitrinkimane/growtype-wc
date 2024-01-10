@@ -38,7 +38,7 @@ class Custom_WC_Widget_Product_Categories extends WC_Widget
         $this->widget_cssclass = 'woocommerce widget_product_categories';
         $this->widget_description = __('A list or dropdown of product categories.', 'growtype-wc');
         $this->widget_id = 'woocommerce_product_categories';
-        $this->widget_name = __('Growtype - Filter Products by Category', 'growtype-wc');
+        $this->widget_name = 'Growtype - Filter Products by Category';
         $this->settings = array (
             'title' => array (
                 'type' => 'text',
