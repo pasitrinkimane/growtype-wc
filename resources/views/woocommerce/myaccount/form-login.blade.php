@@ -23,13 +23,13 @@ do_action('woocommerce_before_customer_login_form'); ?>
 
 <div class="u-columns" id="customer_login">
 
-    <div class="u-column1 col-12">
+    <div class="woocommerce-form-wrapper u-column1 col-12">
 
-        <h3 class="e-title text-center p-4">
+        <h3 class="e-title">
             <?php esc_html_e('Sign in', 'growtype-wc'); ?>
         </h3>
 
-        <form class="woocommerce-form woocommerce-form-login login container-sm ps-4 pe-4 pb-4" method="post">
+        <form class="woocommerce-form woocommerce-form-login login" method="post">
 
             <?php do_action('woocommerce_login_form_start'); ?>
 
@@ -41,7 +41,8 @@ do_action('woocommerce_before_customer_login_form'); ?>
             </div>
 
             <div class="mb-3">
-                <label for="password"><?php esc_html_e('Password', 'growtype-wc'); ?>&nbsp;<span class="required">*</span></label>
+                <label for="password"><?php esc_html_e('Password', 'growtype-wc'); ?>
+                    &nbsp;<span class="required">*</span></label>
                 <input class="form-control" type="password" name="password" id="password" autocomplete="current-password"/>
             </div>
 
@@ -62,7 +63,7 @@ do_action('woocommerce_before_customer_login_form'); ?>
             </div>
 
             <div class="row">
-                <div class="col-12 d-grid">
+                <div class="b-actions col-12 d-grid">
                     <?php wp_nonce_field('woocommerce-login', 'woocommerce-login-nonce'); ?>
                     <button type="submit" class="btn btn-primary woocommerce-button button woocommerce-form-login__submit" name="login" value="<?php esc_attr_e('Log in',
                         'growtype-wc'); ?>"><?php esc_html_e('Log in', 'growtype-wc'); ?></button>
@@ -86,17 +87,17 @@ do_action('woocommerce_before_customer_login_form'); ?>
 
     <?php if ('yes' === get_option('woocommerce_enable_myaccount_registration')) : ?>
 
-    <div class="u-column2 col-12">
+    <div class="woocommerce-form-wrapper u-column2 col-12">
 
-        <h3 class="e-title text-center p-4">
-            <?php esc_html_e('Register', 'growtype-wc'); ?>
+        <h3 class="e-title">
+                <?php esc_html_e('Register', 'growtype-wc'); ?>
         </h3>
 
         <form method="post" class="woocommerce-form woocommerce-form-register register ps-4 pe-4" <?php do_action('woocommerce_register_form_tag'); ?> >
 
-            <?php do_action('woocommerce_register_form_start'); ?>
+                <?php do_action('woocommerce_register_form_start'); ?>
 
-            <?php if ('no' === get_option('woocommerce_registration_generate_username')) : ?>
+                <?php if ('no' === get_option('woocommerce_registration_generate_username')) : ?>
 
             <div class="mb-3">
                 <label for="reg_username"><?php esc_html_e('Username', 'growtype-wc'); ?>
@@ -112,7 +113,7 @@ do_action('woocommerce_before_customer_login_form'); ?>
                 <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo (!empty($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>"/><?php // @codingStandardsIgnoreLine ?>
             </div>
 
-            <?php if ('no' === get_option('woocommerce_registration_generate_password')) : ?>
+                <?php if ('no' === get_option('woocommerce_registration_generate_password')) : ?>
 
             <div class="mb-3">
                 <label for="reg_password"><?php esc_html_e('Password', 'growtype-wc'); ?>
@@ -126,17 +127,17 @@ do_action('woocommerce_before_customer_login_form'); ?>
 
             <?php endif; ?>
 
-            <?php do_action('woocommerce_register_form'); ?>
+                <?php do_action('woocommerce_register_form'); ?>
 
             <div class="row mt-4">
-                <div class="col-12 d-grid">
-                    <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
+                <div class="b-actions col-12 d-grid">
+                        <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
                     <button type="submit" class="btn btn-primary woocommerce-Button woocommerce-button button woocommerce-form-register__submit" name="register" value="<?php esc_attr_e('Register',
                         'growtype-wc'); ?>"><?php esc_html_e('Register', 'growtype-wc'); ?></button>
                 </div>
             </div>
 
-            <?php do_action('woocommerce_register_form_end'); ?>
+                <?php do_action('woocommerce_register_form_end'); ?>
 
         </form>
 

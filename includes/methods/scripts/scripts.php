@@ -35,13 +35,10 @@ function growtype_disable_woocommerce_scripts()
 /**
  * Custom scrips
  */
-add_action('wp_enqueue_scripts', 'growtype_custom_woocommerce_scripts', 100);
+//add_action('wp_enqueue_scripts', 'growtype_custom_woocommerce_scripts', 100);
 function growtype_custom_woocommerce_scripts()
 {
-    /**
-     * External Scripts
-     */
-    wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@9', ['jquery'], GROWTYPE_WC_VERSION, true);
+
 }
 
 /**

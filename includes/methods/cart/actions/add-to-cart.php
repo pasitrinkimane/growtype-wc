@@ -259,8 +259,8 @@ function growtype_wc_woocommerce_ajax_added_to_cart($product_id)
 /**
  * Redirect after add to cart
  */
-add_action('woocommerce_add_to_cart_redirect', 'growtype_wc_woocommerce_add_to_cart_redirect');
-function growtype_wc_woocommerce_add_to_cart_redirect($url = false)
+add_action('woocommerce_add_to_cart_redirect', 'growtype_wc_add_to_cart_redirect');
+function growtype_wc_add_to_cart_redirect($url = false)
 {
     if (!class_exists('woocommerce')) {
         return false;
@@ -278,14 +278,14 @@ function growtype_wc_woocommerce_add_to_cart_redirect($url = false)
     }
 
     if ($instant_checkout || $sold_individually || growtype_wc_selling_type_single_product() || growtype_wc_selling_type_single_item()) {
-        $url = wc_get_checkout_url();
+        if (isset($url) && !empty($url) || get_option('woocommerce_cart_redirect_after_add') === 'yes') {
+            $url = wc_get_checkout_url();
+        }
     }
 
-    if (isset($url) && !empty($url) || get_option('woocommerce_cart_redirect_after_add') === 'yes') {
-        return $url;
-    }
+//    return get_bloginfo('url') . add_query_arg(array (), remove_query_arg('add-to-cart'));
 
-    return get_bloginfo('url') . add_query_arg(array (), remove_query_arg('add-to-cart'));
+    return apply_filters('growtype_wc_add_to_cart_redirect', $url);
 }
 
 /**
@@ -299,7 +299,7 @@ function growtype_wc_woocommerce_cart_redirect_after_error($url)
     if (!empty($product_id)) {
         $product = wc_get_product($product_id);
 
-        if ($product->is_sold_individually() && product_is_in_cart($product)) {
+        if ($product->is_sold_individually() && growtype_wc_product_is_in_cart($product)) {
 
             wc_clear_notices();
 
@@ -338,3 +338,17 @@ function growtype_wc_woocommerce_product_add_to_cart_url($add_to_cart_url, $prod
 
     return $add_to_cart_url;
 }
+
+/*
+ * Add to cart
+ */
+add_action('woocommerce_add_to_cart', function () {
+    $user_can_buy = get_theme_mod('only_registered_users_can_buy') ? is_user_logged_in() : true;
+
+    if (!$user_can_buy) {
+        wc_clear_notices();
+        $redirect_url = growtype_wc_user_can_not_buy_redirect_url();
+        wp_redirect($redirect_url);
+        exit;
+    }
+}, 10, 2);

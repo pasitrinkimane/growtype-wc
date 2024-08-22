@@ -1,4 +1,5 @@
 import {message} from "./components/message";
+import {paymentFormLoaded} from "./events/payment-form-loaded";
 
 (function ($) {
     "use strict";
@@ -13,7 +14,7 @@ import {message} from "./components/message";
         if ($(window).width() > 640) {
             let notice = $('.wc-block-components-notice-banner').height() + 100;
             if (notice > 110) {
-                $('.woocommerce-checkout-steps .woocommerce-NoticeGroup + .col2-set').css('padding-top', notice + 'px');
+                $('.payment-methods-position-after_shipping_details .woocommerce-NoticeGroup + .col2-set').css('padding-top', notice + 'px');
             }
         }
         message();
@@ -37,10 +38,12 @@ import {message} from "./components/message";
                 window.select.chosen(window.selectArgs);
             }, 200)
         } else {
-            setTimeout(function () {
-                $('select#billing_state').select2('destroy');
-                $('select#billing_state').select2();
-            }, 100)
+            if ($('select#billing_state').length > 0) {
+                setTimeout(function () {
+                    $('select#billing_state').select2('destroy');
+                    $('select#billing_state').select2();
+                }, 100)
+            }
         }
     }
 
@@ -48,8 +51,6 @@ import {message} from "./components/message";
      * Clear payment methods empty description boxes
      */
     jQuery('body').on('updated_checkout', function () {
-        console.log('updated_checkout')
-
         initFloatingLabels();
         resetSelects();
 
@@ -100,7 +101,6 @@ import {message} from "./components/message";
      * Input floating label
      */
     function initFloatingLabels() {
-        console.log('initFloatingLabels')
         if ($('body').hasClass('woocommerce-checkout-input-label-style-floating')) {
             $('.form-row .woocommerce-input-wrapper input').each(function (index, element) {
                 updateInputLabel($(element));
@@ -128,8 +128,36 @@ import {message} from "./components/message";
         }
     }
 
+    $(document.body).on('change ready', 'select[name=billing_country]', function () {
+        setTimeout(function () {
+            updatePostcodeStatus();
+        }, 200)
+    });
+
+    $(document).ready(function () {
+        setTimeout(function () {
+            updatePostcodeStatus();
+        }, 200)
+    });
+
+    function updatePostcodeStatus() {
+        let postcode = $('#billing_postcode_field:visible').length
+
+        if (postcode > 0) {
+            $('form[name="checkout"]')
+                .addClass('postcode-is-visible')
+                .removeClass('postcode-is-hidden')
+        } else {
+            $('form[name="checkout"]')
+                .removeClass('postcode-is-visible')
+                .addClass('postcode-is-hidden')
+        }
+    }
+
     if ($('body').hasClass('woocommerce-checkout-steps')) {
         $('#customer_details .btn-next').click(function () {
+            event.stopPropagation();
+            event.preventDefault();
 
             if (!billingFieldsAreValid()) {
                 return
@@ -165,6 +193,17 @@ import {message} from "./components/message";
 
                 $('.b-breadcrumb .b-breadcrumb-text').removeClass('is-active');
                 $('.b-breadcrumb .b-breadcrumb-text[data-type="payment"]').addClass('is-active');
+
+                /**
+                 * Fire event
+                 */
+                document.dispatchEvent(paymentFormLoaded({
+                    value: window.growtype_wc_ajax.cart_total,
+                    currency: window.growtype_wc_ajax.currency,
+                    items: window.growtype_wc_ajax.items_gtm,
+                    user_id: window.growtype_wc_ajax.user_id,
+                    email: window.growtype_wc_ajax.email,
+                }))
             })
         });
 
@@ -173,7 +212,9 @@ import {message} from "./components/message";
 
             parent.find('.woocommerce-additional-fields').fadeOut();
             parent.find('.woocommerce-billing-fields-summary').fadeOut().promise().done(function () {
-                parent.removeClass('is-completed')
+                resetSelects();
+
+                parent.removeClass('is-completed');
                 parent.find('.woocommerce-billing-fields__field-wrapper').fadeIn();
                 parent.find('.b-actions').fadeIn();
 
@@ -214,7 +255,9 @@ import {message} from "./components/message";
 
             return formData;
         }
+    }
 
+    if ($('body').hasClass('payment-methods-position-after_shipping_details')) {
         $('#order_review_heading').click(function () {
             $(this).toggleClass('is-open')
         });

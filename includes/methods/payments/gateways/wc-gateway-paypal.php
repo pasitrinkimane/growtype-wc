@@ -30,8 +30,6 @@ class Growtype_WC_Gateway_Paypal extends WC_Payment_Gateway
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array ($this, 'process_admin_options'));
         add_action('woocommerce_thankyou_' . $this->id, array ($this, 'thankyou_page'));
         add_filter('woocommerce_payment_complete_order_status', array ($this, 'change_payment_complete_order_status'), 10, 3);
-
-        add_action('woocommerce_email_before_order_table', array ($this, 'email_instructions'), 10, 3);
     }
 
     protected function setup_properties()
@@ -62,13 +60,7 @@ class Growtype_WC_Gateway_Paypal extends WC_Payment_Gateway
                 'title' => __('Enable/Disable', 'growtype-wc'),
                 'type' => 'checkbox',
                 'label' => __('Method is enabled', 'growtype-wc'),
-                'default' => 'yes'
-            ),
-            'visible_in_frontend' => array (
-                'title' => __('Visibility', 'growtype-wc'),
-                'type' => 'checkbox',
-                'label' => __('Method is visible in frontend', 'growtype-wc'),
-                'default' => 'true'
+                'default' => 'no'
             ),
             'title' => array (
                 'title' => __('Method title', 'growtype-wc'),
@@ -142,23 +134,17 @@ class Growtype_WC_Gateway_Paypal extends WC_Payment_Gateway
         return 'completed';
     }
 
-    /**
-     * Add content to the WC emails.
-     *
-     * @access public
-     * @param WC_Order $order
-     * @param bool $sent_to_admin
-     * @param bool $plain_text
-     */
-    public function email_instructions($order, $sent_to_admin, $plain_text = false)
-    {
-        if ($this->instructions && !$sent_to_admin && 'offline' === $order->payment_method && $order->has_status('on-hold')) {
-            echo wpautop(wptexturize($this->instructions)) . PHP_EOL;
-        }
-    }
-
     public function payment_fields()
     {
+        $description = $this->get_description();
+        if ($description) {
+            echo wpautop(wptexturize($description)); // @codingStandardsIgnoreLine.
+        }
+
+        do_action('growtype_wc_gateway_paypal_before_payment_button');
+
         echo '<button class="btn btn-primary btn-paypal"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/PayPal_logo.svg/527px-PayPal_logo.svg.png"/></button>';
+
+        do_action('growtype_wc_gateway_paypal_after_payment_button');
     }
 }

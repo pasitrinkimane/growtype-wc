@@ -35,9 +35,12 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('GROWTYPE_WC_VERSION', '1.2.1');
+define('GROWTYPE_WC_VERSION', '1.2.4.5');
 
-//define('WC_TEMPLATE_DEBUG_MODE', true);
+/**
+ * Debug mode
+ */
+define('WC_TEMPLATE_DEBUG_MODE', false);
 
 /**
  * Plugin text domain

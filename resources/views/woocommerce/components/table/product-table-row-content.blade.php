@@ -1,6 +1,6 @@
 <div {!! $classes !!}>
     <div class="table-body-cell">
-        <div class="e-img" style="{!! growtype_get_featured_image_tag(get_post()) !!}"></div>
+        <div class="e-img" style="{!! growtype_get_featured_image_tag(get_the_ID()) !!}"></div>
     </div>
     <div class="table-body-cell">
         {!! $product->get_title() !!}

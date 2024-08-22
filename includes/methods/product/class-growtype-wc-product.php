@@ -923,7 +923,7 @@ class Growtype_Wc_Product
      */
     public static function catalog_default_preview_style()
     {
-        return !empty(get_theme_mod('wc_catalog_products_preview_style')) ? get_theme_mod('wc_catalog_products_preview_style') : 'grid';
+        return !empty(get_theme_mod('wc_catalog_products_layout_style')) ? get_theme_mod('wc_catalog_products_layout_style') : 'grid';
     }
 
     /**

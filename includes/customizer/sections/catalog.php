@@ -20,22 +20,22 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 /**
  * Products preview style
  */
-$wp_customize->add_setting('wc_catalog_products_preview_style',
+$wp_customize->add_setting('wc_catalog_products_layout_style',
     array (
-        'default' => 'grid',
+        'default' => 'default',
         'transport' => 'refresh',
     )
 );
 
-$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'wc_catalog_products_preview_style',
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'wc_catalog_products_layout_style',
     array (
-        'label' => __('Products preview style', 'growtype-wc'),
-        'description' => esc_html__('Choose how products should be displayed', 'growtype-wc'),
+        'label' => __('Products layout', 'growtype-wc'),
+        'description' => esc_html__('Choose products layout style', 'growtype-wc'),
         'section' => 'woocommerce_product_catalog',
         'input_attrs' => array (
             'multiselect' => false,
         ),
-        'choices' => $this->product_preview_styles
+        'choices' => $this->products_layout_styles
     )
 ));
 

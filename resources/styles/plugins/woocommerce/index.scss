@@ -1585,11 +1585,14 @@ p.demo_store,
 
   .woocommerce-form-login {
     border-radius: 5px;
-    box-shadow: 0px 1px 9px 2px rgba(128, 128, 128, 0.1);
     background: white;
     padding: 20px;
     margin-bottom: 30px;
-    padding-bottom: 10px;
+    padding-bottom: 25px;
+    @include bp-phone-xl() {
+      padding: 15px;
+      padding-bottom: 20px;
+    }
 
     .form-row-first, .form-row-last {
       padding-top: 15px;
@@ -1949,7 +1952,6 @@ p.demo_store,
       }
 
       li:not(.woocommerce-notice) {
-
         @include clearfix;
       }
     }
@@ -2028,35 +2030,35 @@ p.demo_store,
         background-size: 32px 20px;
 
         &.visa {
-          background-image: url("./../../../icons/credit-cards/visa.svg");
+          background-image: url("./../../../icons/payment-methods/visa.svg");
         }
 
         &.mastercard {
-          background-image: url("./../../../icons/credit-cards/mastercard.svg");
+          background-image: url("./../../../icons/payment-methods/mastercard.svg");
         }
 
         &.laser {
-          background-image: url("./../../../icons/credit-cards/laser.svg");
+          background-image: url("./../../../icons/payment-methods/laser.svg");
         }
 
         &.dinersclub {
-          background-image: url("./../../../icons/credit-cards/diners.svg");
+          background-image: url("./../../../icons/payment-methods/diners.svg");
         }
 
         &.maestro {
-          background-image: url("./../../../icons/credit-cards/maestro.svg");
+          background-image: url("./../../../icons/payment-methods/maestro.svg");
         }
 
         &.jcb {
-          background-image: url("./../../../icons/credit-cards/jcb.svg");
+          background-image: url("./../../../icons/payment-methods/jcb.svg");
         }
 
         &.amex {
-          background-image: url("./../../../icons/credit-cards/amex.svg");
+          background-image: url("./../../../icons/payment-methods/amex.svg");
         }
 
         &.discover {
-          background-image: url("./../../../icons/credit-cards/discover.svg");
+          background-image: url("./../../../icons/payment-methods/discover.svg");
         }
       }
 

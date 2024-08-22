@@ -11,9 +11,11 @@ function growtype_header_before_close_wc_extend()
 add_action('growtype_side_nav', 'growtype_wc_side_nav');
 function growtype_wc_side_nav()
 {
-    if (growtype_wc_wishlist_page_icon()) { ?>
+    if (growtype_wc_wishlist_page_icon()) {
+        $permalink = apply_filters('growtype_wc_wishlist_url', get_permalink(get_page_by_path('wishlist')));
+        ?>
         <li class="e-wishlist">
-            <a href="<?php echo get_permalink(get_page_by_path('wishlist')) ?>">
+            <a href="<?php echo $permalink ?>">
                 <i class="icon-wishlist"></i>
             </a>
         </li>
@@ -71,9 +73,18 @@ function growtype_wc_extend_body_classes($classes)
         $classes[] = 'ajaxcart-enabled';
     }
 
+    if (growtype_wc_user_has_active_subscription()) {
+        $classes[] = 'active-subscription';
+    }
+
     if (is_checkout()) {
-        $classes[] = 'woocommerce-checkout-' . get_theme_mod('woocommerce_checkout_style_select');
+        $classes[] = 'woocommerce-checkout-' . growtype_wc_get_checkout_style();
         $classes[] = 'woocommerce-checkout-input-label-style-' . get_theme_mod('woocommerce_checkout_input_label_style');
+        $classes[] = 'payment-methods-position-' . growtype_wc_checkout_payment_methods_position();
+
+        if (growtype_wc_checkout_breadcrumbs_active()) {
+            $classes[] = 'woocommerce-checkout-breadcrumbs-active';
+        }
     }
 
     if (get_theme_mod('woocommerce_cart_enabled', true)) {

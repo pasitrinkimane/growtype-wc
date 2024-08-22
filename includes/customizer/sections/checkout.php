@@ -547,3 +547,81 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
         'description' => __('Create account checkbox checked by default.', 'growtype-wc'),
     )
 ));
+
+/**
+ * Intro
+ */
+$wp_customize->add_setting('woocommerce_checkout_payment_methods_section_notice',
+    array (
+        'default' => '',
+        'transport' => 'postMessage'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_checkout_payment_methods_section_notice',
+    array (
+        'label' => __('Payment methods'),
+        'description' => __('Below you can payment methods settings'),
+        'section' => 'woocommerce_checkout'
+    )
+));
+
+/**
+ * Order review Cart item style
+ */
+$wp_customize->add_setting('woocommerce_checkout_payment_methods_position',
+    array (
+        'default' => 'default',
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_customize, 'woocommerce_checkout_payment_methods_position',
+    array (
+        'label' => __('Position', 'growtype-wc'),
+        'section' => 'woocommerce_checkout',
+        'input_attrs' => array (
+            'multiselect' => false,
+        ),
+        'choices' => array (
+            'default' => __('Default', 'growtype-wc'),
+            'after_shipping_details' => __('After shipping details', 'growtype-wc')
+        )
+    )
+));
+
+/**
+ * Intro
+ */
+$wp_customize->add_setting('woocommerce_checkout_extra_section_notice',
+    array (
+        'default' => '',
+        'transport' => 'postMessage'
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Simple_Notice_Custom_control($wp_customize, 'woocommerce_checkout_extra_section_notice',
+    array (
+        'label' => __('Extra'),
+        'description' => __('Extra settings'),
+        'section' => 'woocommerce_checkout'
+    )
+));
+
+/**
+ * Order review Cart item style
+ */
+$wp_customize->add_setting('woocommerce_checkout_breadcrumbs',
+    array (
+        'default' => false,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_breadcrumbs',
+    array (
+        'label' => esc_html__('Breadcrumbs'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Enabled/disable breadcrumbs', 'growtype-wc'),
+    )
+));

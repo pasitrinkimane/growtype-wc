@@ -179,3 +179,20 @@ function growtype_wc_size_guide_cta()
 </div>';
     }
 }
+
+/**
+ *
+ */
+add_action('template_redirect', 'growtype_wc_product_page_redirect');
+function growtype_wc_product_page_redirect()
+{
+    if (is_product()) {
+        $disable_single_page = get_post_meta(get_the_ID(), '_disable_single_page', true);
+
+        if ($disable_single_page === 'yes') {
+            $redirect_url = apply_filters('growtype_wc_product_page_redirect_url', get_permalink(wc_get_page_id('shop')));
+            wp_redirect($redirect_url);
+            exit;
+        }
+    }
+}

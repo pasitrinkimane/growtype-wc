@@ -44,10 +44,7 @@ $wp_customize->add_control(new Skyrocket_Dropdown_Select2_Custom_Control($wp_cus
         'input_attrs' => array (
             'multiselect' => false,
         ),
-        'choices' => array (
-            'product-style-1' => __('Style 1', 'growtype-wc'),
-            'product-style-2' => __('Style 2', 'growtype-wc')
-        )
+        'choices' => $this->product_preview_styles
     )
 ));
 
@@ -66,6 +63,60 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
         'label' => esc_html__('Product title'),
         'section' => 'woocommerce_product_preview_page',
         'description' => __('Enable/disable product title.', 'growtype-wc'),
+    )
+));
+
+/**
+ * Product short description
+ */
+$wp_customize->add_setting('woocommerce_product_preview_show_short_description',
+    array (
+        'default' => 0,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_show_short_description',
+    array (
+        'label' => esc_html__('Short description'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable short description.', 'growtype-wc'),
+    )
+));
+
+/**
+ * Product thumbnail
+ */
+$wp_customize->add_setting('woocommerce_product_preview_show_thumbnail',
+    array (
+        'default' => 1,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_show_thumbnail',
+    array (
+        'label' => esc_html__('Thumbnail'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable thumbnail.', 'growtype-wc'),
+    )
+));
+
+/**
+ * Rating
+ */
+$wp_customize->add_setting('woocommerce_product_preview_show_rating',
+    array (
+        'default' => 0,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_product_preview_show_rating',
+    array (
+        'label' => esc_html__('Rating'),
+        'section' => 'woocommerce_product_preview_page',
+        'description' => __('Enable/disable rating.', 'growtype-wc'),
     )
 ));
 

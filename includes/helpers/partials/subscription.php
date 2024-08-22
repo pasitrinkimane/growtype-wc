@@ -38,11 +38,11 @@ function growtype_wc_create_subscription_order_object($args = array ())
     $args = wp_parse_args($args, $default_args);
 
     if (!isset($args['billing_period'])) {
-        $args['billing_period'] = get_post_meta($product->get_id(), '_growtype_wc_subscription_period', true);
+        $args['billing_period'] = growtype_wc_get_subcription_period($product->get_id());
     }
 
     if (!isset($args['billing_interval'])) {
-        $args['billing_interval'] = (int)get_post_meta($product->get_id(), '_growtype_wc_subscription_duration', true);
+        $args['billing_interval'] = growtype_wc_get_subcription_duration($product->get_id());
     }
 
     if (!isset($args['billing_price'])) {
@@ -80,11 +80,11 @@ function growtype_wc_create_subscription_order_object($args = array ())
         return new WP_Error('woocommerce_subscription_invalid_start_date_format', _x('Invalid date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
     }
 
-    if (get_option('woocommerce_enable_guest_checkout') === 'no') {
-        if (empty($args['customer_id']) || !is_numeric($args['customer_id']) || $args['customer_id'] <= 0) {
-            return new WP_Error('woocommerce_subscription_invalid_customer_id', _x('Invalid subscription customer_id.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
-        }
-    }
+//    if (get_option('woocommerce_enable_guest_checkout') === 'no') {
+//        if (empty($args['customer_id']) || !is_numeric($args['customer_id']) || $args['customer_id'] <= 0) {
+//            return new WP_Error('woocommerce_subscription_invalid_customer_id', _x('Invalid subscription customer_id.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+//        }
+//    }
 
     if (empty($args['billing_period']) || !array_key_exists(strtolower($args['billing_period']), growtype_wc_sub_get_subscription_period_strings())) {
         return new WP_Error('woocommerce_subscription_invalid_billing_period', __('Invalid subscription billing period given.', 'woocommerce-subscriptions'));
@@ -233,7 +233,7 @@ function growtype_wc_sub_get_datetime_from($variable_date_type)
 function growtype_wc_get_subscriptions($status = null)
 {
     $posts = get_posts([
-        'post_per_page' => -1,
+        'posts_per_page' => -1,
         'post_type' => 'growtype_wc_subs',
         'post_status' => 'any',
     ]);
@@ -243,8 +243,15 @@ function growtype_wc_get_subscriptions($status = null)
         $post->sub_price = wc_price(get_post_meta($post->ID, '_price', true));
         $post->sub_status = get_post_meta($post->ID, '_status', true);
         $post->sub_duration = get_post_meta($post->ID, '_duration', true);
-        $post->sub_start_date = date(get_option('date_format') . ' ' . get_option('time_format'), strtotime(get_post_meta($post->ID, '_start_date', true)));
-        $post->sub_end_date = date(get_option('date_format') . ' ' . get_option('time_format'), strtotime(get_post_meta($post->ID, '_end_date', true)));
+
+        $start_date = get_post_meta($post->ID, '_start_date', true);
+        $post->sub_start_date = !empty($start_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($start_date)) : '';
+
+        $end_date = get_post_meta($post->ID, '_end_date', true);
+        $post->sub_end_date = !empty($end_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($end_date)) : '';
+
+        $next_charge_date = get_post_meta($post->ID, '_next_charge_date', true);
+        $post->sub_next_charge = !empty($next_charge_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($next_charge_date)) : '';
 
         if (!empty($status) && $status != $post->sub_status) {
             continue;
@@ -254,4 +261,14 @@ function growtype_wc_get_subscriptions($status = null)
     }
 
     return $subscriptions;
+}
+
+function growtype_wc_get_subcription_duration($product_id)
+{
+    return growtype_wc_product_is_subscription($product_id) ? (int)get_post_meta($product_id, '_growtype_wc_subscription_duration', true) : null;
+}
+
+function growtype_wc_get_subcription_period($product_id)
+{
+    return growtype_wc_product_is_subscription($product_id) ? get_post_meta($product_id, '_growtype_wc_subscription_period', true) : null;
 }

@@ -14,6 +14,12 @@ function growtype_wc_woocommerce_post_class($classes, $product)
         $classes[] = 'previewstyle-plan';
     }
 
+    $promo_label = get_post_meta($product->get_id(), '_promo_label', true);
+
+    if (!empty($promo_label)) {
+        $classes[] = 'has-promo-label';
+    }
+
     if (growtype_wc_product_is_subscription($product->get_id())) {
         $classes[] = 'subscription';
     }

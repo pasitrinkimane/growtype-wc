@@ -126,26 +126,21 @@ class Growtype_Wc_Subscription extends WC_Order
 
     public function save_metabox($post_id, $post)
     {
-        // Add nonce for security and authentication.
         $nonce_name = isset($_POST['custom_nonce']) ? $_POST['custom_nonce'] : '';
         $nonce_action = 'custom_nonce_action';
 
-        // Check if nonce is valid.
         if (!wp_verify_nonce($nonce_name, $nonce_action)) {
             return;
         }
 
-        // Check if user has permissions to save data.
         if (!current_user_can('edit_post', $post_id)) {
             return;
         }
 
-        // Check if not an autosave.
         if (wp_is_post_autosave($post_id)) {
             return;
         }
 
-        // Check if not a revision.
         if (wp_is_post_revision($post_id)) {
             return;
         }
@@ -158,7 +153,6 @@ class Growtype_Wc_Subscription extends WC_Order
             if (!empty($order_id)) {
                 $renewal_order = wc_get_order($order_id);
                 do_action('woocommerce_scheduled_subscription_payment_' . $renewal_order->get_payment_method(), $renewal_order->get_total(), $renewal_order);
-                error_log('Process_Subscriptions_Job: ' . $order_id);
             }
         }
     }
@@ -221,18 +215,37 @@ class Growtype_Wc_Subscription extends WC_Order
 
     function manage_columns($columns)
     {
-        $columns['status'] = 'Status';
+        foreach ($this->meta_fields as $meta_fields) {
+            foreach ($meta_fields as $meta_field) {
+                $columns[$meta_field['key']] = $meta_field['label'];
+            }
+        }
 
         return $columns;
     }
 
     function fill_columns($column, $post_id)
     {
-        switch ($column) {
-            case 'status':
-                $status = get_post_meta($post_id, '_status', true);
-                echo '<span style="background: ' . ($status === 'active' ? 'green' : 'red') . ';padding: 5px;color: white;border-radius: 5px;text-transform: uppercase;">' . $status . '</span>';
-                break;
+        foreach ($this->meta_fields as $meta_fields) {
+            foreach ($meta_fields as $meta_field) {
+                $columns[$meta_field['key']] = $meta_field['label'];
+
+                if ($meta_field['key'] === $column) {
+                    $value = get_post_meta($post_id, $meta_field['key'], true);
+
+                    if ($column === '_status') {
+                        echo '<span style="background: ' . ($value === 'active' ? 'green' : 'red') . ';padding: 5px;color: white;border-radius: 5px;text-transform: uppercase;">' . $value . '</span>';
+                    } elseif ($column === '_user_id') {
+                        if (!empty(get_user_by('id', $value))) {
+                            echo $value . ' - (' . get_user_by('id', $value)->user_email . ')';
+                        } else {
+                            echo $value;
+                        }
+                    } else {
+                        echo $value;
+                    }
+                }
+            }
         }
     }
 
@@ -316,9 +329,19 @@ class Growtype_Wc_Subscription extends WC_Order
         }
     }
 
+    public static function status($sub_id)
+    {
+        return get_post_meta($sub_id, '_status', true);
+    }
+
     public static function change_status($sub_id, $status)
     {
         update_post_meta($sub_id, '_status', $status);
+    }
+
+    public static function manage_url($sub_id)
+    {
+        return growtype_wc_get_account_subpage_url('subscriptions') . '?action=manage&subscription=' . $sub_id;
     }
 }
 

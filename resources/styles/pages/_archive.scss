@@ -164,20 +164,3 @@ Pagination
     }
   }
 }
-
-/**
-Products preview style
- */
-.preview-style--list {
-  .woocommerce-loop-product__link {
-    display: flex;
-
-    .content-wrapper {
-      padding-left: 15px;
-    }
-
-    .imagewrapper {
-      max-width: 140px;
-    }
-  }
-}

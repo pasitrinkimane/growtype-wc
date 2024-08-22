@@ -1,9 +1,0 @@
-.woocommerce {
-  .products.preview-style--grid {
-    margin-bottom: 0;
-    @include bp-phone-xl() {
-      width: calc(100% + 0px) !important;
-      margin-left: 0 !important;
-    }
-  }
-}

@@ -68,12 +68,12 @@ if (!$checkout->is_registration_enabled() && $checkout->is_registration_required
         <?php do_action('woocommerce_checkout_before_order_review_heading'); ?>
 
         <?php if (get_theme_mod('woocommerce_checkout_order_review_heading', true)) { ?>
-            <h3 id="order_review_heading"><?php esc_html_e('Order summary', 'growtype-wc'); ?></h3>
+            <h3 id="order_review_heading" class="is-open"><?php esc_html_e('Order summary', 'growtype-wc'); ?></h3>
         <?php } ?>
 
         <?php do_action('woocommerce_checkout_before_order_review'); ?>
 
-        <div id="order_review" class="woocommerce-checkout-review-order">
+        <div id="order_review" class="woocommerce-checkout-review-order is-accordion">
             <?php do_action('woocommerce_checkout_order_review'); ?>
         </div>
 

@@ -19,6 +19,25 @@ class Growtype_Wc_Admin_Settings_General
     function admin_settings()
     {
         /**
+         * Optimization enabled
+         */
+        register_setting(
+            'growtype_wc_settings_general', // settings group name
+            'woocommerce_optimization_is_enabled', // option name
+        );
+
+        add_settings_field(
+            'woocommerce_optimization_is_enabled',
+            'WC Plugin Optimization Enabled',
+            function () {
+                $html = '<input type="checkbox" name="woocommerce_optimization_is_enabled" value="1" ' . checked(1, get_option('woocommerce_optimization_is_enabled'), false) . ' />';
+                echo $html;
+            },
+            'growtype-wc-settings',
+            'growtype_wc_settings_general_render'
+        );
+
+        /**
          * Woocommerce main menu title
          */
         register_setting(

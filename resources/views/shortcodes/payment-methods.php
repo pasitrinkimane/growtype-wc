@@ -1,7 +1,7 @@
-<div class="b-payment-methods" style="justify-content: <?php echo $params['justify-content'] ?>;">
-    <?php foreach ($items as $item) { ?>
-        <div class="b-payment-methods-single <?php echo isset($item['class']) ? $item['class'] : ''; ?>">
-            <img src="<?php echo $item['img']; ?>" alt="">
+<div class="b-payment-methods" style="justify-content: <?php echo $params['justify_content'] ?>;">
+    <?php foreach ($icons as $icon) { ?>
+        <div class="b-payment-methods-single <?php echo isset($icon['class']) ? $icon['class'] : ''; ?>">
+            <img src="<?php echo $icon['url']; ?>" alt="">
         </div>
     <?php } ?>
 </div>

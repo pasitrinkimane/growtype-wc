@@ -2,8 +2,15 @@
   max-width: 640px;
   margin: auto;
 
-  .b-intro-content {
+  .woocommerce-order-details-intro {
     text-align: center;
+
+    & + .woocommerce-order-details {
+      margin-top: 40px;
+      @include bp-phone-xl(){
+        margin-top: 30px;
+      }
+    }
   }
 
   .woocommerce-notice {

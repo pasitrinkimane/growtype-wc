@@ -81,7 +81,7 @@ class Growtype_Wc_Public
      */
     public function enqueue_scripts()
     {
-        wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', array ('jquery'), $this->version, false);
+        wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', array ('jquery'), $this->version, true);
 
         /**
          * libs
@@ -89,14 +89,20 @@ class Growtype_Wc_Public
         /**
          * Countdown
          */
-        wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', array ('jquery'), $this->version, false);
-        wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', array ('jquery', 'simple-auction-countdown'), $this->version, false);
-
+        wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', array ('jquery'), $this->version, true);
+        wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', array ('jquery', 'simple-auction-countdown'), $this->version, true);
 
         $ajax_url = admin_url('admin-ajax.php');
 
         if (class_exists('QTX_Translator')) {
             $ajax_url = admin_url('admin-ajax.php' . '?lang=' . qtranxf_getLanguage());
+        }
+
+        $email = class_exists('Growtype_Analytics') ? growtype_analytics_get_user_email() : '';
+
+        $cart_total = 0;
+        if (!empty(WC()) && !empty(WC()->cart->cart_contents_total)) {
+            $cart_total = WC()->cart->cart_contents_total;
         }
 
         wp_localize_script($this->growtype_wc, 'growtype_wc_ajax', array (
@@ -110,8 +116,12 @@ class Growtype_Wc_Public
             'error_text' => esc_html__("Something went wrong, please contact our support", "growtype-wc"),
             'no_wishlist_text' => esc_html__("No wishlist found", "growtype-wc"),
             'fill_required_fields_text' => esc_html__("Please fill all required fields", "growtype-wc"),
+            'currency' => get_woocommerce_currency(),
             'wc_version' => defined('WC_VERSION') ? WC_VERSION : null,
+            'items_gtm' => growtype_wc_get_cart_items_gtm(),
+            'cart_total' => $cart_total,
+            'user_id' => get_current_user_id(),
+            'email' => apply_filters('growtype_wc_get_user_email', $email),
         ));
     }
-
 }

@@ -149,7 +149,7 @@ function growtype_wc_products_shortcode($atts, $content = null)
         $args['tax_query'] = $visibility_tax_data;
     }
 
-    if (isset($product_type) && $product_type === 'subscription') {
+    if (!isset($args['post__in']) && isset($product_type) && $product_type === 'subscription') {
         $subscription_ids = Growtype_Wc_Product::get_subscriptions_ids();
         $args['post__in'] = isset($args['post__in']) ? array_merge($args['post__in'], $subscription_ids) : $subscription_ids;
     }

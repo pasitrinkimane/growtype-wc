@@ -25,8 +25,7 @@ class Growtype_Wc_Order
      */
     function growtype_wc_woocommerce_payment_complete($order_id, $transaction_id)
     {
-        $order = wc_get_order($order_id);
-        $subscription = growtype_wc_order_get_subscription_order($order);
+        $subscription = growtype_wc_order_get_subscription_order($order_id);
 
         if (!empty($subscription)) {
             $post_id = wp_insert_post([
@@ -43,6 +42,7 @@ class Growtype_Wc_Order
             update_post_meta($post_id, '_user_id', get_current_user_id());
             update_post_meta($post_id, '_start_date', wp_date('Y-m-d H:i:s'));
             update_post_meta($post_id, '_end_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
+            update_post_meta($post_id, '_next_charge_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
         }
 
         if (is_user_logged_in()) {

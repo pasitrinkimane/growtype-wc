@@ -22,10 +22,10 @@ if (!defined('ABSPATH')) {
 
 if (is_single()) {
     $customizer_preview_style = !get_theme_mod('woocommerce_product_page_related_products_preview_style') ? 'grid' : get_theme_mod('woocommerce_product_page_related_products_preview_style');
-    $preview_style_class = 'preview-style--' . (isset($preview_style) && !empty($preview_style) ? $preview_style : $customizer_preview_style);
+    $preview_style_class = 'layout-style--' . (isset($preview_style) && !empty($preview_style) ? $preview_style : $customizer_preview_style);
 } else {
     $customizer_preview_style = Growtype_Wc_Product::catalog_default_preview_style();
-    $preview_style_class = 'preview-style--' . (isset($preview_style) && !empty($preview_style) ? $preview_style : $customizer_preview_style);
+    $preview_style_class = 'layout-style--' . (isset($preview_style) && !empty($preview_style) ? $preview_style : $customizer_preview_style);
 }
 ?>
 

@@ -14,24 +14,36 @@ function growtype_wc_product_type_options($type_options)
     return $type_options;
 }
 
-add_action('woocommerce_update_product', function ($post_id) {
-    update_post_meta($post_id, Growtype_Wc_Subscription::META_KEY, isset($_POST["growtype_wc_subscription"]) ? "yes" : "no");
-});
+/**
+ * Update product meta
+ */
+add_action('woocommerce_update_product', function ($post_id, $product) {
+    if (isset($_POST['post_type']) && $_POST['post_type'] === 'product') {
+        $is_subscription = isset($_POST['growtype_wc_subscription']) && $_POST['growtype_wc_subscription'] ? 'yes' : 'no';
+        update_post_meta($post_id, Growtype_Wc_Subscription::META_KEY, $is_subscription);
+    }
+}, 0, 2);
 
-add_action("save_post_product", function ($post_ID, $product, $update) {
+/**
+ * Save product meta
+ */
+add_action("save_post_product", function ($post_id, $product, $update) {
     if (isset($_POST['growtype_wc_subscription_price'])) {
-        update_post_meta($product->ID, '_growtype_wc_subscription_price', esc_attr($_POST['growtype_wc_subscription_price']));
+        update_post_meta($post_id, '_growtype_wc_subscription_price', esc_attr($_POST['growtype_wc_subscription_price']));
     }
 
     if (isset($_POST['growtype_wc_subscription_period'])) {
-        update_post_meta($product->ID, '_growtype_wc_subscription_period', esc_attr($_POST['growtype_wc_subscription_period']));
+        update_post_meta($post_id, '_growtype_wc_subscription_period', esc_attr($_POST['growtype_wc_subscription_period']));
     }
 
     if (isset($_POST['growtype_wc_subscription_duration'])) {
-        update_post_meta($product->ID, '_growtype_wc_subscription_duration', esc_attr($_POST['growtype_wc_subscription_duration']));
+        update_post_meta($post_id, '_growtype_wc_subscription_duration', esc_attr($_POST['growtype_wc_subscription_duration']));
     }
 }, 10, 3);
 
+/**
+ * Product data tabs
+ */
 add_filter('woocommerce_product_data_tabs', 'growtype_wc_woocommerce_product_data_tabs', 10, 1);
 function growtype_wc_woocommerce_product_data_tabs($default_tabs)
 {
@@ -51,6 +63,9 @@ function growtype_wc_woocommerce_product_data_tabs($default_tabs)
     return $default_tabs;
 }
 
+/**
+ * Product data panels
+ */
 add_action('woocommerce_product_data_panels', 'growtype_wc_woocommerce_product_data_panels');
 function growtype_wc_woocommerce_product_data_panels()
 {
@@ -71,7 +86,7 @@ function growtype_wc_woocommerce_product_data_panels()
             <input type="text" name="growtype_wc_subscription_price" id="growtype-wc-subscription-price" value="<?php echo $growtype_wc_subscription_price; ?>"/>
         </p>
         <p class="form-field">
-            <?php $growtype_wc_subscription_period = get_post_meta($post->ID, '_growtype_wc_subscription_period', true); ?>
+            <?php $growtype_wc_subscription_period = growtype_wc_get_subcription_period($post->ID); ?>
             <label for="growtype-wc-subscription-period"><?php esc_html_e('Period', 'growtype-wc'); ?></label>
             <select name="growtype_wc_subscription_period" id="growtype_wc_subscription_period">
                 <?php foreach ($periods as $key => $period) { ?>
@@ -80,7 +95,7 @@ function growtype_wc_woocommerce_product_data_panels()
             </select>
         </p>
         <p class="form-field">
-            <?php $growtype_wc_subscription_duration = get_post_meta($post->ID, '_growtype_wc_subscription_duration', true); ?>
+            <?php $growtype_wc_subscription_duration = growtype_wc_get_subcription_duration($post->ID); ?>
             <label for="growtype-wc-subscription-duration"><?php esc_html_e('Duration', 'growtype-wc'); ?></label>
             <input type="text" name="growtype_wc_subscription_duration" id="growtype-wc-subscription-duration" value="<?php echo $growtype_wc_subscription_duration; ?>"/>
         </p>

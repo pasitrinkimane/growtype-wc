@@ -1,19 +1,23 @@
 <?php
 
-add_filter('growtype_page_is_among_enabled_pages', 'growtype_wc_page_is_among_enabled_pages');
-function growtype_wc_page_is_among_enabled_pages($enabled_pages)
+add_filter('growtype_page_is_among_enabled_pages', 'growtype_wc_page_is_among_enabled_pages', 100, 2);
+function growtype_wc_page_is_among_enabled_pages($page_enabled, $enabled_pages)
 {
     if (class_exists('woocommerce') && !empty($enabled_pages)) {
+        if (is_wc_endpoint_url('order-received')) {
+            $page_enabled = false;
+        }
+
         if (
             (is_product() && in_array('single_shop_page', $enabled_pages))
             ||
             (is_shop() && in_array(wc_get_page_id('shop'), $enabled_pages))
         ) {
-            return true;
+            $page_enabled = true;
         }
     }
 
-    return false;
+    return $page_enabled;
 }
 
 add_filter('growtype_permalink', 'growtype_wc_permalink');
@@ -90,13 +94,13 @@ function growtype_wc_product_query($query)
 /**
  * Disable shop page access if enabled
  */
-add_action('template_redirect', 'growtype_catalog_disable_access');
-function growtype_catalog_disable_access()
+add_action('template_redirect', 'growtype_wc_catalog_disable_access');
+function growtype_wc_catalog_disable_access()
 {
-    if (is_shop() && get_theme_mod('catalog_disable_access')) {
+    if (is_shop() && growtype_wc_catalog_access_is_disabled()) {
         wp_redirect(home_url());
         exit();
-    } elseif (get_theme_mod('catalog_disable_access') && is_product_category()) {
+    } elseif (growtype_wc_catalog_access_is_disabled() && is_product_category()) {
         /**
          * Disable product category access if enabled
          */
