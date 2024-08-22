@@ -1,0 +1,24 @@
+.woocommerce-form-wrapper {
+  .e-title {
+    text-align: center;
+    padding-top: 20px;
+  }
+
+  .woocommerce-form {
+    label, a {
+      @include bp-phone-xl() {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.woocommerce-account {
+  .main {
+    .content {
+      > p:empty {
+        display: none;
+      }
+    }
+  }
+}

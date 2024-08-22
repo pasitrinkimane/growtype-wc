@@ -25,9 +25,7 @@ function growtype_wc_user_has_active_subscription($user_id = null)
     $subscriptions = growtype_wc_get_user_subscriptions($user_id);
 
     foreach ($subscriptions as $subscription) {
-        $status = get_post_meta($subscription->ID, '_status', true);
-
-        if ($status === Growtype_Wc_Subscription::STATUS_ACTIVE) {
+        if ($subscription->sub_status === Growtype_Wc_Subscription::STATUS_ACTIVE) {
             return true;
         }
     }

@@ -12,3 +12,12 @@ function growtype_wc_coupon_scripts_styles()
         }
     }
 }
+
+/**
+ *
+ */
+add_filter('woocommerce_cart_item_name', 'growtype_wc_cart_item_name');
+function growtype_wc_cart_item_name($text)
+{
+    return __($text);
+}

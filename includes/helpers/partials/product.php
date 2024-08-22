@@ -37,6 +37,7 @@ function growtype_wc_product_is_sold_individually($product_id)
 function growtype_wc_product_is_subscription($product_id)
 {
     $product_type_subscription = get_post_meta($product_id, Growtype_Wc_Subscription::META_KEY, true);
+
     return !empty($product_type_subscription) && $product_type_subscription === 'yes' ? true : false;
 }
 
@@ -114,6 +115,8 @@ function growtype_wc_render_products($query_args, $params = [])
         wp_reset_postdata();
 
         $render = '<div class="woocommerce">' . ob_get_clean() . '</div>';
+
+        $render = apply_filters('growtype_wc_render_products_after', $render, $query_args, $params);
     }
 
     return isset($render) && !empty($render) ? $render : $params['not_found_message_html'];

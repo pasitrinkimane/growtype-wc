@@ -111,10 +111,9 @@
                         if (parseInt(current_amount.text()) > initial_amount_val) {
                             current_amount.text(initial_amount_val);
                         }
-                        Swal.fire({
-                            icon: 'info',
-                            text: data.message,
-                        });
+
+                        alert(data.message);
+
                         return false;
                     }
 
@@ -267,24 +266,14 @@
 
                 if (data == 0 || data.error) {
                     if (data.message) {
-                        Swal.fire({
-                            icon: 'info',
-                            text: data.message,
-                        });
+                        alert(data.message);
                     }
 
                     return false;
                 }
 
                 if (data.quantity == 0) {
-                    Swal.fire({
-                        position: 'center',
-                        icon: false,
-                        title: 'Oops...',
-                        text: data.message,
-                        showConfirmButton: false,
-                        timer: 2500
-                    });
+                    alert(data.message);
 
                     return false;
                 }

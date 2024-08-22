@@ -8,5 +8,5 @@ include('partials/payment-methods.php');
 include('partials/countdown.php');
 include('partials/justpurchased.php');
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/subscription-benefits.php';
-new Growtype_Wc_Subscription_Benefits_Shortcode();
+require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/benefits.php';
+new Growtype_Wc_Benefits_Shortcode();

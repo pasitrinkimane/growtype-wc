@@ -1,41 +1,6 @@
 <?php
 
 /**
- * @return mixed
- * Skip cart page
- */
-function growtype_wc_order_overview_disabled()
-{
-    return get_theme_mod('woocommerce_thankyou_page_order_overview', true);
-}
-
-function growtype_wc_thankyou_page_intro_content($order = null)
-{
-    $woocommerce_thankyou_page_intro_content = get_theme_mod('woocommerce_thankyou_page_intro_content');
-
-    if (user_can_access_platform()) {
-        $woocommerce_thankyou_page_intro_content_access_platform = get_theme_mod('woocommerce_thankyou_page_intro_content_access_platform');
-        if (!empty($woocommerce_thankyou_page_intro_content_access_platform)) {
-            $woocommerce_thankyou_page_intro_content = $woocommerce_thankyou_page_intro_content_access_platform;
-        }
-    }
-
-    if (empty($woocommerce_thankyou_page_intro_content)) {
-        $woocommerce_thankyou_page_intro_content = '<h3 class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">' . apply_filters('woocommerce_thankyou_order_received_text',
-                esc_html__('Thank you. Your order has been received.', 'growtype-wc'),
-                $order) . '</h3>';
-
-        if (!empty($order)) {
-            $woocommerce_thankyou_page_intro_content .= '<p>' . esc_html__('Below are the details of your order.', 'growtype-wc') . '</p>';
-        } else {
-            $woocommerce_thankyou_page_intro_content .= '<p>' . esc_html__('Unfortunately we do not received information about your payment yet.', 'growtype-wc') . '</p>';
-        }
-    }
-
-    return apply_filters('growtype_wc_thankyou_page_intro_content', $woocommerce_thankyou_page_intro_content, $order);
-}
-
-/**
  * @return int[]|WP_Post[]
  */
 function growtype_wc_get_user_orders()
@@ -67,18 +32,27 @@ function growtype_wc_get_user_first_order()
  * @return mixed|null
  * @throws WC_Data_Exception
  */
-function growtype_wc_order_get_subscription_order($order)
+function growtype_wc_order_get_subscription_order($order_id)
 {
-    foreach ($order->get_items() as $item_id => $item) {
-        $is_subscription = growtype_wc_product_is_subscription($item->get_product_id());
-        if ($is_subscription) {
-            $subscription_order = growtype_wc_create_subscription_order_object([
-                'status' => Growtype_Wc_Subscription::STATUS_ACTIVE,
-                'order_id' => $order->get_id(),
-                'product_id' => $item->get_product_id()
-            ]);
+    $order = wc_get_order($order_id);
 
-            return $subscription_order;
+    if ($order && !empty($order->get_items())) {
+        foreach ($order->get_items() as $item_id => $item) {
+            $is_subscription = growtype_wc_product_is_subscription($item->get_product_id());
+            if ($is_subscription) {
+                $subscription_order = growtype_wc_create_subscription_order_object([
+                    'status' => Growtype_Wc_Subscription::STATUS_ACTIVE,
+                    'order_id' => $order->get_id(),
+                    'product_id' => $item->get_product_id()
+                ]);
+
+                if (is_wp_error($subscription_order)) {
+                    error_log(sprintf('Product id: %s. Error:%s', $item->get_product_id(), $subscription_order->get_error_message()));
+                    return null;
+                }
+
+                return $subscription_order;
+            }
         }
     }
 
@@ -90,9 +64,9 @@ function growtype_wc_order_get_subscription_order($order)
  * @return bool
  * @throws WC_Data_Exception
  */
-function growtype_wc_order_contains_subscription_order($order)
+function growtype_wc_order_contains_subscription_order($order_id)
 {
-    $subscription = growtype_wc_order_get_subscription_order($order);
+    $subscription = growtype_wc_order_get_subscription_order($order_id);
 
     return !empty($subscription);
 }
@@ -101,15 +75,17 @@ function growtype_wc_order_contains_subscription_order($order)
  * @param $subscription
  * @return mixed|null
  */
-function growtype_wc_order_is_subscription_order($subscription)
+function growtype_wc_order_is_subscription_order($order_id)
 {
-    if (is_object($subscription) && is_a($subscription, 'WC_Subscription')) {
+    $order = wc_get_order($order_id);
+
+    if (growtype_wc_order_contains_subscription_order($order_id) || (is_object($order) && is_a($order, 'WC_Subscription'))) {
         $is_subscription = true;
     } else {
         $is_subscription = false;
     }
 
-    return apply_filters('growtype_wc_is_subscription', $is_subscription, $subscription);
+    return apply_filters('growtype_wc_is_subscription', $is_subscription, $order);
 }
 
 function growtype_wc_get_order_active_subscriptions($order_id)
@@ -124,4 +100,21 @@ function growtype_wc_get_order_active_subscriptions($order_id)
     }
 
     return $subscriptions;
+}
+
+function growtype_wc_get_order_checkout_url($order_id)
+{
+    $order = wc_get_order($order_id);
+
+    $checkout_url = wc_get_checkout_url();
+
+    $payment_provider_checkout_url = $order->get_meta('stripe_checkout_url');
+
+    if (!empty($payment_provider_checkout_url)) {
+        $checkout_url = $payment_provider_checkout_url;
+    }
+
+    $checkout_url = apply_filters('growtype_wc_get_order_checkout_url', $checkout_url, $order_id, $payment_provider_checkout_url);
+
+    return $checkout_url;
 }

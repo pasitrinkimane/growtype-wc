@@ -1,6 +1,30 @@
 @import "subpages/subscription";
 
 .woocommerce-account {
+  .edit-account {
+
+    .fields-group {
+      padding-bottom: 30px;
+    }
+
+    .fields-group-title {
+      .e-title {
+        margin: 0;
+      }
+    }
+
+    .btn-remove {
+      color: $color-error;
+      background: none;
+      border: 1px solid $color-error;
+
+      @include bp-phone-xl() {
+        margin-top: 100px;
+        width: 100%;
+      }
+    }
+  }
+
   .woocommerce-MyAccount-navigation {
     width: 100%;
     float: left;
@@ -30,12 +54,11 @@
         }
         @include bp-phone-xl() {
           width: 100%;
-          display: none;
+          padding: 10px 0px;
         }
 
         &.woocommerce-MyAccount-navigation-link {
           font-weight: bold;
-          display: none;
 
           .e-subtitle {
             font-weight: 300;
@@ -84,12 +107,6 @@
           }
         }
 
-        &.is-active {
-          a {
-            font-weight: 500;
-          }
-        }
-
         a {
           color: var(--text-color);
           font-size: $font-size-body;
@@ -108,64 +125,6 @@
 
           &:hover {
             text-decoration: none;
-          }
-        }
-
-        &:first-child {
-          @include bp-phone-xl() {
-            display: block;
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1;
-            background: none;
-            max-width: 50px;
-          }
-
-          &:before {
-            @include bp-phone-xl() {
-              background: none;
-              font-family: "Dashicons";
-              font-weight: 900;
-              content: "\f110";
-              width: 13px;
-              height: 25px;
-              opacity: 1;
-              position: absolute;
-              color: black;
-              left: 0;
-              right: 0;
-              top: 0;
-              bottom: 0;
-              margin: auto;
-            }
-          }
-
-          a {
-            @include bp-phone-xl() {
-              opacity: 0;
-            }
-          }
-
-          &.is-active {
-            @include bp-phone-xl() {
-              display: none;
-              position: relative;
-              max-width: initial;
-              background: white;
-              z-index: initial;
-              width: 100%;
-            }
-
-            a {
-              opacity: 1;
-            }
-
-            & ~ li {
-              display: block;
-            }
-
           }
         }
       }
@@ -211,6 +170,9 @@
 
     .b-info-header-cta {
       margin-right: 20px;
+      @include bp-phone-xl() {
+        margin-right: 15px;
+      }
     }
 
     .btn-back-bg {

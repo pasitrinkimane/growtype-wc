@@ -17,19 +17,19 @@ function update_shipping_cost_based_on_address($rates, $package)
 
 function growtype_wc_update_shipping_details($rates)
 {
-    $cart_total = WC()->cart->cart_contents_total;
+    if (!empty(WC()) && !empty(WC()->cart)) {
+        $printful_methods = get_option('woocommerce_plugins_printful_enabled') && function_exists('growtype_wc_printful_available_methods') ? growtype_wc_printful_available_methods() : null;
 
-    $printful_methods = get_option('woocommerce_plugins_printful_enabled') && function_exists('growtype_wc_printful_available_methods') ? growtype_wc_printful_available_methods() : null;
+        foreach ($rates as $rate_key => $rate) {
+            if (!empty($printful_methods) && isset($printful_methods[$rate->method_id])) {
+                if (!empty($printful_methods[$rate->method_id])) {
+                    $method = $printful_methods[$rate->method_id];
 
-    foreach ($rates as $rate_key => $rate) {
-        if (!empty($printful_methods) && isset($printful_methods[$rate->method_id])) {
-            if (!empty($printful_methods[$rate->method_id])) {
-                $method = $printful_methods[$rate->method_id];
-
-                $rate->label = $method['name'];
-                $rate->cost = $method['rate'];
-            } else {
-                unset($rates[$rate_key]);
+                    $rate->label = $method['name'];
+                    $rate->cost = $method['rate'];
+                } else {
+                    unset($rates[$rate_key]);
+                }
             }
         }
     }

@@ -6,6 +6,7 @@
         "php": "^7.0|^8.0",
         "rappasoft/laravel-helpers": "^2.0",
         "printful/php-api-sdk": "^2.2",
-        "google/apiclient": "^2.15"
+        "google/apiclient": "^2.15",
+        "stripe/stripe-php": "^13.9"
     }
 }

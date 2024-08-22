@@ -31,8 +31,6 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
         add_action('woocommerce_thankyou_' . $this->id, array ($this, 'thankyou_page'));
         add_filter('woocommerce_payment_complete_order_status', array ($this, 'change_payment_complete_order_status'), 10, 3);
 
-        add_action('woocommerce_email_before_order_table', array ($this, 'email_instructions'), 10, 3);
-
         add_filter('woocommerce_credit_card_form_fields', array ($this, 'extend_woocommerce_credit_card_form_fields'), 0, 2);
     }
 
@@ -42,7 +40,7 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
 
         $extra_values['card-holder-name-field'] = '<p class="form-row form-row-wide">
 				<label for="' . esc_attr($id) . '-card-holder-name">' . esc_html__('Name on card', 'woocommerce') . '&nbsp;<span class="required">*</span></label>
-				<input id="' . esc_attr($id) . '-card-holder-name" class="input-text wc-credit-card-form-card-holder-name" inputmode="numeric" autocomplete="cc-number" autocorrect="no" autocapitalize="no" spellcheck="no" type="text" placeholder="Full name" ' . $cc_form->field_name($id . '-card-holder-name') . ' />
+				<input id="' . esc_attr($id) . '-card-holder-name" class="input-text wc-credit-card-form-card-holder-name" inputmode="text" autocomplete="cc-number" autocorrect="no" autocapitalize="no" spellcheck="no" type="text" placeholder="Full name" ' . $cc_form->field_name($id . '-card-holder-name') . ' />
 			</p>';
 
         $default_fields = array_merge($extra_values, $default_fields);
@@ -78,13 +76,7 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
                 'title' => __('Enable/Disable', 'growtype-wc'),
                 'type' => 'checkbox',
                 'label' => __('Method is enabled', 'growtype-wc'),
-                'default' => 'yes'
-            ),
-            'visible_in_frontend' => array (
-                'title' => __('Visibility', 'growtype-wc'),
-                'type' => 'checkbox',
-                'label' => __('Method is visible in frontend', 'growtype-wc'),
-                'default' => 'true'
+                'default' => 'no'
             ),
             'title' => array (
                 'title' => __('Method title', 'growtype-wc'),
@@ -111,6 +103,8 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
      */
     public function process_payment($order_id)
     {
+        global $woocommerce;
+
         $holder_name = $_REQUEST['-growtype_wc_cc-card-holder-name'];
         $card_number = $_REQUEST['growtype_wc_cc-card-number'];
         $card_expiry = $_REQUEST['growtype_wc_cc-card-expiry'];
@@ -122,13 +116,13 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
             $passed_validation = false;
         }
 
-        if (empty($card_number)) {
-            wc_add_notice(__('Please enter card number.', 'growtype-wc'), 'error');
+        if (!growtype_wc_card_number_is_valid($card_number)) {
+            wc_add_notice(__('Please enter a valid card number.', 'growtype-wc'), 'error');
             $passed_validation = false;
         }
 
-        if (empty($card_expiry)) {
-            wc_add_notice(__('Please enter card expiry.', 'growtype-wc'), 'error');
+        if (!growtype_wc_card_expiry_is_valid($card_expiry)) {
+            wc_add_notice(__('Please enter a valid card expiry date.', 'growtype-wc'), 'error');
             $passed_validation = false;
         }
 
@@ -150,8 +144,6 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
                 'result' => 'failure'
             );
         }
-
-        global $woocommerce;
 
         $order = wc_get_order($order_id);
 
@@ -190,28 +182,22 @@ class Growtype_WC_Gateway_Cc extends WC_Payment_Gateway
         return 'completed';
     }
 
-    /**
-     * Add content to the WC emails.
-     *
-     * @access public
-     * @param WC_Order $order
-     * @param bool $sent_to_admin
-     * @param bool $plain_text
-     */
-    public function email_instructions($order, $sent_to_admin, $plain_text = false)
-    {
-        if ($this->instructions && !$sent_to_admin && 'offline' === $order->payment_method && $order->has_status('on-hold')) {
-            echo wpautop(wptexturize($this->instructions)) . PHP_EOL;
-        }
-    }
-
     public function payment_fields()
     {
+        $description = $this->get_description();
+        if ($description) {
+            echo wpautop(wptexturize($description)); // @codingStandardsIgnoreLine.
+        }
+
         $cc_form = new WC_Payment_Gateway_CC();
         $cc_form->id = $this->id;
         $cc_form->supports = $this->supports;
         $cc_form->form();
 
+        do_action('growtype_wc_gateway_cc_before_payment_button');
+
         echo '<button type="submit" class="btn btn-primary btn-card">Complete secure payment</button>';
+
+        do_action('growtype_wc_gateway_cc_after_payment_button');
     }
 }

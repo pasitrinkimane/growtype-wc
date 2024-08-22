@@ -11,3 +11,7 @@ require_once 'partials/price.php';
 require_once 'partials/order.php';
 require_once 'partials/subscription.php';
 require_once 'partials/user.php';
+require_once 'partials/payment.php';
+require_once 'partials/thankyou.php';
+require_once 'partials/checkout.php';
+require_once 'partials/catalog.php';

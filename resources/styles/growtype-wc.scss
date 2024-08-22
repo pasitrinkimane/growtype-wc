@@ -10,7 +10,6 @@
 @import "components/buttons";
 @import "components/cart";
 @import "components/lightbox";
-@import "components/products-preview";
 @import "components/notices";
 @import "components/loader";
 @import "components/wishlist";
@@ -20,13 +19,14 @@
 @import "components/slider";
 @import "components/form";
 @import "components/order-details";
-@import "components/table";
 @import "components/inputs";
 @import "components/ordering";
 
 @import "widgets/woocommerce-widget-price-filter";
 
-@import "block-editor/product-grid";
+@import "product-preview";
+
+@import "products-layout";
 
 @import "pages/wishlist";
 @import "pages/archive";
@@ -39,6 +39,8 @@
 @import "pages/faq";
 @import "pages/template";
 @import "pages/lost-password";
+@import "pages/register";
+@import "pages/login";
 
 @import "payments/reepay";
 

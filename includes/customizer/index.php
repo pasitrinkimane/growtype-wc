@@ -8,7 +8,8 @@ class Growtype_Wc_Customizer_Extend
         add_action('customize_register', array ($this, 'add_sections'), 20);
         add_action('customize_controls_print_scripts', array ($this, 'add_scripts'), 30);
 
-        $this->product_preview_styles = $this->get_available_product_preview_styles();
+        $this->products_layout_styles = self::get_available_products_layout_styles();
+        $this->product_preview_styles = self::get_available_product_preview_styles();
         $this->available_wc_coupons = $this->get_available_wc_coupons();
         $this->available_products = $this->get_available_products();
 
@@ -93,12 +94,18 @@ class Growtype_Wc_Customizer_Extend
      */
     function get_available_products()
     {
-        $wc_products = wc_get_products(array ('limit' => -1));
+        $wc_products = get_posts(
+            array (
+                'post_type' => 'product',
+                'posts_per_page' => -1,
+                'post_status' => 'any',
+            )
+        );
 
         $products_map = [];
         if (!empty($wc_products)) {
             foreach ($wc_products as $product) {
-                $products_map[$product->get_id()] = $product->get_title();
+                $products_map[$product->ID] = $product->post_title . ' - ' . $product->post_status;
             }
         }
 
@@ -131,13 +138,28 @@ class Growtype_Wc_Customizer_Extend
     /**
      * Wc product preview styles
      */
-    function get_available_product_preview_styles()
+    public static function get_available_products_layout_styles()
     {
-        return array (
-            'grid' => __('Grid', 'growtype-wc'),
-            'list' => __('List', 'growtype-wc'),
-            'table' => __('Table', 'growtype-wc')
+        $default_styles = array (
+            'default' => __('Default', 'growtype-wc'),
+            'table' => __('Table', 'growtype-wc'),
         );
+
+        return apply_filters('growtype_wc_products_layout_styles', $default_styles);
+    }
+
+    /**
+     * Wc product preview styles
+     */
+    public static function get_available_product_preview_styles()
+    {
+        $default_styles = array (
+            'default' => __('Default', 'growtype-wc'),
+            'product-style-2' => __('Style 2', 'growtype-wc'),
+            'product-style-plan' => __('Plan', 'growtype-wc'),
+        );
+
+        return apply_filters('growtype_wc_products_preview_styles', $default_styles);
     }
 
     /**

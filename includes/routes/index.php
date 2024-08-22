@@ -23,29 +23,26 @@ add_action('template_redirect', function () {
     /**
      * Check if user should be redirected to specific url.
      */
-    growtype_custom_page_redirect();
-
     $user_can_buy = get_theme_mod('only_registered_users_can_buy') ? is_user_logged_in() : true;
 
     if (
         !$user_can_buy
         &&
         (
-            (is_woocommerce() || is_cart() || is_checkout())
-            ||
-            isset($_GET['add-to-cart']) && !empty($_GET['add-to-cart'])
+            is_woocommerce() || is_cart() || is_checkout()
         )
     ) {
-        $redirect_url = home_url();
-
-        if (function_exists('growtype_form_login_page_url')) {
-            wc_clear_notices();
-            $redirect_url = growtype_form_login_page_url([
-                'redirect_after' => get_permalink()
-            ]);
-        }
-
+        wc_clear_notices();
+        $redirect_url = growtype_wc_user_can_not_buy_redirect_url();
         wp_redirect($redirect_url);
+        exit;
+    }
+
+    /**
+     * Check if login page and redirect accordingly
+     */
+    if (!is_user_logged_in() && growtype_wc_is_account_page() && class_exists('Growtype_Form') && !empty(growtype_form_login_page_url())) {
+        wp_redirect(growtype_form_login_page_url());
         exit;
     }
 

@@ -1,0 +1,65 @@
+li.product.product-style-plan {
+  border: 1px solid #E5E5E5;
+  padding: 20px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  @include bp-phone-xl() {
+    width: calc(100% - 20px) !important;
+  }
+
+  .woocommerce-LoopProduct-link {
+    color: initial;
+    padding-bottom: 20px;
+  }
+
+  .add_to_cart_button {
+    margin-top: auto!important;
+  }
+
+  .woocommerce-loop-product__title {
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .short-description {
+    font-size: 14px;
+
+    p, li {
+      font-size: 14px;
+    }
+  }
+
+  ul {
+    padding-left: 15px;
+    padding-top: 15px;
+
+    li {
+      list-style-type: initial;
+    }
+  }
+
+  .price {
+    display: flex;
+    gap: 5px;
+    align-items: flex-end;
+
+    ins {
+      order: 0;
+      font-size: 28px;
+      bottom: -5px;
+      position: relative;
+    }
+
+    del {
+      order: 1;
+    }
+
+    .duration-details {
+      display: flex;
+      gap: 5px;
+      order: 2;
+    }
+  }
+}

@@ -16,6 +16,12 @@ if (!function_exists('woocommerce_template_loop_product_thumbnail')) {
 if (!function_exists('woocommerce_get_product_thumbnail')) {
     function woocommerce_get_product_thumbnail($size = 'woocommerce_thumbnail', $attr = array (), $placeholder = true)
     {
+        $show_preview_thumbnail = get_theme_mod('woocommerce_product_preview_show_thumbnail', true);
+
+        if (!$show_preview_thumbnail) {
+            return;
+        }
+
         global $product;
 
         if (!is_array($attr)) {

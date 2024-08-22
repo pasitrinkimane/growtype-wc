@@ -2,13 +2,13 @@
 
 class Growtype_Wc_Cron
 {
-    const GROWTYPE_WC_SUBS_CHECK = 'growtype_wc_subs_check';
+    const GROWTYPE_WC_PROCESS_SUBSCRIPTIONS_HOOK = 'growtype_cron_growtype_wc_process_subscriptions';
 
     public function __construct()
     {
         add_filter('growtype_cron_load_jobs', [$this, 'growtype_cron_load_jobs'], 10);
 
-        add_action(self::GROWTYPE_WC_SUBS_CHECK, array ($this, 'generate_jobs'));
+        add_action(self::GROWTYPE_WC_PROCESS_SUBSCRIPTIONS_HOOK, array ($this, 'generate_jobs'));
 
         add_action('wp_loaded', array (
             $this,
@@ -18,8 +18,8 @@ class Growtype_Wc_Cron
 
     function cron_activation()
     {
-        if (!wp_next_scheduled(self::GROWTYPE_WC_SUBS_CHECK)) {
-            wp_schedule_event(time(), 'every5minute', self::GROWTYPE_WC_SUBS_CHECK);
+        if (!wp_next_scheduled(self::GROWTYPE_WC_PROCESS_SUBSCRIPTIONS_HOOK)) {
+            wp_schedule_event(time(), 'hourly', self::GROWTYPE_WC_PROCESS_SUBSCRIPTIONS_HOOK);
         }
     }
 

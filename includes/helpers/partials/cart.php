@@ -122,18 +122,10 @@ function growtype_wc_cart_icon_is_active()
 }
 
 /**
- * @return bool
- */
-function cart_is_empty()
-{
-    return count(WC()->cart->get_cart()) === 0;
-}
-
-/**
  * @param $product
  * @return bool
  */
-function product_is_in_cart($product)
+function growtype_wc_product_is_in_cart($product)
 {
     $product_in_cart = WC()->cart->find_product_in_cart(WC()->cart->generate_cart_id($product->get_id()));
 
@@ -147,4 +139,100 @@ function product_is_in_cart($product)
 function growtype_wc_skip_cart_page()
 {
     return get_theme_mod('woocommerce_skip_cart_page', false);
+}
+
+function growtype_wc_get_cart_items_gtm()
+{
+    $items = [];
+
+    if (!empty(WC()) && !empty(WC()->cart)) {
+        $items = WC()->cart->get_cart();
+
+        if (empty($items)) {
+            $default_product = apply_filters('growtype_wc_get_cart_items_gtm_default_product', null);
+
+            if (!empty($default_product)) {
+                return [
+                    [
+                        'item_id' => $default_product->get_id(),
+                        'item_name' => $default_product->get_name(),
+                        'affiliation' => "",
+                        'coupon' => "",
+                        'discount' => "",
+                        'price' => $default_product->get_price(),
+                        'promotion_id' => "",
+                        'promotion_name' => "",
+                        'quantity' => 1
+                    ]
+                ];
+            }
+        }
+    }
+
+    $data = [];
+    foreach ($items as $item) {
+        array_push($data, [
+            'item_id' => $item['product_id'],
+            'item_name' => $item['data']->get_name(),
+            'affiliation' => "",
+            'coupon' => "",
+            'discount' => round((int)$item['data']->get_regular_price() - (int)$item['data']->get_price(), 2),
+            'price' => $item['data']->get_price(),
+            'promotion_id' => "",
+            'promotion_name' => "",
+            'quantity' => $item['quantity']
+        ]);
+    }
+
+    return $data;
+}
+
+function growtype_wc_get_purchase_items_gtm($order_items)
+{
+    $data = [];
+    foreach ($order_items as $item) {
+        array_push($data, [
+            'item_id' => $item['product_id'],
+            'item_name' => $item->get_name(),
+            'affiliation' => "",
+            'coupon' => "",
+            'price' => $item->get_data()['total'],
+            'promotion_id' => "",
+            'promotion_name' => "",
+            'quantity' => $item['quantity']
+        ]);
+    }
+
+    return $data;
+}
+
+function growtype_wc_get_cart_totals()
+{
+    $discount_total = 0;
+    $discount_percentage = 0;
+    $regular_price_total = 0;
+    foreach (WC()->cart->get_cart() as $cart_item_key => $values) {
+        $product = $values['data'];
+
+        if ($product->is_on_sale()) {
+            $regular_price = $product->get_regular_price();
+            $sale_price = $product->get_sale_price();
+            $discount = ((float)$regular_price - (float)$sale_price) * (int)$values['quantity'];
+            $discount_total += $discount;
+            $regular_price_total += $regular_price;
+        }
+    }
+
+    /**
+     * Discount
+     */
+    if ($discount_total > 0) {
+        $discount_percentage = round(($discount_total * 100) / $regular_price_total, 0);
+    }
+
+    return [
+        'regular_price' => $regular_price_total,
+        'discount' => $discount_total,
+        'discount_percentage' => $discount_percentage,
+    ];
 }

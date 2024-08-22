@@ -1,6 +1,7 @@
 .b-payment-methods {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 
   .b-payment-methods-single {
     max-width: 60px;
@@ -8,6 +9,7 @@
 
     img {
       max-width: 100%;
+      width: 100%;
     }
 
     &.custom {

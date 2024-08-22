@@ -18,11 +18,6 @@
     }
 
     .subs-single-details {
-      width: 60%;
-      @include bp-phone-xl() {
-        width: 100%;
-      }
-
       .e-status {
         padding: 5px;
         border-radius: 5px;
@@ -48,12 +43,6 @@
     }
 
     .subs-single-actions {
-      width: 40%;
-      @include bp-phone-xl() {
-        width: 100%;
-        margin-top: 20px;
-      }
-
       .b-actions {
         display: flex;
         gap: 10px;

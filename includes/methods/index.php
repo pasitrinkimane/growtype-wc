@@ -41,9 +41,15 @@ include('payments/index.php');
 include('shipping/index.php');
 
 /**
+ * Optimization
+ */
+if (get_option('woocommerce_optimization_is_enabled')) {
+    include('admin/optimization/index.php');
+}
+
+/**
  * Admin
  */
-include('admin/menu/features.php');
 include('admin/menu/orders.php');
 include('admin/menu/main.php');
 
@@ -110,9 +116,9 @@ include('pages/wishlist.php');
 include('pages/product.php');
 include('pages/login.php');
 include('pages/catalog.php');
-include('pages/checkout.php');
+include('pages/checkout/index.php');
 include('pages/cart.php');
-include('pages/account/main.php');
+include('pages/account/index.php');
 include('pages/thank-you.php');
 
 /**

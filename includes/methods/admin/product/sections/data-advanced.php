@@ -29,13 +29,10 @@ function growtype_wc_product_options_advanced()
     // External Url
     woocommerce_wp_select(array (
         'id' => '_preview_style',
-        'label' => 'Preview style',
+        'label' => 'Product Preview style',
         'description' => 'Product preview style visible in frontend.',
         'desc_tip' => 'true',
-        'options' => [
-            'default' => 'Default',
-            'plan' => 'Plan'
-        ]
+        'options' => Growtype_Wc_Customizer_Extend::get_available_product_preview_styles()
     ));
 
     echo '</div>';
@@ -111,6 +108,21 @@ function growtype_wc_product_options_advanced()
         'id' => '_hide_product_price',
         'label' => 'Hide product price',
         'description' => 'Check this if you want to hide product price',
+        'desc_tip' => 'true'
+    ));
+
+    echo '</div>';
+
+    /**
+     * Disable single page
+     */
+    echo '<div class="options_group disable_single_page">';
+
+    // External Url
+    woocommerce_wp_checkbox(array (
+        'id' => '_disable_single_page',
+        'label' => 'Disable single page',
+        'description' => 'Check this if you want to disable single (inner) product page',
         'desc_tip' => 'true'
     ));
 
@@ -210,6 +222,11 @@ function growtype_wc_admin_process_product_object_advanced($product)
      * Hide price
      */
     $product->update_meta_data('_hide_product_price', $_POST['_hide_product_price'] ?? false);
+
+    /**
+     * Disable single product page
+     */
+    $product->update_meta_data('_disable_single_page', $_POST['_disable_single_page'] ?? false);
 
     /**
      * Extra details about price
