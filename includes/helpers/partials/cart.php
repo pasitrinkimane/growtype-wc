@@ -16,15 +16,6 @@ function growtype_wc_render_cart_single_item($cart_item)
     $product_price_html = WC()->cart->get_product_price($_product);
     $product_image = Growtype_Wc_Product::preview_image($product_id);
     $product_attributes = Growtype_Wc_Product::visible_attributes($product_id);
-
-    /**
-     * Printful
-     */
-    if (class_exists('Printful_Customizer')) {
-        $printful_customizer = new Printful_Customizer();
-        $product_image = $printful_customizer->change_woocommerce_cart_item_thumbnail($product_image, $cart_item);
-    }
-
     $product_permalink = esc_url($_product->get_permalink($cart_item));
 
     ob_start();

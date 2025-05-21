@@ -45,7 +45,9 @@ class Growtype_Wc_Cron
 
     function generate_jobs()
     {
-        $subscriptions = growtype_wc_get_subscriptions(Growtype_Wc_Subscription::STATUS_ACTIVE);
+        $subscriptions = growtype_wc_get_subscriptions([
+            'status' => Growtype_Wc_Subscription::STATUS_ACTIVE
+        ]);
 
         error_log(sprintf('growtype_wc_subs_check. valid subscriptions found: %s', count($subscriptions)));
 

@@ -26,18 +26,6 @@ if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
     <?php wc_print_notice(apply_filters('woocommerce_checkout_coupon_message', esc_html__('Have a coupon?', 'growtype-wc') . ' <a href="#" class="showcoupon">' . esc_html__('Click here to enter your code', 'growtype-wc') . '</a>'), 'notice'); ?>
 </div>
 
-<form class="checkout_coupon woocommerce-form-coupon" method="post" style="display:none">
-
-    <p><?php esc_html_e('If you have a coupon code, please apply it below.', 'growtype-wc'); ?></p>
-
-    <div class="row pt-2">
-        <div class="col-9">
-            <input type="text" name="coupon_code" class="input-text h-100" placeholder="<?php esc_attr_e('Coupon code', 'growtype-wc'); ?>" id="coupon_code" value=""/>
-        </div>
-        <div class="col-3">
-            <button type="submit" class="button btn btn-primary w-100" name="apply_coupon" value="<?php esc_attr_e('Apply coupon', 'growtype-wc'); ?>"><?php esc_html_e('Apply coupon', 'growtype-wc'); ?></button>
-        </div>
-    </div>
-
-    <div class="clear"></div>
-</form>
+<?php
+echo growtype_wc_include_view('woocommerce.checkout.form-coupon-form')
+?>

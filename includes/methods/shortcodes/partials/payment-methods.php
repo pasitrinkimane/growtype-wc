@@ -8,11 +8,16 @@ function growtype_wc_payment_methods_shorcode($atts)
 {
     $params = shortcode_atts(array (
         'justify_content' => 'flex-start',
-        'disabled_methods' => '',
+        'disabled_icons' => '',
+        'enabled_icons' => '',
         'icons' => [
             'visa' => [
                 'class' => 'visa',
                 'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/visa.svg',
+            ],
+            'visa_white' => [
+                'class' => 'visa-white',
+                'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/visa-white.svg',
             ],
             'maestro' => [
                 'class' => 'maestro',
@@ -21,6 +26,10 @@ function growtype_wc_payment_methods_shorcode($atts)
             'mastercard' => [
                 'class' => 'mastercard',
                 'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/mastercard.svg',
+            ],
+            'mastercard_white' => [
+                'class' => 'mastercard-white',
+                'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/mastercard-white.svg',
             ],
             'paypal' => [
                 'class' => 'paypal',
@@ -41,16 +50,31 @@ function growtype_wc_payment_methods_shorcode($atts)
             'mcafee' => [
                 'class' => 'mcafee',
                 'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/mcafee.svg',
+            ],
+            'coinbase' => [
+                'class' => 'coinbase',
+                'url' => GROWTYPE_WC_URL_PUBLIC . 'icons/payment-methods/coinbase.svg',
             ]
         ],
     ), $atts);
 
-    $params['disabled_methods'] = !empty($params['disabled_methods']) ? explode(',', $params['disabled_methods']) : [];
+    $params['disabled_icons'] = !empty($params['disabled_icons']) ? explode(',', $params['disabled_icons']) : [];
+    $params['enabled_icons'] = !empty($params['enabled_icons']) ? explode(',', $params['enabled_icons']) : [];
 
     $params = apply_filters('growtype_wc_payment_methods_icons_params', $params);
 
-    if (!empty($params['disabled_methods'])) {
-        foreach ($params['disabled_methods'] as $method) {
+    if (!empty($params['enabled_icons'])) {
+        $enabled_icons = [];
+        foreach ($params['enabled_icons'] as $method) {
+            if (isset($params['icons'][$method])) {
+                $enabled_icons[$method] = $params['icons'][$method];
+            }
+        }
+        $params['icons'] = $enabled_icons;
+    }
+
+    if (!empty($params['disabled_icons'])) {
+        foreach ($params['disabled_icons'] as $method) {
             if (isset($params['icons'][$method])) {
                 unset($params['icons'][$method]);
             }

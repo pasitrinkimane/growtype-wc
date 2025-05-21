@@ -6,10 +6,25 @@
 add_action('woocommerce_account_subscriptions_endpoint', 'woocommerce_account_subscriptions_endpoint_extend');
 function woocommerce_account_subscriptions_endpoint_extend()
 {
-    if (isset($_POST['subscription_id']) && isset($_POST['change_subscription_status'])) {
-        Growtype_Wc_Subscription::change_status($_POST['subscription_id'], $_POST['change_subscription_status']);
+    if (!is_user_logged_in()) {
+        return;
     }
 
+    if (isset($_POST['subscription_id']) && !empty($_POST['subscription_id']) && isset($_POST['change_subscription_status']) && !empty($_POST['change_subscription_status'])) {
+        $subscriptions = growtype_wc_get_user_subscriptions(get_current_user_id());
+
+        foreach ($subscriptions as $subscription) {
+            if ((int)$subscription->ID == (int)$_POST['subscription_id']) {
+                Growtype_Wc_Subscription::change_status($_POST['subscription_id'], $_POST['change_subscription_status']);
+                do_action('growtype_wc_change_subscription_status', $_POST['subscription_id'], $_POST['change_subscription_status']);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Manage subscription
+     */
     if (isset($_GET['action']) && $_GET['action'] === 'manage') {
         $manage_subscription_externally = true;
 
@@ -57,6 +72,8 @@ function woocommerce_account_subscriptions_endpoint_extend()
                                     die();
                                 }
                             }
+                        } else {
+                            wc_add_notice(sprintf('Something went wrong. Please contact us at <a href="mailto:%1$s">%1$s</a> for help.', get_option('admin_email')), 'error');
                         }
                     } else {
                         $manage_subscription_externally = false;
@@ -72,7 +89,9 @@ function woocommerce_account_subscriptions_endpoint_extend()
         }
 
         if ($manage_subscription_externally) {
-            wp_redirect(growtype_wc_get_account_subpage_url('subscriptions'));
+            $redirect_url = add_query_arg([], growtype_wc_get_account_subpage_url('subscriptions'));
+
+            wp_redirect($redirect_url);
             die();
         }
     } else {

@@ -22,7 +22,7 @@ function growtype_wc_add_editor_plus_shop_manager_role()
      */
     add_role(
         'editor_plus_shop_manager',
-        __('Editor + Shop manager'),
+        __('Editor + Shop manager','growtype-wc'),
         array (
             'level_9' => true,
             'level_8' => true,
@@ -48,6 +48,8 @@ function growtype_wc_add_editor_plus_shop_manager_role()
             'edit_dashboard' => true,
             'edit_others_pages' => true,
             'edit_others_posts' => true,
+            'edit_post' => true,
+            'edit_page' => true,
             'edit_pages' => true,
             'edit_posts' => true,
             'edit_private_pages' => true,

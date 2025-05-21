@@ -78,6 +78,27 @@ import {paymentFormLoaded} from "./events/payment-form-loaded";
             }
         })
 
+        /**
+         * Card payment expiration date only allow 2 numbers for year
+         */
+        if ($('input[name="growtype_wc_cc-card-expiry"]').length > 0) {
+            $('input[name="growtype_wc_cc-card-expiry"]').payment('formatCardExpiry').on('input', function () {
+                var value = $(this).val();
+                var expDate = value.split(' / ');
+
+                if (expDate.length === 2) {
+                    var month = expDate[0];
+                    var year = expDate[1];
+
+                    if (year.length > 2) {
+                        year = year.substring(year.length - 2);
+                    }
+
+                    $(this).val(month + ' / ' + year);
+                }
+            });
+        }
+
         selectPaymentMethod();
     });
 
@@ -262,4 +283,6 @@ import {paymentFormLoaded} from "./events/payment-form-loaded";
             $(this).toggleClass('is-open')
         });
     }
+
+
 })(jQuery);

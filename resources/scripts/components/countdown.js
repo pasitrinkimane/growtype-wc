@@ -1,5 +1,4 @@
 function countdown() {
-
     window.growtype_wc.countdown = {
         started: 'Started',
         checking: 'Checking',
@@ -14,11 +13,14 @@ function countdown() {
 
     function initCountdown() {
         if (jQuery(".auction-time-countdown").length > 0 && $.SAcountdown !== 'undefined') {
-            jQuery(".auction-time-countdown").each(function (index) {
+            jQuery(".auction-time-countdown").each(function (index, element) {
+                let id = jQuery(this).attr('id');
                 let until = jQuery(this).attr('data-time');
                 let format = jQuery(this).attr('data-format') ?? 'yowdHMS';
                 let compact = jQuery(this).attr('data-compact') === 'true' ? true : false;
+                let labels = jQuery(this).attr('data-labels');
                 let expiryText = '';
+                let cookieName = id;
 
                 if (jQuery(this).hasClass('future')) {
                     expiryText = '<span class="value started">' + window.growtype_wc.countdown.started + '</span>';
@@ -26,31 +28,45 @@ function countdown() {
                     expiryText = '<span class="value over">' + window.growtype_wc.countdown.over + '</span>';
                 }
 
-                if (cookieCustom.getCookie('growtype_wc_countdown_time') !== null) {
-                    until = convertStringToSeconds(cookieCustom.getCookie('growtype_wc_countdown_time'));
+                if (cookieCustom.getCookie(cookieName) !== null) {
+                    until = growtypeWcConvertStringToSeconds(cookieCustom.getCookie(cookieName));
 
                     if (until === 0) {
-                        $('.auction-time-countdown').html(expiryText)
+                        $(element).html(expiryText);
                         return;
                     }
                 }
 
-                jQuery(this).SAcountdown({
+                let params = {
                     until: until,
                     format: format,
                     compact: compact,
                     expiryText: expiryText,
                     onTick: function (event) {
                         if (event[6] >= 0) {
-                            cookieCustom.setCookie('growtype_wc_countdown_time', event);
+                            cookieCustom.setCookie(cookieName, event);
                         }
                     },
-                });
+                    onExpiry: function () {
+                        $(this).trigger('countdownExpired');
+                    }
+                };
+
+                if (typeof labels !== 'undefined' && labels.length > 0) {
+                    params.labels = labels.split(',');
+                }
+
+                jQuery(this).SAcountdown(params);
             });
         }
     }
 
-    function convertStringToSeconds(timeString) {
+    function growtypeWcConvertStringToSeconds(timeString) {
+
+        if (timeString === null) {
+            return 0;
+        }
+
         const timeArray = timeString.split(',').map(Number);
 
         const secondsInYear = 365 * 24 * 60 * 60;
@@ -71,6 +87,8 @@ function countdown() {
 
         return totalSeconds;
     }
+
+    window.growtypeWcConvertStringToSeconds = growtypeWcConvertStringToSeconds;
 }
 
 export {countdown};

@@ -55,7 +55,9 @@ class Growtype_Wc_Loader
         $this->actions = array ();
         $this->filters = array ();
 
-        add_action('plugins_loaded', array ($this, 'load_methods'));
+        $this->load_methods();
+
+        add_action('init', array ($this, 'check_ability_to_launch_plugin'));
     }
 
     /**
@@ -124,7 +126,6 @@ class Growtype_Wc_Loader
      */
     public function run()
     {
-
         foreach ($this->filters as $hook) {
             add_filter($hook['hook'], array ($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
         }
@@ -132,7 +133,19 @@ class Growtype_Wc_Loader
         foreach ($this->actions as $hook) {
             add_action($hook['hook'], array ($hook['component'], $hook['callback']), $hook['priority'], $hook['accepted_args']);
         }
+    }
 
+    function check_ability_to_launch_plugin()
+    {
+        if (!class_exists('WooCommerce')) {
+            if (!function_exists('deactivate_plugins')) {
+                require_once ABSPATH . 'wp-admin/includes/plugin.php';
+            }
+
+            if (is_plugin_active('growtype-wc/growtype-wc.php')) {
+                deactivate_plugins('growtype-wc/growtype-wc.php');
+            }
+        }
     }
 
     /**
@@ -141,10 +154,6 @@ class Growtype_Wc_Loader
      */
     function load_methods()
     {
-        if (!class_exists('WooCommerce')) {
-            return;
-        }
-
         /**
          * Autoload vendor
          */
@@ -161,7 +170,7 @@ class Growtype_Wc_Loader
         require_once GROWTYPE_WC_PATH . '/includes/methods/index.php';
 
         /**
-         * Methods
+         * Plugins
          */
         require_once GROWTYPE_WC_PATH . '/includes/plugins/index.php';
 

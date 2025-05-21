@@ -1,12 +1,4 @@
 <?php
-/**
- * Remove marketing
- */
-add_action('admin_menu', 'growtype_wc_remove_woocommerce_marketing_menu', 999);
-function growtype_wc_remove_woocommerce_marketing_menu()
-{
-    remove_menu_page('woocommerce-marketing');
-}
 
 /**
  * Supress WooCommerce Helper Admin Notices
@@ -48,12 +40,3 @@ wp_clear_scheduled_hook('woocommerce_tracker_send_event');
  * Disable the Payment Gateway Admin Suggestions
  */
 add_filter('woocommerce_admin_payment_gateway_suggestion_specs', '__return_empty_array');
-
-/**
- * Menu admin page "Home"
- */
-add_action('admin_menu', 'growtype_wc_remove_wc_admin_home_menu', 999);
-function growtype_wc_remove_wc_admin_home_menu()
-{
-    remove_submenu_page('woocommerce', 'wc-admin');
-}

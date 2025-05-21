@@ -63,6 +63,24 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
 ));
 
 /**
+ * Payment Methods
+ */
+$wp_customize->add_setting('woocommerce_account_payment_methods_tab_disabled',
+    array (
+        'default' => 0,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_account_payment_methods_tab_disabled',
+    array (
+        'label' => esc_html__('Payment Methods Disabled'),
+        'description' => __('Enable/disable payment methods tab in user account.', 'growtype-wc'),
+        'section' => 'woocommerce_account_page',
+    )
+));
+
+/**
  * Downloads tab
  */
 $wp_customize->add_setting('woocommerce_account_downloads_tab_disabled',

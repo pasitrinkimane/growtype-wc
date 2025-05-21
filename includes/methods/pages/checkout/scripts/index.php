@@ -11,6 +11,12 @@ function growtype_wc_checkout_enqueue_scripts()
         $css .= '
         .woocommerce-checkout-review-order-table .cart-subtotal {
             display:none!important;
+        }
+        .woocommerce-checkout-review-order-table .cart-discount th, .woocommerce-checkout-review-order-table .cart-discount td {
+            padding-top:11px!important;
+        }
+        .woocommerce-checkout-review-order-table .woocommerce-shipping-totals th, .woocommerce-checkout-review-order-table .woocommerce-shipping-totals td {
+            padding-top:11px!important;
         }';
     }
 
@@ -39,7 +45,7 @@ function growtype_wc_checkout_enqueue_scripts()
     } else {
         $css .= '
         .woocommerce-checkout-review-order-table .cart_item_detailed {
-            display:none;
+            display:none!important;
         }';
     }
 

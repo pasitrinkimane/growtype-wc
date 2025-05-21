@@ -5,7 +5,9 @@
  */
 function growtype_wc_is_payment_page()
 {
-    return is_checkout() && empty(is_wc_endpoint_url('order-received'));
+    $is_payment_page = is_checkout() && empty(is_wc_endpoint_url('order-received'));
+
+    return apply_filters('growtype_wc_is_payment_page', $is_payment_page);
 }
 
 /**
@@ -62,4 +64,19 @@ function growtype_wc_card_expiry_is_valid($date)
     }
 
     return true;
+}
+
+function growtype_wc_payment_method_is_enabled($payment_method_id)
+{
+    $payment_gateways = WC()->payment_gateways->payment_gateways();
+
+    if (isset($payment_gateways[$payment_method_id])) {
+        $gateway = $payment_gateways[$payment_method_id];
+
+        if ($gateway->is_available()) {
+            return true;
+        }
+    }
+
+    return false;
 }

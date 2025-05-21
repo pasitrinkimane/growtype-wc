@@ -127,26 +127,30 @@ function growtype_wc_woocommerce_account_extend_menu_items($items)
             continue;
         }
 
+        if (get_theme_mod('woocommerce_account_payment_methods_tab_disabled') && $key === 'payment-methods') {
+            continue;
+        }
+
         $new_items[$key] = $item;
 
         /**
          * Purchased products tab
          */
-        if (!get_theme_mod('woocommerce_account_purchased_products_tab_disabled') && $key === 'dashboard') {
+        if (!get_theme_mod('woocommerce_account_purchased_products_tab_disabled')) {
             $new_items['purchased-products'] = growtype_wc_get_account_subpage_intro_details('purchased-products');
         }
 
         /**
          * Uploaded products tab
          */
-        if (!get_theme_mod('woocommerce_account_uploaded_products_tab_disabled') && $key === 'dashboard') {
+        if (!get_theme_mod('woocommerce_account_uploaded_products_tab_disabled')) {
             $new_items['uploaded-products'] = growtype_wc_get_account_subpage_intro_details('uploaded-products');
         }
 
         /**
          * Subscription
          */
-        if (!get_theme_mod('woocommerce_account_subscriptions_tab_disabled') && $key === 'dashboard') {
+        if (!get_theme_mod('woocommerce_account_subscriptions_tab_disabled')) {
             $new_items['subscriptions'] = growtype_wc_get_account_subpage_intro_details('subscriptions');
         }
     }

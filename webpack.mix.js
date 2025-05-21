@@ -24,6 +24,7 @@ mix
      */
     .copyDirectory('resources/fonts', 'public/styles/fonts')
     .copyDirectory('resources/icons', 'public/icons')
+    .copyDirectory('resources/images', 'public/images')
     .copyDirectory('resources/libs', 'public/libs')
 
 mix

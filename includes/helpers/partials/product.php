@@ -36,7 +36,7 @@ function growtype_wc_product_is_sold_individually($product_id)
  */
 function growtype_wc_product_is_subscription($product_id)
 {
-    $product_type_subscription = get_post_meta($product_id, Growtype_Wc_Subscription::META_KEY, true);
+    $product_type_subscription = get_post_meta($product_id, '_growtype_wc_subscription', true);
 
     return !empty($product_type_subscription) && $product_type_subscription === 'yes' ? true : false;
 }
@@ -98,6 +98,8 @@ function growtype_wc_render_products($query_args, $params = [])
             set_query_var('preview_permalink', true);
         }
 
+        do_action('growtype_wc_after_shop_loop_start', $params);
+
         if ($params['preview_style'] === 'table') {
             echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
         } else {
@@ -105,6 +107,8 @@ function growtype_wc_render_products($query_args, $params = [])
                 echo growtype_wc_include_view('woocommerce.content-product', ['params' => $params]);
             endwhile;
         }
+
+        do_action('growtype_wc_before_shop_loop_end', $params);
 
         wc_get_template('loop/loop-end.php');
 

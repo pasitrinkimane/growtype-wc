@@ -25,7 +25,7 @@ class Growtype_Wc_Order
      */
     function growtype_wc_woocommerce_payment_complete($order_id, $transaction_id)
     {
-        $subscription = growtype_wc_order_get_subscription_order($order_id);
+        $subscription = Growtype_Wc_Subscription::growtype_wc_order_get_subscription_order($order_id);
 
         if (!empty($subscription)) {
             $post_id = wp_insert_post([
@@ -51,6 +51,36 @@ class Growtype_Wc_Order
             $current_user->add_role('customer');
         }
     }
-}
 
-new Growtype_Wc_Order();
+    /**
+     * Check if the user has an unpaid, abandoned cart order
+     */
+    public static function get_abandoned_cart_order($user_email, $min_age_in_minutes = 10, $orders_period_in_minutes = 7200)
+    {
+        $current_time = current_time('timestamp');
+        $min_time_threshold = $current_time - ($min_age_in_minutes * MINUTE_IN_SECONDS);
+        $period_start_time = $current_time - ($orders_period_in_minutes * MINUTE_IN_SECONDS);
+
+        $orders = wc_get_orders([
+            'customer' => $user_email,
+            'limit' => 1, // Check the last order only
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'date_query' => [
+                'after' => date('Y-m-d H:i:s', $period_start_time), // Search orders created within the last 60 minutes
+            ],
+        ]);
+
+        if ($orders) {
+            $last_order = $orders[0];
+
+            $order_timestamp = $last_order->get_date_created()->getOffsetTimestamp(); // Get order time in site's timezone
+
+            if (!$last_order->is_paid() && $order_timestamp < $min_time_threshold) {
+                return $last_order->get_id();
+            }
+        }
+
+        return null;
+    }
+}

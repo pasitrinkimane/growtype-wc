@@ -8,7 +8,7 @@
             <div class="modal-body">
                 <h4 class="mb-4"><?php echo __('Elevate your chat experience with our subscription!', 'growtype-wc') ?></h4>
                 <b><?php echo __('Enjoy benefits like:', 'growtype-wc') ?></b>
-                <?php echo Growtype_Wc_Benefits_Shortcode::benefits() ?>
+                <?php echo Growtype_Wc_Benefits_Shortcode::render() ?>
             </div>
             <div class="modal-footer">
                 <a href="<?php echo get_permalink(get_page_by_path('plans')) ?>" class="btn btn-primary"><?php echo __('Upgrade to Premium', 'growtype-wc') ?></a>

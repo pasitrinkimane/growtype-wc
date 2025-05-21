@@ -469,3 +469,37 @@ Product type auction
     padding-bottom: 30px;
   }
 }
+
+.auction-time-countdown {
+  .countdown_row {
+    .countdown_section {
+      min-width: 30px;
+      position: relative;
+
+      &:before {
+        content: ':';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        right: -14px;
+        top: -10px;
+        bottom: 0;
+        margin: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      &:last-child {
+        &:before {
+          display: none;
+        }
+      }
+    }
+
+    .countdown_amount {
+      font-weight: bold;
+    }
+  }
+}

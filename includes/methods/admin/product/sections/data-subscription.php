@@ -39,6 +39,8 @@ add_action("save_post_product", function ($post_id, $product, $update) {
     if (isset($_POST['growtype_wc_subscription_duration'])) {
         update_post_meta($post_id, '_growtype_wc_subscription_duration', esc_attr($_POST['growtype_wc_subscription_duration']));
     }
+
+    update_post_meta($post_id, '_growtype_wc_subscription_preview_as_monthly', isset($_POST['growtype_wc_subscription_preview_as_monthly']) ? esc_attr($_POST['growtype_wc_subscription_preview_as_monthly']) : 0);
 }, 10, 3);
 
 /**
@@ -99,6 +101,12 @@ function growtype_wc_woocommerce_product_data_panels()
             <label for="growtype-wc-subscription-duration"><?php esc_html_e('Duration', 'growtype-wc'); ?></label>
             <input type="text" name="growtype_wc_subscription_duration" id="growtype-wc-subscription-duration" value="<?php echo $growtype_wc_subscription_duration; ?>"/>
         </p>
+        <p class="form-field">
+            <?php $growtype_wc_subscription_preview_as_monthly = get_post_meta($post->ID, '_growtype_wc_subscription_preview_as_monthly', true); ?>
+            <label for="growtype-wc-subscription-preview-as-monthly"><?php esc_html_e('Preview with monthly price', 'growtype-wc'); ?></label>
+            <input type="checkbox" name="growtype_wc_subscription_preview_as_monthly" value="1" <?php echo checked(1, $growtype_wc_subscription_preview_as_monthly, false) ?> id="growtype-wc-subscription-preview-as-monthly"/>
+        </p>
+        <?php do_action('growtype_wc_subscription_tab_before_close', $post->ID); ?>
     </div>
 
     <script>

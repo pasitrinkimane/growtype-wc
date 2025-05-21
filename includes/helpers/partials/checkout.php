@@ -2,7 +2,7 @@
 
 function growtype_wc_is_checkout_page()
 {
-    return strpos($_SERVER['REQUEST_URI'], 'checkout') > -1;
+    return strpos($_SERVER['REQUEST_URI'], 'checkout') > -1 && empty(is_wc_endpoint_url('order-received'));
 }
 
 function growtype_wc_user_can_not_buy_redirect_url()

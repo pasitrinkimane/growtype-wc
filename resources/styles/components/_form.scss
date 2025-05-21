@@ -3,3 +3,35 @@
   padding-bottom: 0;
   padding-top: 0;
 }
+
+.promo-code, .woocommerce-form-coupon {
+  .woocommerce-form-coupon-content {
+    max-width: 600px;
+    display: grid;
+    grid-template-columns: auto 0.5fr;
+    gap: 10px;
+    padding-top: 5px;
+
+    .submit-wrapper {
+      max-width: 200px;
+
+      button {
+        min-width: initial;
+      }
+    }
+
+    .woocommerce-message {
+      padding-top: 7px;
+      padding-bottom: 7px;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+  }
+}
+
+.woocommerce-form-coupon {
+  background: white;
+  color: black;
+  padding: 20px;
+  margin-bottom: 30px;
+}

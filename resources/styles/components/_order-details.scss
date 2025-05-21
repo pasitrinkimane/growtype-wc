@@ -16,6 +16,19 @@
     color: white;
   }
 
+  .woocommerce-table__line-item {
+    img {
+      max-width: 60px;
+      padding-right: 12px;
+      width: 100%;
+      display: inline-block;
+    }
+
+    a {
+      text-decoration: none;
+    }
+  }
+
   .woocommerce-table-wrapper {
     padding: 20px 30px 40px 30px;
     background: white;

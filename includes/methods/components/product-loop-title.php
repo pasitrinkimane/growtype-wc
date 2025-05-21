@@ -31,11 +31,32 @@ add_action('woocommerce_before_shop_loop_item', function () {
     echo Growtype_Wc_Product::get_promo_label_formatted();
 });
 
-add_action('woocommerce_after_shop_loop_item_title', function () {
-    echo Growtype_Wc_Product::get_price_details_formatted();
-    echo Growtype_Wc_Product::get_extra_details_formatted();
-});
+/**
+ * Price details
+ */
+add_action('woocommerce_after_shop_loop_item_title', 'growtype_wc_after_shop_loop_item_title_price_details');
 
-add_action('woocommerce_after_shop_loop_item_title', function () {
+function growtype_wc_after_shop_loop_item_title_price_details()
+{
+    echo Growtype_Wc_Product::get_price_details_formatted();
+}
+
+/**
+ * Extra details
+ */
+add_action('woocommerce_after_shop_loop_item_title', 'growtype_wc_after_shop_loop_item_title_extra_details');
+
+function growtype_wc_after_shop_loop_item_title_extra_details()
+{
+    echo Growtype_Wc_Product::get_extra_details_formatted();
+}
+
+/**
+ * Close title
+ */
+add_action('woocommerce_after_shop_loop_item_title', 'woocommerce_after_shop_loop_item_title_close_title');
+
+function woocommerce_after_shop_loop_item_title_close_title()
+{
     echo '</div>';
-});
+}

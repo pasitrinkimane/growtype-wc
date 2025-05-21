@@ -101,6 +101,55 @@
     margin-bottom: 30px;
     padding-bottom: 10px;
   }
+
+  .woocommerce-checkout-review-order-table {
+    tbody {
+      tr:last-child {
+        position: relative;
+
+        &:after {
+          content: "";
+          border-bottom: 1px solid #dfe1e5;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+        }
+      }
+    }
+
+    .promo-code {
+      td {
+        padding: 0;
+      }
+
+      form {
+        text-align: left;
+
+        & {
+          display: block !important;
+        }
+      }
+
+      td {
+        padding-top: 25px;
+        padding-bottom: 30px;
+        margin-bottom: 10px;
+        position: relative;
+      }
+
+      form {
+        background: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      p {
+        display: none;
+      }
+    }
+  }
 }
 
 .woocommerce-checkout-payment {
@@ -192,6 +241,13 @@
           width: 100%;
         }
       }
+
+      &[for="payment_method_growtype_wc_coinbase"] {
+        img {
+          max-width: 80px;
+          width: 100%;
+        }
+      }
     }
 
     > input {
@@ -263,6 +319,114 @@
           @include bp-phone-xl() {
             padding-left: 15px;
             padding-right: 15px;
+          }
+        }
+      }
+
+      .form-row {
+        position: relative;
+
+        &:nth-child(2) {
+          &:before {
+            content: "";
+            margin-bottom: 10px;
+            width: 25px;
+            height: 20px;
+            position: absolute;
+            left: 15px;
+            bottom: 1px;
+            background: url("../../icons/card.svg") no-repeat;
+            background-size: contain;
+          }
+
+          input {
+            padding-left: 50px;
+          }
+        }
+      }
+
+      .payment_box-inner--combined {
+        .wc-payment-form {
+          display: flex;
+          flex-wrap: wrap;
+
+          .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+
+            label {
+              font-weight: 300;
+            }
+
+            input {
+              margin-top: auto;
+              margin: 0;
+              width: 100% !important;
+              min-height: 56px;
+
+              &::placeholder {
+                font-size: 16px;
+                color: #6C727D;
+              }
+            }
+
+            &:nth-child(2) {
+              position: relative;
+              @include bp-phone-xl-reverse() {
+                width: 64%;
+              }
+
+              @include bp-phone-xl-reverse() {
+                input {
+                  border-right: 0;
+                  border-radius: 3px 0px 0px 3px;
+                }
+              }
+
+              &:before {
+                bottom: 6px;
+              }
+            }
+
+            &:nth-child(3) {
+              @include bp-phone-xl-reverse() {
+                width: 18%;
+
+                input {
+                  border-left: 0;
+                  border-right: 0;
+                  border-radius: 0;
+                }
+              }
+
+              label {
+                display: none;
+              }
+
+              @include bp-phone-xl() {
+                width: 30%;
+              }
+            }
+
+            &:nth-child(4) {
+              label {
+                display: none;
+              }
+
+              @include bp-phone-xl-reverse() {
+                width: 18%;
+
+                input {
+                  border-left: 0;
+                  border-radius: 0px 3px 3px 0px;
+                }
+              }
+
+              @include bp-phone-xl() {
+                width: 30%;
+              }
+            }
           }
         }
       }
@@ -693,7 +857,7 @@ select,
     }
 
     &.is-active {
-      background: #F5F7FC;
+      background: #f8f9fa;
     }
 
     &.is-hidden {
@@ -740,7 +904,7 @@ select,
 
       .woocommerce-shipping-totals {
         th, td {
-          padding-top: 5px !important;
+          padding-top: 5px;
         }
 
         .woocommerce-shipping-methods {
@@ -1010,7 +1174,6 @@ select,
               &:not(.order-total) {
                 th {
                   border: none !important;
-                  padding-top: 0;
                   padding-bottom: 0;
                 }
 
@@ -1059,6 +1222,41 @@ select,
 
                 td {
                   padding-bottom: 15px;
+                }
+              }
+            }
+          }
+        }
+
+        label[for^="shipping_method_0_free_"] {
+          color: #4A978A;
+        }
+
+        .cart-discount {
+          &[class*="coupon-"] {
+            th {
+              color: #4A978A;
+            }
+
+            td {
+              display: flex;
+              gap: 5px;
+            }
+
+            th {
+              span {
+                padding-left: 5px;
+                text-transform: uppercase;
+                color: black;
+
+                &:before {
+                  content: "\f323";
+                  font-family: "dashicons";
+                  font-size: 16px;
+                  margin-right: 5px;
+                  position: relative;
+                  top: 2px;
+                  color: #c6c8d1;
                 }
               }
             }
