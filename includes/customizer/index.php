@@ -2,16 +2,22 @@
 
 class Growtype_Wc_Customizer_Extend
 {
+    private $products_layout_styles;
+    private $product_preview_styles;
+    private $available_wc_coupons;
+    private $available_products;
 
     public function __construct()
     {
         add_action('customize_register', array ($this, 'add_sections'), 20);
         add_action('customize_controls_print_scripts', array ($this, 'add_scripts'), 30);
 
-        $this->products_layout_styles = self::get_available_products_layout_styles();
-        $this->product_preview_styles = self::get_available_product_preview_styles();
-        $this->available_wc_coupons = $this->get_available_wc_coupons();
-        $this->available_products = $this->get_available_products();
+        add_action('init', function () {
+            $this->products_layout_styles = self::get_available_products_layout_styles();
+            $this->product_preview_styles = self::get_available_product_preview_styles();
+            $this->available_wc_coupons = $this->get_available_wc_coupons();
+            $this->available_products = $this->get_available_products();
+        });
 
         add_action('customize_controls_enqueue_scripts', array ($this, 'customizer_control'));
 

@@ -81,6 +81,7 @@ class Growtype_Wc
         $this->set_locale();
         $this->define_admin_hooks();
         $this->define_public_hooks();
+        $this->load_helpers();
     }
 
     /**
@@ -101,11 +102,6 @@ class Growtype_Wc
      */
     private function load_dependencies()
     {
-        /**
-         * The helpers function
-         */
-        require_once GROWTYPE_WC_PATH . 'includes/helpers/index.php';
-
         /**
          * The class responsible for orchestrating the actions and filters of the
          * core plugin.
@@ -130,7 +126,11 @@ class Growtype_Wc
         require_once GROWTYPE_WC_PATH . 'public/class-growtype-wc-public.php';
 
         $this->loader = new Growtype_Wc_Loader();
+    }
 
+    private function load_helpers()
+    {
+        require_once GROWTYPE_WC_PATH . 'includes/helpers/index.php';
     }
 
     /**
@@ -145,7 +145,7 @@ class Growtype_Wc
     private function set_locale()
     {
         $plugin_i18n = new Growtype_Wc_i18n();
-        $this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+        $this->loader->add_action('init', $plugin_i18n, 'load_plugin_textdomain');
     }
 
     /**

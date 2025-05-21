@@ -184,12 +184,26 @@ function growtype_wc_wp_ajax_add_to_cart_ajax()
 }
 
 /**
- * Add to cart ajax
+ * Empty cart for single item purchase mode but retain applied coupons.
  */
-add_filter('woocommerce_add_cart_item_data', 'growtype_wc_woocommerce_add_cart_item_data');
-function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
+add_action('wp_loaded', function () {
+    if (isset($_REQUEST['add-to-cart']) && is_numeric(wp_unslash($_REQUEST['add-to-cart']))) {
+        $single_item_purchase_mode = growtype_wc_single_item_purchase_mode_is_enabled();
+
+        if ($single_item_purchase_mode && !WC()->cart->is_empty()) {
+            foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+                WC()->cart->remove_cart_item($cart_item_key);
+            }
+        }
+    }
+}, 10);
+
+/**
+ * @return bool
+ */
+function growtype_wc_single_item_purchase_mode_is_enabled()
 {
-    global $woocommerce;
+    $single_purchase = false;
 
     /**
      * Check product type
@@ -198,7 +212,7 @@ function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
         $only_as_single_purchase = Growtype_Wc_Product::only_as_single_purchase($_POST['product_id']);
 
         if ($only_as_single_purchase) {
-            $woocommerce->cart->empty_cart();
+            $single_purchase = true;
         }
     }
 
@@ -206,7 +220,35 @@ function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
      * If selling type single clear all other products and add a new one
      */
     if (growtype_wc_selling_type_single_product() || growtype_wc_selling_type_single_item()) {
-        $woocommerce->cart->empty_cart();
+        $single_purchase = true;
+    }
+
+    return $single_purchase;
+}
+
+/**
+ * Add to cart ajax
+ */
+add_filter('woocommerce_add_cart_item_data', 'growtype_wc_woocommerce_add_cart_item_data');
+function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
+{
+    $single_item_purchase_mode = growtype_wc_single_item_purchase_mode_is_enabled();
+
+    /**
+     * Keep only single item in cart
+     */
+    if ($single_item_purchase_mode) {
+        $cart = WC()->cart;
+
+        $cart_contents = $cart->get_cart();
+
+        $index = 1;
+        foreach ($cart_contents as $key => $item) {
+            if (count($cart_contents) !== $index) {
+                $cart->remove_cart_item($key);
+            }
+            $index++;
+        }
     }
 
     return $cart_item_data;
@@ -259,7 +301,7 @@ function growtype_wc_woocommerce_ajax_added_to_cart($product_id)
 /**
  * Redirect after add to cart
  */
-add_action('woocommerce_add_to_cart_redirect', 'growtype_wc_add_to_cart_redirect');
+add_action('woocommerce_add_to_cart_redirect', 'growtype_wc_add_to_cart_redirect', 10);
 function growtype_wc_add_to_cart_redirect($url = false)
 {
     if (!class_exists('woocommerce')) {
@@ -282,8 +324,6 @@ function growtype_wc_add_to_cart_redirect($url = false)
             $url = wc_get_checkout_url();
         }
     }
-
-//    return get_bloginfo('url') . add_query_arg(array (), remove_query_arg('add-to-cart'));
 
     return apply_filters('growtype_wc_add_to_cart_redirect', $url);
 }

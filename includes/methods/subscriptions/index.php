@@ -1,252 +1,24 @@
 <?php
 
-class Growtype_Wc_Subscription extends WC_Order
+class Growtype_Wc_Subscription
 {
     const META_KEY = '_growtype_wc_subscription';
     const STATUS_ACTIVE = 'active';
     const STATUS_CANCELLED = 'cancelled';
 
-    const META_FIELDS = [
-        'subscription' => [
-            [
-                'type' => 'select',
-                'key' => '_status',
-                'name' => 'status',
-                'label' => 'Status:',
-                'options' => [],
-            ],
-            [
-                'key' => '_period',
-                'name' => 'period',
-                'label' => 'Period:'
-            ],
-            [
-                'key' => '_duration',
-                'name' => 'duration',
-                'label' => 'Duration:'
-            ],
-            [
-                'key' => '_price',
-                'name' => 'price',
-                'label' => 'Price:'
-            ],
-            [
-                'key' => '_start_date',
-                'name' => 'start_date',
-                'label' => 'Start date:'
-            ],
-            [
-                'key' => '_end_date',
-                'name' => 'end_date',
-                'label' => 'End date:'
-            ]
-        ],
-        'user' => [
-            [
-                'key' => '_user_id',
-                'name' => 'user_id',
-                'label' => 'User id:',
-            ]
-        ],
-        'order' => [
-            [
-                'key' => '_order_id',
-                'name' => 'order_id',
-                'label' => 'Order id:',
-            ]
-        ]
-    ];
-
-    const SUBSCRIPTION_DATA_KEYS = array (
-        '_billing_period' => 'billing_period',
-        '_billing_interval' => 'billing_interval',
-        '_suspension_count' => 'suspension_count',
-        '_cancelled_email_sent' => 'cancelled_email_sent',
-        '_requires_manual_renewal' => 'requires_manual_renewal',
-        '_trial_period' => 'trial_period',
-
-        '_schedule_trial_end' => 'schedule_trial_end',
-        '_schedule_next_payment' => 'schedule_next_payment',
-        '_schedule_cancelled' => 'schedule_cancelled',
-        '_schedule_end' => 'schedule_end',
-        '_schedule_payment_retry' => 'schedule_payment_retry',
-        '_schedule_start' => 'schedule_start',
-
-        '_subscription_switch_data' => 'switch_data',
-
-        '_billing_price' => 'billing_price',
-        '_product_id' => 'product_id',
-        '_title' => 'title',
-    );
-
     public function __construct()
     {
         add_action('init', array ($this, 'growtype_wc_register_subscription_post_type'));
-        add_action('add_meta_boxes_growtype_wc_subs', array ($this, 'growtype_wc_add_meta_boxes_growtype_wc_subs'));
-        add_action('save_post_growtype_wc_subs', array ($this, 'growtype_wc_save_post_growtype_wc_subs'));
 
-        add_filter('manage_growtype_wc_subs_posts_columns', array ($this, 'manage_columns'));
-        add_action('manage_growtype_wc_subs_posts_custom_column', array ($this, 'fill_columns'), 10, 2);
-
-        $this->meta_fields = self::META_FIELDS;
-        $this->meta_fields['subscription'][0]['options'] = growtype_wc_get_subscription_statuses();
-
-        $this->set_meta_keys_to_props();
-
-        if (is_admin()) {
-            add_action('load-post.php', array ($this, 'init_metabox'));
-        }
+        $this->load_partials();
     }
 
-    public function init_metabox()
+    function load_partials()
     {
-        add_action('add_meta_boxes', array ($this, 'add_metabox'));
-        add_action('save_post', array ($this, 'save_metabox'), 10, 2);
-    }
-
-    public function add_metabox()
-    {
-        add_meta_box(
-            'actions-meta-box',
-            __('Actions', 'growtype-wc'),
-            array ($this, 'render_metabox'),
-            'growtype_wc_subs',
-            'side',
-            'default'
-        );
-    }
-
-    public function render_metabox($post)
-    {
-        wp_nonce_field('custom_nonce_action', 'custom_nonce');
-        ?>
-        <button class="button button-primary button-large" name="trigger_action" value="subscription_charge" type="submit">Charge subscription</button>
-        <?php
-    }
-
-    public function save_metabox($post_id, $post)
-    {
-        $nonce_name = isset($_POST['custom_nonce']) ? $_POST['custom_nonce'] : '';
-        $nonce_action = 'custom_nonce_action';
-
-        if (!wp_verify_nonce($nonce_name, $nonce_action)) {
-            return;
-        }
-
-        if (!current_user_can('edit_post', $post_id)) {
-            return;
-        }
-
-        if (wp_is_post_autosave($post_id)) {
-            return;
-        }
-
-        if (wp_is_post_revision($post_id)) {
-            return;
-        }
-
-        $trigger_action = isset($_POST['trigger_action']) ? $_POST['trigger_action'] : '';
-
-        if (!empty($trigger_action)) {
-            $order_id = isset($_POST['order_id']) ? $_POST['order_id'] : '';
-
-            if (!empty($order_id)) {
-                $renewal_order = wc_get_order($order_id);
-                do_action('woocommerce_scheduled_subscription_payment_' . $renewal_order->get_payment_method(), $renewal_order->get_total(), $renewal_order);
-            }
-        }
-    }
-
-    public function get_data_key($key)
-    {
-        return $this->data[$key];
-    }
-
-    public function set_meta_keys_to_props()
-    {
-        foreach (self::SUBSCRIPTION_DATA_KEYS as $meta_key => $prop) {
-            $this->data[$prop] = get_post_meta($this->id, $meta_key, true);
-        }
-    }
-
-    public function __set($key, $value)
-    {
-        $this->$key = $value;
-    }
-
-    public function set_title($value)
-    {
-        $this->set_prop('title', $value);
-    }
-
-    public function set_billing_period($value)
-    {
-        $this->set_prop('billing_period', $value);
-    }
-
-    public function set_billing_interval($value)
-    {
-        $this->set_prop('billing_interval', (string)absint($value));
-    }
-
-    public function set_start_date($value)
-    {
-        $this->set_prop('schedule_start', $value);
-    }
-
-    public function set_billing_price($value)
-    {
-        $this->set_prop('billing_price', $value);
-    }
-
-    public function set_product_id($value)
-    {
-        $this->set_prop('product_id', $value);
-    }
-
-    public function set_date_created($date = null)
-    {
-        if (!is_null($date)) {
-            $datetime_string = growtype_wc_sub_get_datetime_utc_string(growtype_wc_sub_get_datetime_from($date));
-
-            $this->set_prop('date_created', $datetime_string);
-        }
-    }
-
-    function manage_columns($columns)
-    {
-        foreach ($this->meta_fields as $meta_fields) {
-            foreach ($meta_fields as $meta_field) {
-                $columns[$meta_field['key']] = $meta_field['label'];
-            }
-        }
-
-        return $columns;
-    }
-
-    function fill_columns($column, $post_id)
-    {
-        foreach ($this->meta_fields as $meta_fields) {
-            foreach ($meta_fields as $meta_field) {
-                $columns[$meta_field['key']] = $meta_field['label'];
-
-                if ($meta_field['key'] === $column) {
-                    $value = get_post_meta($post_id, $meta_field['key'], true);
-
-                    if ($column === '_status') {
-                        echo '<span style="background: ' . ($value === 'active' ? 'green' : 'red') . ';padding: 5px;color: white;border-radius: 5px;text-transform: uppercase;">' . $value . '</span>';
-                    } elseif ($column === '_user_id') {
-                        if (!empty(get_user_by('id', $value))) {
-                            echo $value . ' - (' . get_user_by('id', $value)->user_email . ')';
-                        } else {
-                            echo $value;
-                        }
-                    } else {
-                        echo $value;
-                    }
-                }
-            }
-        }
+        add_action('init', function () {
+            include_once 'partials/Growtype_Wc_Subscription_Order.php';
+            new Growtype_Wc_Subscription_Order();
+        });
     }
 
     function growtype_wc_register_subscription_post_type()
@@ -264,74 +36,189 @@ class Growtype_Wc_Subscription extends WC_Order
         ));
     }
 
-    /**
-     * Meta boxes
-     */
-    function growtype_wc_add_meta_boxes_growtype_wc_subs()
+    public static function create_order_object($args = array ())
     {
-        add_meta_box('subscription', __('Subscription', 'growtype-wc'), array ($this, 'growtype_wc_subs_metabox_html'), 'growtype_wc_subs', 'normal', 'high', $this->meta_fields['subscription']);
-        add_meta_box('user', __('User', 'growtype-wc'), array ($this, 'growtype_wc_subs_metabox_html'), 'growtype_wc_subs', 'normal', 'high', $this->meta_fields['user']);
-        add_meta_box('order', __('Order', 'growtype-wc'), array ($this, 'growtype_wc_subs_metabox_html'), 'growtype_wc_subs', 'normal', 'high', $this->meta_fields['order']);
-    }
+        $now = gmdate('Y-m-d H:i:s');
+        $order = (isset($args['order_id'])) ? wc_get_order($args['order_id']) : null;
 
-    function growtype_wc_subs_metabox_html($post, $params)
-    {
-        global $post;
+        $product = (isset($args['product_id'])) ? wc_get_product($args['product_id']) : null;
 
-        $args = $params['args'];
-
-        foreach ($args as $arg) {
-            $current_value = get_post_meta($post->ID, $arg['key'], true);
-            ?>
-            <div style="margin-bottom: 10px;">
-                <label><?php echo $arg['label'] ?></label>
-                <?php if (isset($arg['type']) && $arg['type'] === 'select') { ?>
-                    <select name="<?php echo $arg['name'] ?>">
-                        <?php
-                        if (isset($arg['options'])) {
-                            foreach ($arg['options'] as $key => $label) { ?>
-                                <option value="<?php echo $key ?>" <?php echo selected($key, $current_value) ?>><?php echo $label ?></option>
-                            <?php }
-                        }
-                        ?>
-                    </select>
-                <?php } else { ?>
-                    <input type="text" class="regular-text" name="<?php echo $arg['name'] ?>" value="<?php echo $current_value; ?>">
-                <?php } ?>
-            </div>
-            <?php if ($arg['name'] === 'user_id') { ?>
-                <a href="<?php echo get_edit_user_link($current_value) ?>" target="_blank">Profile link</a>
-            <?php } ?>
-            <?php if ($arg['name'] === 'order_id') { ?>
-                <a href="<?php echo get_edit_post_link($current_value) ?>" target="_blank">Order link</a>
-            <?php } ?>
-        <?php } ?>
-
-        <?php
-    }
-
-    function growtype_wc_save_post_growtype_wc_subs()
-    {
-        if (empty($_POST)) {
-            return;
+        if (empty($product) && !empty($order)) {
+            foreach ($order->get_items() as $item) {
+                $product = $item->get_product();
+            }
         }
 
-        global $post;
+        $default_args = array (
+            'status' => '',
+            'order_id' => 0,
+            'customer_note' => null,
+            'customer_id' => null,
+            'start_date' => $args['date_created'] ?? $now,
+            'date_created' => $now,
+            'created_via' => '',
+            'currency' => get_woocommerce_currency(),
+            'prices_include_tax' => get_option('woocommerce_prices_include_tax'),
+            'product_id' => isset($args['product_id']) ? $args['product_id'] : $product->get_id(),
+        );
 
-        $meta_fields_groups = $this->meta_fields;
+        // If we are creating a subscription from an order, we use some of the order's data as defaults.
+        if ($order instanceof \WC_Order) {
+            $default_args['customer_id'] = $order->get_user_id();
+            $default_args['created_via'] = $order->get_created_via('edit');
+            $default_args['currency'] = $order->get_currency('edit');
+            $default_args['prices_include_tax'] = $order->get_prices_include_tax('edit') ? 'yes' : 'no';
+            $default_args['date_created'] = growtype_wc_sub_get_datetime_utc_string($order->get_date_created('edit'));
+        }
 
-        foreach ($meta_fields_groups as $meta_fields_group) {
-            foreach ($meta_fields_group as $meta_fields) {
-                if (isset($_POST[$meta_fields['name']])) {
-                    update_post_meta($post->ID, $meta_fields['key'], $_POST[$meta_fields['name']]);
+        $args = wp_parse_args($args, $default_args);
+
+        if (!isset($args['billing_period'])) {
+            $args['billing_period'] = growtype_wc_get_subcription_period($product->get_id());
+        }
+
+        if (!isset($args['billing_interval'])) {
+            $args['billing_interval'] = growtype_wc_get_subcription_duration($product->get_id());
+        }
+
+        if (!isset($args['billing_price'])) {
+            $args['billing_price'] = get_post_meta($product->get_id(), '_growtype_wc_subscription_price', true);
+        }
+
+        if (!isset($args['customer_note'])) {
+            $args['customer_note'] = $order->get_customer_note();
+        }
+
+        if (!isset($args['title'])) {
+            $args['title'] = $product->get_title();
+        }
+
+        /**
+         * Check data
+         */
+        if (empty($args['status']) || !empty($args['status']) && !array_key_exists($args['status'], growtype_wc_get_subscription_statuses())) {
+            return new WP_Error('woocommerce_invalid_subscription_status', __('Invalid subscription status given.', 'woocommerce-subscriptions'));
+        }
+
+        if (!is_string($args['date_created']) || false === growtype_wc_sub_datetime_mysql_format($args['date_created'])) {
+            return new WP_Error('woocommerce_subscription_invalid_date_created_format', _x('Invalid created date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+        }
+
+        if (growtype_wc_sub_date_to_time($args['date_created']) > time()) {
+            return new WP_Error('woocommerce_subscription_invalid_date_created', _x('Subscription created date must be before current day.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+        }
+
+        if (!is_string($args['start_date']) || false === growtype_wc_sub_datetime_mysql_format($args['start_date'])) {
+            return new WP_Error('woocommerce_subscription_invalid_start_date_format', _x('Invalid date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
+        }
+
+        if (empty($args['billing_period']) || !array_key_exists(strtolower($args['billing_period']), growtype_wc_sub_get_subscription_period_strings())) {
+            return new WP_Error('woocommerce_subscription_invalid_billing_period', __('Invalid subscription billing period given.', 'woocommerce-subscriptions'));
+        }
+
+        if (empty($args['billing_interval']) || !is_numeric($args['billing_interval']) || absint($args['billing_interval']) <= 0) {
+            return new WP_Error('woocommerce_subscription_invalid_billing_interval', __('Invalid subscription billing interval given. Must be an integer greater than 0.', 'woocommerce-subscriptions'));
+        }
+
+        $subscription = new \Growtype_Wc_Subscription_Order();
+
+        $subscription->set_status($args['status']);
+
+        $subscription->set_title($args['title'] ?? sprintf('Order id: %s', $order->get_id()));
+        $subscription->set_billing_price($args['billing_price']);
+        $subscription->set_customer_note($args['customer_note']);
+        $subscription->set_customer_id($args['customer_id']);
+        $subscription->set_date_created($args['date_created']);
+        $subscription->set_created_via($args['created_via']);
+        $subscription->set_currency($args['currency']);
+        $subscription->set_prices_include_tax('no' !== $args['prices_include_tax']);
+        $subscription->set_billing_period($args['billing_period']);
+        $subscription->set_billing_interval(absint($args['billing_interval']));
+        $subscription->set_start_date($args['start_date']);
+        $subscription->set_product_id($args['product_id']);
+
+        if ($args['order_id'] > 0) {
+            $subscription->set_parent_id($args['order_id']);
+        }
+
+        $subscription = apply_filters('growtype_wc_created_subscription', $subscription);
+
+        do_action('growtype_wc_create_subscription_order_object', $subscription);
+
+        return $subscription;
+    }
+
+    public static function growtype_wc_order_get_subscription_order($order_id)
+    {
+        $order = wc_get_order($order_id);
+
+        if ($order && !empty($order->get_items())) {
+            foreach ($order->get_items() as $product) {
+                $product_id = $product->get_product_id();
+                $is_subscription = growtype_wc_product_is_subscription($product_id);
+                if ($is_subscription) {
+                    $subscription_order = Growtype_Wc_Subscription::create_order_object([
+                        'status' => 'active',
+                        'order_id' => $order->get_id(),
+                        'product_id' => $product_id
+                    ]);
+
+                    if (is_wp_error($subscription_order)) {
+                        error_log(sprintf('Product id: %s. Error:%s', $product->get_product_id(), $subscription_order->get_error_message()));
+                        return null;
+                    }
+
+                    return $subscription_order;
                 }
             }
         }
+
+        return null;
     }
 
-    public static function status($sub_id)
+    /**
+     * @param $order_id
+     * @return bool
+     * @throws WC_Data_Exception
+     */
+    public static function contains_subscription_order($order_id)
     {
-        return get_post_meta($sub_id, '_status', true);
+        $subscription = Growtype_Wc_Subscription::growtype_wc_order_get_subscription_order($order_id);
+
+        return !empty($subscription);
+    }
+
+    /**
+     * @param $subscription
+     * @return mixed|null
+     */
+    public static function is_subscription_order($order_id)
+    {
+        $order = wc_get_order($order_id);
+
+        if (Growtype_Wc_Subscription::contains_subscription_order($order_id) || (is_object($order) && is_a($order, 'WC_Subscription'))) {
+            $is_subscription = true;
+        } else {
+            $is_subscription = false;
+        }
+
+        return apply_filters('growtype_wc_is_subscription', $is_subscription, $order);
+    }
+
+    public static function active_orders($order_id)
+    {
+        $posts = growtype_wc_get_subscriptions([
+            'status' => Growtype_Wc_Subscription::STATUS_ACTIVE
+        ]);
+
+        $subscriptions = [];
+        foreach ($posts as $post) {
+            if ($post->order_id === $order_id) {
+                array_push($subscriptions, $post);
+            }
+        }
+
+        return $subscriptions;
     }
 
     public static function change_status($sub_id, $status)
@@ -339,10 +226,13 @@ class Growtype_Wc_Subscription extends WC_Order
         update_post_meta($sub_id, '_status', $status);
     }
 
+    public static function status($sub_id)
+    {
+        return get_post_meta($sub_id, '_status', true);
+    }
+
     public static function manage_url($sub_id)
     {
         return growtype_wc_get_account_subpage_url('subscriptions') . '?action=manage&subscription=' . $sub_id;
     }
 }
-
-new Growtype_Wc_Subscription();

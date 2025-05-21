@@ -49,10 +49,14 @@ function growtype_wc_products_shortcode($atts, $content = null)
      */
     $args = array (
         'post_type' => 'product',
-        'post_status' => $post_status,
+        'post_status' => 'publish',
         'orderby' => $orderby,
         'order' => $order
     );
+
+    if (isset($atts['post_status']) && !empty($atts['post_status'])) {
+        $args['post_status'] = explode(',', $atts['post_status']);
+    }
 
     if (!empty($meta_key)) {
         $args['meta_query'] = [
@@ -150,7 +154,7 @@ function growtype_wc_products_shortcode($atts, $content = null)
     }
 
     if (!isset($args['post__in']) && isset($product_type) && $product_type === 'subscription') {
-        $subscription_ids = Growtype_Wc_Product::get_subscriptions_ids();
+        $subscription_ids = Growtype_Wc_Product::get_subscriptions_ids($args);
         $args['post__in'] = isset($args['post__in']) ? array_merge($args['post__in'], $subscription_ids) : $subscription_ids;
     }
 

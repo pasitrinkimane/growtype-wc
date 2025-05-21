@@ -18,7 +18,7 @@
 defined('ABSPATH') || exit;
 ?>
 
-<div class="woocommerce-order <?php echo get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : '' ?> order-details-<?php echo get_theme_mod('woocommerce_thankyou_page_order_details', true) ? 'enabled' : 'disabled' ?> customer-details-<?php echo get_theme_mod('woocommerce_thankyou_page_customer_details', true) ? 'enabled' : 'disabled' ?> download-details-<?php echo get_theme_mod('woocommerce_thankyou_page_download_details', true) ? 'enabled' : 'disabled' ?>">
+<div class="woocommerce-order <?php echo get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : '' ?> order-details-<?php echo growtype_wc_order_details_enabled() ? 'enabled' : 'disabled' ?> customer-details-<?php echo get_theme_mod('woocommerce_thankyou_page_customer_details', true) ? 'enabled' : 'disabled' ?> download-details-<?php echo get_theme_mod('woocommerce_thankyou_page_download_details', true) ? 'enabled' : 'disabled' ?>">
     <?php if ($order) { ?>
         <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
 

@@ -52,3 +52,21 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
         'description' => __('Enable that only registered users would be able to buy products.', 'growtype-wc'),
     )
 ));
+
+/**
+ * Disable default notices
+ */
+$wp_customize->add_setting('growtype_wc_disable_default_wc_notices',
+    array (
+        'default' => 0,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'growtype_wc_disable_default_wc_notices',
+    array (
+        'label' => esc_html__('Disable Notices'),
+        'section' => 'woocommerce_general_page',
+        'description' => __('Disable default WooCommerce notices ', 'growtype-wc'),
+    )
+));

@@ -446,11 +446,11 @@ class Growtype_Wc_Product
     /**
      * @return void
      */
-    public static function get_subscriptions_ids()
+    public static function get_subscriptions_ids($args = [])
     {
         $args = array (
             'post_type' => 'product',
-            'post_status' => 'publish',
+            'post_status' => $args['post_status'] ?? 'publish',
             'posts_per_page' => -1,
             'meta_query' => array (
                 array (
@@ -652,6 +652,26 @@ class Growtype_Wc_Product
         }
 
         return get_permalink($product_id);
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function add_to_cart_url($product_id = null, $params = []): string
+    {
+        global $product;
+
+        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+
+        $product = wc_get_product($product_id);
+
+        if (!$product) {
+            return '';
+        }
+
+        $url = add_query_arg($params, $product->add_to_cart_url());
+
+        return $url;
     }
 
     /**

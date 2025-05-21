@@ -54,8 +54,27 @@ function growtype_wc_after_my_account()
 
     if (!current_user_can('manage_options')) {
         ?>
-        <a href="<?php echo $delete_url; ?>" class="btn btn-secondary ms-auto btn-remove"><?php echo __('Delete Account', 'growtype-wc') ?></a>
+        <a href="<?php echo $delete_url; ?>" class="btn btn-secondary ms-auto btn-remove-account"><?php echo __('Delete Account', 'growtype-wc') ?></a>
         <?php
+
+        add_action('wp_footer', function () {
+            ?>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const deleteButtons = document.querySelectorAll('.btn-remove-account');
+                    deleteButtons.forEach(function (button) {
+                        button.addEventListener('click', function (event) {
+                            event.preventDefault(); // Prevent the default action of the link
+
+                            if (confirm('Are you sure you want to delete your account? All your data will be lost.')) {
+                                window.location.href = this.href;
+                            }
+                        });
+                    });
+                });
+            </script>
+            <?php
+        });
     }
 }
 

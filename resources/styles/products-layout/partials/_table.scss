@@ -40,7 +40,9 @@ List products as table
         padding: 0;
       }
 
-      font-size: $font-size-body;
+      & {
+        font-size: $font-size-body;
+      }
     }
   }
 
@@ -100,7 +102,10 @@ List products as table
       display: table-header-group;
       font-weight: bold;
     }
-    display: none;
+
+    & {
+      display: none;
+    }
   }
 
   .table-header-cell {

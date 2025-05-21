@@ -1,0 +1,114 @@
+/**
+ * woocommerce-layout.scss
+ * Applies layout to the default WooCommerce frontend design
+ */
+
+/**
+ * Imports
+ */
+@import "mixins";
+@import "variables";
+
+/**
+ * Styling begins
+ */
+.woocommerce,
+.woocommerce-page {
+	/**
+	 * Forms
+	 */
+	form {
+
+		.form-row {
+
+			@include clearfix();
+
+			label {
+				display: block;
+
+				&.checkbox {
+					display: inline;
+				}
+			}
+
+			select {
+				width: 100%;
+			}
+
+			.input-text {
+				box-sizing: border-box;
+				width: 100%;
+			}
+		}
+
+		.form-row-first,
+		.form-row-last {
+			width: 47%;
+			overflow: visible;
+		}
+
+		.form-row-first {
+			float: left;
+
+			/*rtl:raw:
+			float: right;
+			*/
+		}
+
+		.form-row-last {
+			float: right;
+		}
+
+		.form-row-wide {
+			clear: both;
+		}
+
+		.password-input {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			position: relative;
+
+			input[type="password"] {
+				padding-right: 2.5rem;
+			}
+
+			/* Hide the Edge "reveal password" native button */
+			input::-ms-reveal {
+				display: none;
+			}
+		}
+
+		.show-password-input {
+			background-color: transparent;
+			border-radius: 0;
+			border: 0;
+			color: var(--wc-form-color-text, #000);
+			cursor: pointer;
+			font-size: inherit;
+			line-height: inherit;
+			margin: 0;
+			padding: 0;
+			position: absolute;
+			right: 0.7em;
+			text-decoration: none;
+			top: 50%;
+			transform: translateY( -50% );
+			-moz-osx-font-smoothing: inherit;
+			-webkit-appearance: none;
+			-webkit-font-smoothing: inherit;
+		}
+
+		.show-password-input::after {
+			@include iconafter( "\e010" ); 	// Icon styles and glyph
+			margin-left: 0; /* reset the left margin from iconafter mixin */
+			margin-top: -2px; /* Manual vertical alignment adjustment */
+			vertical-align: middle;
+			display: inline-block;
+		}
+
+		.show-password-input.display-password::after {
+			color: #585858;
+		}
+	}
+}

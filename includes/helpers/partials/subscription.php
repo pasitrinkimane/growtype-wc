@@ -1,142 +1,5 @@
 <?php
 
-function growtype_wc_create_subscription_order_object($args = array ())
-{
-    $now = gmdate('Y-m-d H:i:s');
-    $order = (isset($args['order_id'])) ? wc_get_order($args['order_id']) : null;
-
-    $product = (isset($args['product_id'])) ? wc_get_product($args['product_id']) : null;
-
-    if (empty($product) && !empty($order)) {
-        foreach ($order->get_items() as $item) {
-            $product = $item->get_product();
-        }
-    }
-
-    $default_args = array (
-        'status' => '',
-        'order_id' => 0,
-        'customer_note' => null,
-        'customer_id' => null,
-        'start_date' => $args['date_created'] ?? $now,
-        'date_created' => $now,
-        'created_via' => '',
-        'currency' => get_woocommerce_currency(),
-        'prices_include_tax' => get_option('woocommerce_prices_include_tax'),
-        'product_id' => isset($args['product_id']) ? $args['product_id'] : $product->get_id(),
-    );
-
-    // If we are creating a subscription from an order, we use some of the order's data as defaults.
-    if ($order instanceof \WC_Order) {
-        $default_args['customer_id'] = $order->get_user_id();
-        $default_args['created_via'] = $order->get_created_via('edit');
-        $default_args['currency'] = $order->get_currency('edit');
-        $default_args['prices_include_tax'] = $order->get_prices_include_tax('edit') ? 'yes' : 'no';
-        $default_args['date_created'] = growtype_wc_sub_get_datetime_utc_string($order->get_date_created('edit'));
-    }
-
-    $args = wp_parse_args($args, $default_args);
-
-    if (!isset($args['billing_period'])) {
-        $args['billing_period'] = growtype_wc_get_subcription_period($product->get_id());
-    }
-
-    if (!isset($args['billing_interval'])) {
-        $args['billing_interval'] = growtype_wc_get_subcription_duration($product->get_id());
-    }
-
-    if (!isset($args['billing_price'])) {
-        $args['billing_price'] = get_post_meta($product->get_id(), '_growtype_wc_subscription_price', true);
-    }
-
-    if (!isset($args['customer_note'])) {
-        $args['customer_note'] = $order->get_customer_note();
-    }
-
-    if (!isset($args['title'])) {
-        $args['title'] = $product->get_title();
-    }
-
-    /**
-     * Check data
-     */
-
-    // Check that the given status exists.
-    if (empty($args['status']) || !empty($args['status']) && !array_key_exists($args['status'], growtype_wc_get_subscription_statuses())) {
-        return new WP_Error('woocommerce_invalid_subscription_status', __('Invalid subscription status given.', 'woocommerce-subscriptions'));
-    }
-
-    // Validate the date_created arg.
-    if (!is_string($args['date_created']) || false === growtype_wc_sub_datetime_mysql_format($args['date_created'])) {
-        return new WP_Error('woocommerce_subscription_invalid_date_created_format', _x('Invalid created date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
-    }
-    // Check if the date is in the future.
-    if (growtype_wc_sub_date_to_time($args['date_created']) > time()) {
-        return new WP_Error('woocommerce_subscription_invalid_date_created', _x('Subscription created date must be before current day.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
-    }
-
-    // Validate the start_date arg.
-    if (!is_string($args['start_date']) || false === growtype_wc_sub_datetime_mysql_format($args['start_date'])) {
-        return new WP_Error('woocommerce_subscription_invalid_start_date_format', _x('Invalid date. The date must be a string and of the format: "Y-m-d H:i:s".', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
-    }
-
-//    if (get_option('woocommerce_enable_guest_checkout') === 'no') {
-//        if (empty($args['customer_id']) || !is_numeric($args['customer_id']) || $args['customer_id'] <= 0) {
-//            return new WP_Error('woocommerce_subscription_invalid_customer_id', _x('Invalid subscription customer_id.', 'Error message while creating a subscription', 'woocommerce-subscriptions'));
-//        }
-//    }
-
-    if (empty($args['billing_period']) || !array_key_exists(strtolower($args['billing_period']), growtype_wc_sub_get_subscription_period_strings())) {
-        return new WP_Error('woocommerce_subscription_invalid_billing_period', __('Invalid subscription billing period given.', 'woocommerce-subscriptions'));
-    }
-
-    if (empty($args['billing_interval']) || !is_numeric($args['billing_interval']) || absint($args['billing_interval']) <= 0) {
-        return new WP_Error('woocommerce_subscription_invalid_billing_interval', __('Invalid subscription billing interval given. Must be an integer greater than 0.', 'woocommerce-subscriptions'));
-    }
-
-    $subscription = new \Growtype_Wc_Subscription();
-
-    $subscription->set_status($args['status']);
-
-    $subscription->set_title($args['title'] ?? sprintf('Order id: %s', $order->get_id()));
-    $subscription->set_billing_price($args['billing_price']);
-    $subscription->set_customer_note($args['customer_note']);
-    $subscription->set_customer_id($args['customer_id']);
-    $subscription->set_date_created($args['date_created']);
-    $subscription->set_created_via($args['created_via']);
-    $subscription->set_currency($args['currency']);
-    $subscription->set_prices_include_tax('no' !== $args['prices_include_tax']);
-    $subscription->set_billing_period($args['billing_period']);
-    $subscription->set_billing_interval(absint($args['billing_interval']));
-    $subscription->set_start_date($args['start_date']);
-    $subscription->set_product_id($args['product_id']);
-
-    if ($args['order_id'] > 0) {
-        $subscription->set_parent_id($args['order_id']);
-    }
-
-    $subscription->save();
-
-    /**
-     * Filter the newly created subscription object.
-     * We need to fetch the subscription from the database as the current object state doesn't match the loaded state.
-     *
-     * @param WC_Subscription $subscription
-     * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.2.22
-     */
-    $subscription = apply_filters('growtype_wc_created_subscription', $subscription);
-
-    /**
-     * Triggered after a new subscription is created.
-     *
-     * @param WC_Subscription $subscription
-     * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.2.22
-     */
-    do_action('growtype_wc_create_subscription_order_object', $subscription);
-
-    return $subscription;
-}
-
 function growtype_wc_sub_date_to_time($date_string)
 {
 
@@ -230,34 +93,78 @@ function growtype_wc_sub_get_datetime_from($variable_date_type)
     return $datetime;
 }
 
-function growtype_wc_get_subscriptions($status = null)
+function growtype_wc_get_subscriptions($args = [])
 {
-    $posts = get_posts([
+    $meta_query = [];
+
+    if (isset($args['user_id'])) {
+        $meta_query[] = [
+            [
+                'key' => '_user_id',
+                'value' => $args['user_id'],
+                'compare' => '='
+            ]
+        ];
+    }
+
+    if (isset($args['order_id'])) {
+        $meta_query[] = [
+            [
+                'key' => '_order_id',
+                'value' => $args['order_id'],
+                'compare' => '='
+            ]
+        ];
+    }
+
+    // Add status filtering if needed
+    if (isset($args['status'])) {
+        $meta_query[] = [
+            'key' => '_status',
+            'value' => $args['status'],
+            'compare' => '='
+        ];
+    }
+
+    $query = new WP_Query([
         'posts_per_page' => -1,
         'post_type' => 'growtype_wc_subs',
         'post_status' => 'any',
+        'orderby' => 'post_date',
+        'order' => 'DESC',
+        'meta_query' => $meta_query
     ]);
 
+    $posts = $query->posts;
     $subscriptions = [];
-    foreach ($posts as $post) {
-        $post->sub_price = wc_price(get_post_meta($post->ID, '_price', true));
-        $post->sub_status = get_post_meta($post->ID, '_status', true);
-        $post->sub_duration = get_post_meta($post->ID, '_duration', true);
 
-        $start_date = get_post_meta($post->ID, '_start_date', true);
+    foreach ($posts as $post) {
+        // Fetch all metadata at once
+        $meta_data = get_post_meta($post->ID);
+
+        $post->sub_price = wc_price($meta_data['_price'][0] ?? '');
+        $post->sub_status = $meta_data['_status'][0] ?? '';
+        $post->sub_duration = $meta_data['_duration'][0] ?? '';
+
+        $start_date = $meta_data['_start_date'][0] ?? '';
         $post->sub_start_date = !empty($start_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($start_date)) : '';
 
-        $end_date = get_post_meta($post->ID, '_end_date', true);
+        $end_date = $meta_data['_end_date'][0] ?? '';
         $post->sub_end_date = !empty($end_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($end_date)) : '';
 
-        $next_charge_date = get_post_meta($post->ID, '_next_charge_date', true);
+        $order_id = $meta_data['_order_id'][0] ?? '';
+        $order = wc_get_order($order_id);
+
+        $sub_payment_date = $order ? $order->get_date_paid() : false;
+        $post->sub_payment_date = $sub_payment_date
+            ? $sub_payment_date->date_i18n(get_option('date_format') . ' ' . get_option('time_format'))
+            : '';
+
+        $next_charge_date = $meta_data['_next_charge_date'][0] ?? '';
         $post->sub_next_charge = !empty($next_charge_date) ? date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($next_charge_date)) : '';
 
-        if (!empty($status) && $status != $post->sub_status) {
-            continue;
-        }
-
-        array_push($subscriptions, $post);
+        // Add the post to subscriptions array
+        $subscriptions[] = $post;
     }
 
     return $subscriptions;

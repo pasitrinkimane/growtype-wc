@@ -16,7 +16,7 @@ function growtype_wc_product_options_inventory_product_data()
     // External Url
     woocommerce_wp_text_input(array (
         'id' => '_amount_in_units',
-        'label' => 'Units (amount)',
+        'label' => 'Units',
         'description' => 'Product amount in units.',
         'desc_tip' => 'true',
         'placeholder' => '',
@@ -32,7 +32,7 @@ function growtype_wc_product_options_inventory_product_data()
     // External Url
     woocommerce_wp_text_input(array (
         'id' => '_amount_in_cases',
-        'label' => 'Cases (amount)',
+        'label' => 'Cases',
         'description' => 'Product amount in cases.',
         'desc_tip' => 'true',
         'placeholder' => '',

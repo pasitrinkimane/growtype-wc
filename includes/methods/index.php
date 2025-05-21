@@ -33,7 +33,8 @@ include('product/class-growtype-wc-auction.php');
 /**
  * Payment
  */
-include('payments/index.php');
+include('payments/Growtype_WC_Gateway.php');
+new Growtype_WC_Gateway();
 
 /**
  * Shipping
@@ -69,12 +70,13 @@ include('scripts/scripts.php');
 include('emails/index.php');
 
 include('orders/orders.php');
+new Growtype_Wc_Order();
 
 /**
  * Product single
  */
 include('components/modal.php');
-include('components/message.php');
+include('components/notice.php');
 include('components/product-single-meta.php');
 include('components/product-single-intro.php');
 include('components/product-single-tabs.php');
@@ -86,6 +88,7 @@ include('components/product-single-button.php');
 include('components/product-single-reviews.php');
 include('components/product-single-sale-flash.php');
 include('components/product-single-quantity.php');
+include('components/coupon.php');
 
 /**
  * Components
@@ -145,3 +148,4 @@ include('users/index.php');
  * Subscriptions
  */
 include('subscriptions/index.php');
+new Growtype_Wc_Subscription();

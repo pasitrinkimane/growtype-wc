@@ -8,7 +8,7 @@ include('ajax/index.php');
 /**
  * Enqueue scripts
  */
-add_action('wp_enqueue_scripts', 'growtype_wc_widgets_scripts', 10);
+add_action('wp_enqueue_scripts', 'growtype_wc_widgets_scripts', 20);
 function growtype_wc_widgets_scripts()
 {
     if (!is_admin()) {
@@ -28,7 +28,7 @@ function growtype_wc_widgets_scripts()
 /**
  * Extend Widgets
  */
-add_action('widgets_init', 'growtype_wc_extend_widgets', 15);
+add_action('widgets_init', 'growtype_wc_extend_widgets', 25);
 function growtype_wc_extend_widgets()
 {
     /**
