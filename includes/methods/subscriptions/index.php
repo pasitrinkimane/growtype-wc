@@ -16,8 +16,10 @@ class Growtype_Wc_Subscription
     function load_partials()
     {
         add_action('init', function () {
-            include_once 'partials/Growtype_Wc_Subscription_Order.php';
-            new Growtype_Wc_Subscription_Order();
+            if (class_exists('woocommerce')) {
+                include_once 'partials/Growtype_Wc_Subscription_Order.php';
+                new Growtype_Wc_Subscription_Order();
+            }
         });
     }
 
@@ -74,11 +76,11 @@ class Growtype_Wc_Subscription
         $args = wp_parse_args($args, $default_args);
 
         if (!isset($args['billing_period'])) {
-            $args['billing_period'] = growtype_wc_get_subcription_period($product->get_id());
+            $args['billing_period'] = growtype_wc_get_subscription_period($product->get_id());
         }
 
         if (!isset($args['billing_interval'])) {
-            $args['billing_interval'] = growtype_wc_get_subcription_duration($product->get_id());
+            $args['billing_interval'] = growtype_wc_get_subscription_duration($product->get_id());
         }
 
         if (!isset($args['billing_price'])) {

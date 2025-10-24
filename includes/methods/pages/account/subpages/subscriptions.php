@@ -3,6 +3,7 @@
 /**
  *
  */
+
 add_action('woocommerce_account_subscriptions_endpoint', 'woocommerce_account_subscriptions_endpoint_extend');
 function woocommerce_account_subscriptions_endpoint_extend()
 {
@@ -46,8 +47,8 @@ function woocommerce_account_subscriptions_endpoint_extend()
                     $stripe_subscription_id = get_post_meta($order_id, 'stripe_subscription_id', true);
 
                     if (!empty($stripe_subscription_id)) {
-                        $growtype_wc_gateway_stripe = new Growtype_WC_Gateway_Stripe();
-                        $stripe_subscription_details = $growtype_wc_gateway_stripe->subscription_details($stripe_subscription_id, $subscription->ID);
+                        $growtype_wc_payment_gateway_stripe = new Growtype_Wc_Payment_Gateway_Stripe();
+                        $stripe_subscription_details = $growtype_wc_payment_gateway_stripe->subscription_details($stripe_subscription_id, $subscription->ID);
 
                         if (!empty($stripe_subscription_details)) {
                             if (isset($_GET['status']) && $_GET['status'] === 'updated') {

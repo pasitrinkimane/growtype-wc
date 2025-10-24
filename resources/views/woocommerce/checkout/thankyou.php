@@ -21,21 +21,7 @@ defined('ABSPATH') || exit;
 <div class="woocommerce-order <?php echo get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : '' ?> order-details-<?php echo growtype_wc_order_details_enabled() ? 'enabled' : 'disabled' ?> customer-details-<?php echo get_theme_mod('woocommerce_thankyou_page_customer_details', true) ? 'enabled' : 'disabled' ?> download-details-<?php echo get_theme_mod('woocommerce_thankyou_page_download_details', true) ? 'enabled' : 'disabled' ?>">
     <?php if ($order) { ?>
         <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
-
-        <?php if ($order->has_status('failed')) { ?>
-
-            <?php echo growtype_wc_include_view('woocommerce.checkout.thankyou-failed', [
-                'order' => $order
-            ]) ?>
-
-        <?php } else { ?>
-
-            <?php echo growtype_wc_include_view('woocommerce.checkout.thankyou-success', [
-                'order' => $order
-            ]) ?>
-
-        <?php } ?>
-
+        <?php do_action('woocommerce_thankyou_intro', $order->get_id()); ?>
         <?php do_action('woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id()); ?>
         <?php do_action('woocommerce_thankyou', $order->get_id()); ?>
     <?php } else { ?>

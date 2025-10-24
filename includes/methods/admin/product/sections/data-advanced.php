@@ -29,7 +29,7 @@ function growtype_wc_product_options_advanced()
     // External Url
     woocommerce_wp_select(array (
         'id' => '_preview_style',
-        'label' => 'Product Preview style',
+        'label' => 'Product Preview Style',
         'description' => 'Product preview style visible in frontend.',
         'desc_tip' => 'true',
         'options' => Growtype_Wc_Customizer_Extend::get_available_product_preview_styles()

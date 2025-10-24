@@ -84,7 +84,7 @@ function growtype_wc_custom_widgets()
     /**
      * WC_Widget_Product_Meta
      */
-    if (!class_exists('Custom_WC_Widget_Product_Meta_Filter')) {
+    if (class_exists('woocommerce') && !class_exists('Custom_WC_Widget_Product_Meta_Filter')) {
         include('components/Custom_WC_Widget_Product_Meta_Filter.php');
         register_widget('Custom_WC_Widget_Product_Meta_Filter');
     }

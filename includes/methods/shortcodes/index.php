@@ -15,6 +15,12 @@ require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/countdown.
 
 require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/justpurchased.php';
 
+require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/notice.php';
+new Growtype_Wc_Notice();
+
+require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/happy-customers.php';
+new Growtype_Wc_Happy_Customers();
+
 require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/banner.php';
 new Growtype_Wc_Banner_Shortcode();
 

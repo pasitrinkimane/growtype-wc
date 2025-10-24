@@ -137,7 +137,7 @@ class Growtype_Wc_Loader
 
     function check_ability_to_launch_plugin()
     {
-        if (!class_exists('WooCommerce')) {
+        if (!class_exists('woocommerce')) {
             if (!function_exists('deactivate_plugins')) {
                 require_once ABSPATH . 'wp-admin/includes/plugin.php';
             }

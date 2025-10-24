@@ -23,7 +23,8 @@ if (!$order) {
     return;
 }
 
-$order_items = $order->get_items(apply_filters('woocommerce_purchase_order_item_types', 'line_item'));
+$order_items = Growtype_Wc_Order::growtype_wc_get_items_with_upsells($order,
+    apply_filters('woocommerce_purchase_order_item_types', 'line_item'));
 $show_purchase_note = $order->has_status(apply_filters('woocommerce_purchase_note_order_statuses',
     array ('completed', 'processing')));
 $show_customer_details = is_user_logged_in() && $order->get_user_id() === get_current_user_id();
@@ -88,7 +89,7 @@ $order_details_title = apply_filters('woocommerce_order_details_title', __('Orde
 
             <tfoot>
             <?php
-            foreach ($order->get_order_item_totals() as $key => $total) {
+            foreach (Growtype_Wc_Order::growtype_wc_get_order_totals_with_upsells($order) as $key => $total) {
                 ?>
             <tr data-type="<?php echo str_replace(':', '', strtolower(str_replace(' ', '_', $total['label']))) ?>">
                 <th scope="row"><?php echo esc_html($total['label']); ?></th>

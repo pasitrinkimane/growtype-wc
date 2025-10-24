@@ -635,14 +635,29 @@ class Growtype_Wc_Product
         return !empty($product_id) ? get_permalink($product_id) . '?customize=edit' : '';
     }
 
+    public static function get_id($product_id = null)
+    {
+        if (empty($product_id)) {
+            global $product;
+
+            if (!empty($product)) {
+                $product_id = $product->get_id();
+            }
+        }
+
+        return $product_id;
+    }
+
     /**
      * @return mixed
      */
     public static function permalink($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+        if (empty($product_id)) {
+            return '';
+        }
 
         /**
          * Check if preview permalink applied
@@ -659,9 +674,11 @@ class Growtype_Wc_Product
      */
     public static function add_to_cart_url($product_id = null, $params = []): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+        if (empty($product_id)) {
+            return '';
+        }
 
         $product = wc_get_product($product_id);
 
@@ -680,15 +697,13 @@ class Growtype_Wc_Product
      */
     public static function get_price_details($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
-
-        if (!empty($product_id)) {
-            $price_details = get_post_meta($product_id, '_price_details', true);
+        if (empty($product_id)) {
+            return '';
         }
 
-        return $price_details ?? '';
+        return get_post_meta($product_id, '_price_details', true);
     }
 
     /**
@@ -697,9 +712,11 @@ class Growtype_Wc_Product
      */
     public static function get_price_details_formatted($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+        if (empty($product_id)) {
+            return '';
+        }
 
         $details = self::get_price_details($product_id);
 
@@ -712,15 +729,13 @@ class Growtype_Wc_Product
      */
     public static function get_extra_details($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
-
-        if (!empty($product_id)) {
-            $details = get_post_meta($product_id, '_extra_details', true);
+        if (empty($product_id)) {
+            return '';
         }
 
-        return $details ?? '';
+        return get_post_meta($product_id, '_extra_details', true);
     }
 
     /**
@@ -729,9 +744,11 @@ class Growtype_Wc_Product
      */
     public static function get_extra_details_formatted($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+        if (empty($product_id)) {
+            return '';
+        }
 
         $details = self::get_extra_details($product_id);
 
@@ -757,15 +774,13 @@ class Growtype_Wc_Product
      */
     public static function price_is_hidden($product_id = null): bool
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
-
-        if (!empty($product_id)) {
-            $price_hidden = get_post_meta($product_id, '_hide_product_price', true);
+        if (empty($product_id)) {
+            return '';
         }
 
-        return $price_hidden ?? false;
+        return get_post_meta($product_id, '_hide_product_price', true);
     }
 
     /**
@@ -774,15 +789,13 @@ class Growtype_Wc_Product
      */
     public static function get_promo_label($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
-
-        if (!empty($product_id)) {
-            $promo_label = get_post_meta($product_id, '_promo_label', true);
+        if (empty($product_id)) {
+            return '';
         }
 
-        return $promo_label ?? '';
+        return get_post_meta($product_id, '_promo_label', true);
     }
 
     /**
@@ -791,9 +804,11 @@ class Growtype_Wc_Product
      */
     public static function get_promo_label_formatted($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product_id = !empty($product_id) ? $product_id : $product->get_id();
+        if (empty($product_id)) {
+            return '';
+        }
 
         $promo_label = self::get_promo_label($product_id);
 
@@ -810,11 +825,13 @@ class Growtype_Wc_Product
      */
     public static function get_discount_percentage_label_formatted($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product = !empty($product_id) ? wc_get_product($product_id) : $product;
+        if (empty($product_id)) {
+            return '';
+        }
 
-        $percentage = self::get_discount_percentage($product->get_id());
+        $percentage = self::get_discount_percentage($product_id);
 
         if (!empty($percentage)) {
             return '<span class="badge badge-percentage">' . sprintf('%s off', $percentage) . '</span>';
@@ -829,9 +846,13 @@ class Growtype_Wc_Product
      */
     public static function get_discount_percentage($product_id = null): string
     {
-        global $product;
+        $product_id = self::get_id($product_id);
 
-        $product = !empty($product_id) ? wc_get_product($product_id) : $product;
+        if (empty($product_id)) {
+            return '';
+        }
+
+        $product = wc_get_product($product_id);
 
         $regular_price = (float)$product->get_regular_price();
         $sale_price = (float)$product->get_sale_price();

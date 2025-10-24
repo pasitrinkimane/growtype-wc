@@ -32,6 +32,7 @@ class Growtype_Wc_Banner_Shortcode
         $params['id'] = 'growtype-wc-banner-' . $params['id'];
         $params['countdown_duration'] = $params['countdown_duration'] ?? '600';
         $params['show_countdown'] = filter_var($params['show_countdown'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $params['hide_on_countdown_expired'] = filter_var($params['hide_on_countdown_expired'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $params['show_default_banner'] = filter_var($params['show_default_banner'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $params['type'] = $params['type'] ?? $_GET['growtype_wc_banner_type'] ?? 'default';
         $params['style'] = $params['style'] ?? $_GET['growtype_wc_banner_style'] ?? 'default';
@@ -219,7 +220,7 @@ class Growtype_Wc_Banner_Shortcode
         }
 
         if (!isset($current_banner['discount_label'])) {
-            $current_banner['discount_label'] = sprintf(__('UP TO %s OFF', 'growtype-child'), $params['discount_amount'] . '%');
+            $current_banner['discount_label'] = sprintf(__('GET %s OFF', 'growtype-child'), $params['discount_amount'] . '%');
         }
 
         if (!isset($current_banner['show_countdown'])) {
@@ -283,11 +284,35 @@ class Growtype_Wc_Banner_Shortcode
                             </p>
                         <?php } ?>
 
-                        <?php if (isset($current_banner['show_countdown']) && !empty($current_banner['show_countdown']) && $current_banner['show_countdown'] && isset($current_banner['countdown'])): ?>
-                            <div class="banner-content-timer">
-                                <?= do_shortcode('[growtype_wc_countdown time="' . ($current_banner['duration'] ?? '600') . '" format="' . ($current_banner['countdown']['format'] ?? 'HMS') . '" labels="' . (isset($current_banner['countdown']['labels']) ? implode(',', $current_banner['countdown']['labels']) : '') . '"]'); ?>
-                            </div>
-                        <?php endif; ?>
+                        <?php
+                        if (
+                            ! empty( $current_banner['show_countdown'] ) &&
+                            ! empty( $current_banner['countdown'] )
+                        ) {
+                            $countdown   = $current_banner['countdown'];
+                            $compact     = filter_var( $countdown['compact'] ?? true, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+                            $time        = intval( $current_banner['duration'] ?? 600 );
+                            $format      = sanitize_text_field( $countdown['format'] ?? 'HMS' );
+                            $labels      = ! empty( $countdown['labels'] )
+                                ? implode( ',', array_map( 'sanitize_text_field', $countdown['labels'] ) )
+                                : '';
+                            $description = sanitize_text_field( $countdown['description'] ?? 'Offer ends in' );
+
+                            // build the shortcode string in one shot
+                            $shortcode = sprintf(
+                                '[growtype_wc_countdown compact="%s" time="%d" format="%s" labels="%s" description="%s"]',
+                                $compact,
+                                $time,
+                                $format,
+                                $labels,
+                                $description
+                            );
+
+                            echo '<div class="banner-content-timer">';
+                            echo do_shortcode( $shortcode );
+                            echo '</div>';
+                        }
+                        ?>
 
                         <?php if (isset($current_banner['decor']) && !empty($current_banner['decor'])): ?>
                             <div class="banner-content-decor">
@@ -324,18 +349,25 @@ class Growtype_Wc_Banner_Shortcode
                 });
             }
 
-            add_action('wp_footer', function () { ?>
+            add_action('wp_footer', function () use ($params) { ?>
                 <script>
                     $(document).ready(function () {
-                        if ($('.growtype-wc-banner').length !== 0) {
-                            jQuery(".growtype-wc-banner .auction-time-countdown").each(function (index, element) {
+                        let wcBanner = jQuery('#<?php echo $params['id']; ?>');
+                        if (wcBanner.length !== 0) {
+                            window.growtype_wc.countdown['over'] = '<?php echo esc_html__('Last Chance', 'growtype-wc'); ?>';
+                            jQuery('#<?php echo $params['id']; ?> .auction-time-countdown').each(function (index, element) {
+                                let hideOnCountdownExpired = '<?php echo $params['hide_on_countdown_expired']; ?>';
                                 let cookieName = jQuery(this).attr('id');
                                 let isVisible = cookieCustom.getCookie(cookieName) === null || growtypeWcConvertStringToSeconds(cookieCustom.getCookie(cookieName)) > 0 ? true : false;
 
-                                if (isVisible) {
-                                    $(this).closest('.growtype-wc-banner').fadeIn();
+                                if (hideOnCountdownExpired) {
+                                    if (isVisible) {
+                                        $(this).closest('.growtype-wc-banner').fadeIn();
+                                    } else {
+                                        $(this).closest('.growtype-wc-banner').hide();
+                                    }
                                 } else {
-                                    $(this).closest('.growtype-wc-banner').hide();
+                                    $(this).closest('.growtype-wc-banner').show();
                                 }
 
                                 $(element).on('countdownExpired', function () {
@@ -343,7 +375,7 @@ class Growtype_Wc_Banner_Shortcode
                                 });
                             });
 
-                            $('.growtype-wc-banner').click(function () {
+                            wcBanner.click(function () {
                                 let url = $(this).attr('data-url');
 
                                 if (url) {

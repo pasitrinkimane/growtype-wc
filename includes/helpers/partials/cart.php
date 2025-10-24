@@ -109,7 +109,7 @@ function growtype_wc_render_cart_content()
  */
 function growtype_wc_cart_icon_is_active()
 {
-    return class_exists('WooCommerce') && get_theme_mod('woocommerce_cart_icon', true) ? true : false;
+    return class_exists('woocommerce') && get_theme_mod('woocommerce_cart_icon', true) ? true : false;
 }
 
 /**

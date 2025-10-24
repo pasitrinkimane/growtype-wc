@@ -31,17 +31,6 @@ function growtype_wc_product_is_sold_individually($product_id)
 }
 
 /**
- * @param $product_id
- * @return bool
- */
-function growtype_wc_product_is_subscription($product_id)
-{
-    $product_type_subscription = get_post_meta($product_id, '_growtype_wc_subscription', true);
-
-    return !empty($product_type_subscription) && $product_type_subscription === 'yes' ? true : false;
-}
-
-/**
  * @param $query_args
  * @param $params
  * @return mixed|string

@@ -27,3 +27,19 @@ if (!function_exists('growtype_wc_order_details_enabled')) {
         return apply_filters('growtype_wc_order_details_enabled', $order_details_enabled);
     }
 }
+
+add_action('woocommerce_thankyou_intro', 'woocommerce_thankyou_intro_callback');
+function woocommerce_thankyou_intro_callback($order_id)
+{
+    $order = wc_get_order($order_id);
+
+    if ($order->has_status('failed')) {
+        echo growtype_wc_include_view('woocommerce.checkout.thankyou-failed', [
+            'order' => $order
+        ]);
+    } else {
+        echo growtype_wc_include_view('woocommerce.checkout.thankyou-success', [
+            'order' => $order
+        ]);
+    }
+}

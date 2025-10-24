@@ -30,76 +30,53 @@ class Growtype_Wc_Admin_Settings
         );
     }
 
-    function options_page_content()
-    {
-        if (isset($_GET['page']) && $_GET['page'] == 'growtype-wc-settings') { ?>
+    function options_page_content() {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'growtype-wc-settings') {
+            return;
+        }
 
-            <div class="wrap">
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : Growtype_Wc_Admin::GROWTYPE_WC_SETTINGS_DEFAULT_TAB;
+        $is_generate_tab = ($tab === 'generate');
+        ?>
 
-                <h1>Growtype Wc - Settings</h1>
+        <div class="wrap">
+            <h1>Growtype WC - Settings</h1>
 
+            <?php if (isset($_GET['updated']) && esc_attr($_GET['updated']) === 'true') : ?>
+                <div class="updated notice is-dismissible"><p>Settings updated.</p></div>
+            <?php endif; ?>
+
+            <?php $this->render_settings_tab_render($tab); ?>
+
+            <form id="growtype_wc_settings_form" method="post" action="options.php">
                 <?php
-                if (isset($_GET['updated']) && 'true' == esc_attr($_GET['updated'])) {
-                    echo '<div class="updated" ><p>Settings updated.</p></div>';
+                // Map tab to settings group and section renderer
+                $settings_map = [
+                    'general'  => 'growtype_wc_settings_general',
+                    'plugins'  => 'growtype_wc_settings_plugins',
+                    'payments' => 'growtype_wc_settings_payments',
+                    'generate' => 'growtype_wc_settings_generate',
+                ];
+
+                if (array_key_exists($tab, $settings_map)) {
+                    settings_fields($settings_map[$tab]);
+
+                    echo '<table class="form-table">';
+                    do_settings_fields('growtype-wc-settings', "{$settings_map[$tab]}_render");
+                    echo '</table>';
                 }
 
-                if (isset ($_GET['tab'])) {
-                    $this->render_settings_tab_render($_GET['tab']);
+                if ($is_generate_tab) {
+                    echo '<input type="hidden" name="generate_settings[generate]" value="1" />';
+                    echo '<button type="submit" class="button button-primary">Generate</button>';
                 } else {
-                    $this->render_settings_tab_render();
+                    submit_button();
                 }
                 ?>
+            </form>
+        </div>
 
-                <form id="growtype_wc_settings_form" method="post" action="options.php">
-                    <?php
-
-                    if (isset ($_GET['tab'])) {
-                        $tab = $_GET['tab'];
-                    } else {
-                        $tab = Growtype_Wc_Admin::GROWTYPE_WC_SETTINGS_DEFAULT_TAB;
-                    }
-
-                    switch ($tab) {
-                        case 'general':
-                            settings_fields('growtype_wc_settings_general');
-
-                            echo '<table class="form-table">';
-                            do_settings_fields('growtype-wc-settings', 'growtype_wc_settings_general_render');
-                            echo '</table>';
-
-                            break;
-                        case 'plugins':
-                            settings_fields('growtype_wc_settings_plugins');
-
-                            echo '<table class="form-table">';
-                            do_settings_fields('growtype-wc-settings', 'growtype_wc_settings_plugins_render');
-                            echo '</table>';
-
-                            break;
-                        case 'generate':
-                            settings_fields('growtype_wc_settings_generate');
-
-                            echo '<table class="form-table">';
-                            do_settings_fields('growtype-wc-settings', 'growtype_wc_settings_generate_render');
-                            echo '</table>';
-
-                            echo '<input type="hidden" name="generate_settings[generate]" value="1" />';
-
-                            echo '<button type="submit" class="button button-primary">Generate</button>';
-
-                            break;
-                    }
-
-                    if ($tab !== 'generate') {
-                        submit_button();
-                    }
-
-                    ?>
-                </form>
-            </div>
-
-            <?php
-        }
+        <?php
     }
 
     function process_posted_data()
@@ -148,6 +125,12 @@ class Growtype_Wc_Admin_Settings
          */
         include_once GROWTYPE_WC_PATH . 'admin/pages/settings/tabs/growtype-wc-admin-settings-general.php';
         new Growtype_Wc_Admin_Settings_General();
+
+        /**
+         * Payments
+         */
+        include_once GROWTYPE_WC_PATH . 'admin/pages/settings/tabs/growtype-wc-admin-settings-payments.php';
+        new Growtype_Wc_Admin_Settings_Payments();
 
         /**
          * Generate

@@ -43,8 +43,8 @@ function growtype_wc_variable_price_html($price, $product)
  * Show smaller price for variable product
  */
 add_filter('wc_price', function ($return, $price, $args, $unformatted_price, $original_price) {
-    if ((int)$price === 0) {
-        return '<span class="is-free">Free</span>';
+    if (empty($price)) {
+        return '<span class="woocommerce-Price-amount is-free">Free</span>';
     }
 
     return $return;

@@ -5,23 +5,56 @@
  */
 add_shortcode('growtype_wc_countdown', 'growtype_wc_countdown_callback');
 
-function growtype_wc_countdown_callback($atts)
-{
-    $time = $atts['time'] ?? "60";
-    $compact = $atts['compact'] ?? "false";
-    $format = $atts['format'] ?? "d H:m:s";
-    $labels = $atts['labels'] ?? "";
-    $labels = !is_array($labels) ? $labels : implode(',', $labels);
+function growtype_wc_countdown_callback( $atts ) {
+    // Merge incoming attributes with defaults
+    $atts = shortcode_atts(
+        [
+            'time'        => '60',                // Seconds or timestamp offset
+            'format'      => 'd H:m:s',           // Date format for countdown
+            'compact'     => 'false',             // Use compact labels ("true" or "false")
+            'labels'      => '',                  // Comma-separated labels or JSON array
+            'description' => '',                  // Optional description under countdown
+        ],
+        $atts,
+        'growtype_countdown'
+    );
 
-    $id_base = str_replace(' ', '', $time . $format . $compact . $labels);
-    $unique_id = md5($id_base);
+    // Normalize labels: accept JSON array or comma-separated string
+    $labels = $atts['labels'];
+    if ( empty( $labels ) ) {
+        $labels = '';
+    } elseif ( strpos( $labels, '[' ) === 0 ) {
+        // JSON-style array
+        $decoded = json_decode( $labels, true );
+        if ( is_array( $decoded ) ) {
+            $labels = implode( ',', $decoded );
+        }
+    } elseif ( is_array( $labels ) ) {
+        // Direct array passed
+        $labels = implode( ',', $labels );
+    }
 
-    return '<div 
-        id="growtype-wc-countdown-' . $unique_id . '"
-        class="auction-time-countdown" 
-        data-time="' . esc_attr($time) . '" 
-        data-format="' . esc_attr($format) . '" 
-        data-compact="' . esc_attr($compact) . '"
-        data-labels="' . esc_attr($labels) . '"
-    ></div>';
+    // Build a unique ID from parameters
+    $id_base   = implode( '|', [ $atts['time'], $atts['format'], $atts['compact'], $labels ] );
+    $unique_id = 'growtype-wc-countdown-' . wp_hash( $id_base );
+
+    // Prepare data attributes
+    $data_attrs = [
+        'data-time'        => $atts['time'],
+        'data-format'      => $atts['format'],
+        'data-compact'     => $atts['compact'],
+        'data-description' => $atts['description'],
+    ];
+    if ( $labels !== '' ) {
+        $data_attrs['data-labels'] = $labels;
+    }
+
+    // Build the attribute string, escaping each value
+    $attr_str = "id=\"$unique_id\" class=\"auction-time-countdown\"";
+    foreach ( $data_attrs as $name => $value ) {
+        $attr_str .= sprintf( ' %s="%s"', esc_attr( $name ), esc_attr( $value ) );
+    }
+
+    // Return the countdown container markup
+    return sprintf( '<div %s></div>', $attr_str );
 }

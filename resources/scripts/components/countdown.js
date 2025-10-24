@@ -19,6 +19,7 @@ function countdown() {
                 let format = jQuery(this).attr('data-format') ?? 'yowdHMS';
                 let compact = jQuery(this).attr('data-compact') === 'true' ? true : false;
                 let labels = jQuery(this).attr('data-labels');
+                let description = jQuery(this).attr('data-description');
                 let expiryText = '';
                 let cookieName = id;
 
@@ -52,8 +53,21 @@ function countdown() {
                     }
                 };
 
-                if (typeof labels !== 'undefined' && labels.length > 0) {
-                    params.labels = labels.split(',');
+                if (typeof description !== 'undefined') {
+                    if (description.length > 0) {
+                        params.description = description;
+                    }
+                }
+
+                if (typeof labels !== 'undefined') {
+                    if (labels === '-') {
+                        jQuery(this).addClass('labels-disabled');
+                        params.labels = ['', '', '', '', '', '', ''];
+                        params.labels1 = ['', '', '', '', '', '', ''];
+                    } else if (labels.length > 0) {
+                        params.labels = labels.split(',');
+                        params.labels1 = labels.split(',');
+                    }
                 }
 
                 jQuery(this).SAcountdown(params);

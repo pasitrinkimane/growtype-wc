@@ -26,7 +26,8 @@ add_action('template_redirect', function () {
     $user_can_buy = get_theme_mod('only_registered_users_can_buy') ? is_user_logged_in() : true;
 
     if (
-        !$user_can_buy
+        class_exists('woocommerce')
+        && !$user_can_buy
         &&
         (
             is_woocommerce() || is_cart() || is_checkout()

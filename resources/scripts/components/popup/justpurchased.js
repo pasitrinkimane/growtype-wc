@@ -6,8 +6,8 @@ function justpurchased() {
             setTimeout(function () {
                 $('.popup-justpurchased').slideUp();
                 cookieCustom.setCookie('growtype_wc_justpurchased', true);
-            }, 5000);
-        }, 2000);
+            }, 7000);
+        }, 4000);
     }
 }
 
