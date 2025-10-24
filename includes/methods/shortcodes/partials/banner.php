@@ -50,7 +50,7 @@ class Growtype_Wc_Banner_Shortcode
                 'halloween' => [
                     'start' => date('Y-m-d', strtotime('October 24')),
                     'end' => date('Y-m-d', strtotime('October 31')),
-                    'intro_title' => 'Spooky Savings!',
+                    'intro_title' => 'Spooky Savings',
                     'intro_subtitle' => 'Limited time offer',
                     'background_images' => [
                         GROWTYPE_WC_URL_PUBLIC . 'images/banners/halloween/graveyard.png'
