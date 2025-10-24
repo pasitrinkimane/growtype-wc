@@ -170,12 +170,28 @@ function growtype_wc_get_subscriptions($args = [])
     return $subscriptions;
 }
 
-function growtype_wc_get_subcription_duration($product_id)
+/**
+ * @param $product_id
+ * @return bool
+ */
+function growtype_wc_product_is_subscription($product_id)
+{
+    $product_type_subscription = get_post_meta($product_id, '_growtype_wc_subscription', true);
+
+    return !empty($product_type_subscription) && $product_type_subscription === 'yes' ? true : false;
+}
+
+function growtype_wc_get_subscription_duration($product_id)
 {
     return growtype_wc_product_is_subscription($product_id) ? (int)get_post_meta($product_id, '_growtype_wc_subscription_duration', true) : null;
 }
 
-function growtype_wc_get_subcription_period($product_id)
+function growtype_wc_get_subscription_price($product_id)
+{
+    return growtype_wc_product_is_subscription($product_id) ? (float)get_post_meta($product_id, '_growtype_wc_subscription_price', true) : null;
+}
+
+function growtype_wc_get_subscription_period($product_id)
 {
     return growtype_wc_product_is_subscription($product_id) ? get_post_meta($product_id, '_growtype_wc_subscription_period', true) : null;
 }

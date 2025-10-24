@@ -33,8 +33,8 @@ include('product/class-growtype-wc-auction.php');
 /**
  * Payment
  */
-include('payments/Growtype_WC_Gateway.php');
-new Growtype_WC_Gateway();
+include('payments/Growtype_Wc_Payment.php');
+new Growtype_Wc_Payment();
 
 /**
  * Shipping
@@ -63,6 +63,8 @@ include('admin/product/sections/data-inventory.php');
 include('admin/product/sections/data-shipping.php');
 include('admin/product/sections/data-variation.php');
 include('admin/product/sections/data-subscription.php');
+include('admin/product/sections/data-trial.php');
+include('admin/product/sections/data-upsell.php');
 include('admin/product/sections/description.php');
 
 include('scripts/scripts.php');
@@ -149,3 +151,15 @@ include('users/index.php');
  */
 include('subscriptions/index.php');
 new Growtype_Wc_Subscription();
+
+/**
+ * Trials
+ */
+include('trials/index.php');
+new Growtype_Wc_Trial();
+
+/**
+ * Upsells
+ */
+include('upsells/index.php');
+new Growtype_Wc_Upsell();

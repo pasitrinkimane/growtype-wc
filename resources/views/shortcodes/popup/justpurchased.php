@@ -1,4 +1,4 @@
-<div class="popup popup-justpurchased">
+<div class="popup popup-justpurchased anim-pulse">
     <div class="popup-inner">
         <?php if ($image_url) : ?>
             <div class="b-image">

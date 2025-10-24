@@ -28,6 +28,10 @@ class Growtype_Wc_Customizer_Extend
 
     function customizer_extend_available_pages($pages)
     {
+        if (!class_exists('woocommerce')) {
+            return [];
+        }
+
         $pages['single_shop_page'] = 'Single product page (important: no id)';
 
         $wc_menu_items = wc_get_account_menu_items();

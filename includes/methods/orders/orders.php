@@ -83,4 +83,68 @@ class Growtype_Wc_Order
 
         return null;
     }
+
+    public static function growtype_wc_get_items_with_upsells($order, $types = 'line_item')
+    {
+        // 1) Core items
+        $native = $order->get_items($types);
+        $root_id = $order->get_meta('parent_order_id') ?: $order->get_id();
+        $merged = [];
+
+        // 2) If this *is* an upsell, prepend the parent’s items
+        if ($root_id !== $order->get_id() && ($parent = wc_get_order($root_id))) {
+            foreach ($parent->get_items($types) as $item) {
+                $merged[] = $item;
+            }
+        }
+
+        // 3) Then this order’s native items
+        foreach ($native as $item) {
+            $merged[] = $item;
+        }
+
+        // 4) Finally any *other* upsells sharing the same root
+        $upsells = (new WC_Order_Query([
+            'limit' => -1,
+            'status' => wc_get_is_paid_statuses(),
+            'meta_key' => 'parent_order_id',
+            'meta_value' => $root_id,
+        ]))->get_orders();
+
+        foreach ($upsells as $upsell) {
+            if ($upsell->get_id() === $order->get_id()) {
+                continue; // skip self
+            }
+            foreach ($upsell->get_items($types) as $item) {
+                $merged[] = $item;
+            }
+        }
+
+        return $merged;
+    }
+
+    public static function growtype_wc_get_order_totals_with_upsells(WC_Order $order)
+    {
+        // Sum line_item subtotals/totals over the merged list
+        $items = self::growtype_wc_get_items_with_upsells($order);
+        $subtotal = 0;
+        $total = 0;
+        foreach ($items as $item) {
+            /** @var WC_Order_Item_Product $item */
+            $subtotal += (float)$item->get_subtotal();
+            $total += (float)$item->get_total();
+        }
+
+        // Build exactly the same shape as woocommerce_get_order_item_totals()
+        return [
+            'cart_subtotal' => [
+                'label' => __('Subtotal:'),
+                'value' => wc_price($subtotal),
+            ],
+            'order_total' => [
+                'label' => __('Total:'),
+                'value' => wc_price($total),
+            ],
+        ];
+    }
 }

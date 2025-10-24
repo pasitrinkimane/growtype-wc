@@ -44,8 +44,8 @@ function growtype_wc_woocommerce_extend_price_html($price_html, $product)
         }
 
         if (growtype_wc_product_is_subscription($product->get_id())) {
-            $duration = growtype_wc_get_subcription_duration($product->get_id());
-            $period = growtype_wc_get_subcription_period($product->get_id());
+            $duration = growtype_wc_get_subscription_duration($product->get_id());
+            $period = growtype_wc_get_subscription_period($product->get_id());
             $preview_as_monthly = get_post_meta($product->get_id(), '_growtype_wc_subscription_preview_as_monthly', true);
 
             if ($preview_as_monthly) {

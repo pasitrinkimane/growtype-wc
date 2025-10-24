@@ -1,8 +1,6 @@
 <?php
 
-add_filter('product_type_options', 'growtype_wc_product_type_options', 10, 1);
-function growtype_wc_product_type_options($type_options)
-{
+add_filter('product_type_options', function ($type_options) {
     $type_options['growtype_wc_subscription'] = array (
         'id' => 'growtype_wc_subscription',
         'wrapper_class' => '',
@@ -12,13 +10,13 @@ function growtype_wc_product_type_options($type_options)
     );
 
     return $type_options;
-}
+}, 10, 1);
 
 /**
  * Update product meta
  */
 add_action('woocommerce_update_product', function ($post_id, $product) {
-    if (isset($_POST['post_type']) && $_POST['post_type'] === 'product') {
+    if (isset($_POST['post_type']) && $_POST['post_type'] === 'product' && isset($_POST['action']) && $_POST['action'] === 'editpost') {
         $is_subscription = isset($_POST['growtype_wc_subscription']) && $_POST['growtype_wc_subscription'] ? 'yes' : 'no';
         update_post_meta($post_id, Growtype_Wc_Subscription::META_KEY, $is_subscription);
     }
@@ -28,31 +26,31 @@ add_action('woocommerce_update_product', function ($post_id, $product) {
  * Save product meta
  */
 add_action("save_post_product", function ($post_id, $product, $update) {
-    if (isset($_POST['growtype_wc_subscription_price'])) {
-        update_post_meta($post_id, '_growtype_wc_subscription_price', esc_attr($_POST['growtype_wc_subscription_price']));
-    }
+    if (isset($_POST['action']) && $_POST['action'] === 'editpost') {
+        if (isset($_POST['growtype_wc_subscription_price'])) {
+            update_post_meta($post_id, '_growtype_wc_subscription_price', esc_attr($_POST['growtype_wc_subscription_price']));
+        }
 
-    if (isset($_POST['growtype_wc_subscription_period'])) {
-        update_post_meta($post_id, '_growtype_wc_subscription_period', esc_attr($_POST['growtype_wc_subscription_period']));
-    }
+        if (isset($_POST['growtype_wc_subscription_period'])) {
+            update_post_meta($post_id, '_growtype_wc_subscription_period', esc_attr($_POST['growtype_wc_subscription_period']));
+        }
 
-    if (isset($_POST['growtype_wc_subscription_duration'])) {
-        update_post_meta($post_id, '_growtype_wc_subscription_duration', esc_attr($_POST['growtype_wc_subscription_duration']));
-    }
+        if (isset($_POST['growtype_wc_subscription_duration'])) {
+            update_post_meta($post_id, '_growtype_wc_subscription_duration', esc_attr($_POST['growtype_wc_subscription_duration']));
+        }
 
-    update_post_meta($post_id, '_growtype_wc_subscription_preview_as_monthly', isset($_POST['growtype_wc_subscription_preview_as_monthly']) ? esc_attr($_POST['growtype_wc_subscription_preview_as_monthly']) : 0);
+        update_post_meta($post_id, '_growtype_wc_subscription_preview_as_monthly', isset($_POST['growtype_wc_subscription_preview_as_monthly']) ? esc_attr($_POST['growtype_wc_subscription_preview_as_monthly']) : 0);
+    }
 }, 10, 3);
 
 /**
  * Product data tabs
  */
-add_filter('woocommerce_product_data_tabs', 'growtype_wc_woocommerce_product_data_tabs', 10, 1);
-function growtype_wc_woocommerce_product_data_tabs($default_tabs)
-{
+add_filter('woocommerce_product_data_tabs', function ($default_tabs) {
     global $post;
 
     $tabs = array (
-        'wk_custom_tab' => array (
+        'growtype_wc_subscription_settings_tab' => array (
             'label' => esc_html__('Subscription settings', 'growtype-wc'),
             'target' => 'growtype_wc_subscription_tab',
             'priority' => 60,
@@ -63,14 +61,13 @@ function growtype_wc_woocommerce_product_data_tabs($default_tabs)
     $default_tabs = array_merge($default_tabs, $tabs);
 
     return $default_tabs;
-}
+}, 10, 1);
+
 
 /**
  * Product data panels
  */
-add_action('woocommerce_product_data_panels', 'growtype_wc_woocommerce_product_data_panels');
-function growtype_wc_woocommerce_product_data_panels()
-{
+add_action('woocommerce_product_data_panels', function () {
     global $woocommerce, $post;
 
     $periods = [
@@ -88,7 +85,7 @@ function growtype_wc_woocommerce_product_data_panels()
             <input type="text" name="growtype_wc_subscription_price" id="growtype-wc-subscription-price" value="<?php echo $growtype_wc_subscription_price; ?>"/>
         </p>
         <p class="form-field">
-            <?php $growtype_wc_subscription_period = growtype_wc_get_subcription_period($post->ID); ?>
+            <?php $growtype_wc_subscription_period = growtype_wc_get_subscription_period($post->ID); ?>
             <label for="growtype-wc-subscription-period"><?php esc_html_e('Period', 'growtype-wc'); ?></label>
             <select name="growtype_wc_subscription_period" id="growtype_wc_subscription_period">
                 <?php foreach ($periods as $key => $period) { ?>
@@ -97,7 +94,7 @@ function growtype_wc_woocommerce_product_data_panels()
             </select>
         </p>
         <p class="form-field">
-            <?php $growtype_wc_subscription_duration = growtype_wc_get_subcription_duration($post->ID); ?>
+            <?php $growtype_wc_subscription_duration = growtype_wc_get_subscription_duration($post->ID); ?>
             <label for="growtype-wc-subscription-duration"><?php esc_html_e('Duration', 'growtype-wc'); ?></label>
             <input type="text" name="growtype_wc_subscription_duration" id="growtype-wc-subscription-duration" value="<?php echo $growtype_wc_subscription_duration; ?>"/>
         </p>
@@ -123,17 +120,17 @@ function growtype_wc_woocommerce_product_data_panels()
         });
     </script>
     <?php
-}
+});
 
-add_filter('woocommerce_product_filters', 'growtype_wc_woocommerce_product_filters', 10, 1);
-function growtype_wc_woocommerce_product_filters($output)
-{
+
+add_filter('woocommerce_product_filters', function ($output) {
     $insert_after_words = 'Virtual</option>';
     $position = strpos($output, $insert_after_words);
     $output = substr_replace($output, '<option value="growtype_wc_subscription" >' . (is_rtl() ? '&larr;' : '&rarr;') . ' Subscription</option>', $position + strlen($insert_after_words), 0);
 
     return $output;
-}
+}, 10, 1);
+
 
 add_filter('parse_query', function ($query) {
     if (isset($_GET['product_type']) && $_GET['product_type'] === 'growtype_wc_subscription') {

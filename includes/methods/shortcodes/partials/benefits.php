@@ -37,18 +37,41 @@ class Growtype_Wc_Benefits_Shortcode
 
             if ($is_slider) {
                 ?>
-                <div class="gwc-benefits-slider growtype-theme-slider" data-gslick='{"infinite": true, "slidesToShow": 1, "slidesToScroll": 1, "arrows": false, "dots": true, "fade": true, "autoplay": true, "autoplaySpeed": 2000}'>
+                <div class="gwc-benefits-slider growtype-theme-slider" data-gslick='{"infinite": true, "slidesToShow": 1, "slidesToScroll": 1, "arrows": false, "dots": true, "fade": true, "autoplay": false, "autoplaySpeed": 2000}'>
                     <?php foreach ($benefits as $benefit) { ?>
                         <div class="gwc-benefits-slider-slide">
+                            <div class="gwc-benefits-slider-slide-images">
+                                <?php if (!empty($benefit['images'])): ?>
+                                    <?php foreach ($benefit['images'] as $image): ?>
+                                        <?php
+                                        $url = $image['url'] ?? '';
+                                        $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                                        $is_video = in_array($ext, ['mp4', 'webm', 'ogg']);
+                                        ?>
+
+                                        <?php if ($is_video): ?>
+                                            <div class="gwc-benefits-slider-slide-img gwc-benefits-slider-slide-video">
+                                                <video autoplay muted loop playsinline>
+                                                    <source src="<?= $url ?>" type="video/<?= $ext ?>">
+                                                </video>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="gwc-benefits-slider-slide-img"
+                                                 style="background:url('<?= $url ?>');
+                                                     background-size: <?= $image['background_size'] ?? 'cover' ?>;
+                                                     background-position: <?= $image['background_position'] ?? 'center' ?>;
+                                                     background-repeat: no-repeat;">
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                             <div class="gwc-benefits-slider-slide-description">
                                 <p class="gwc-benefits-slider-slide-title"><?php echo $benefit['title'] ?></p>
                                 <?php if (isset($benefit['subtitle'])) { ?>
                                     <p class="gwc-benefits-slider-slide-subtitle"><?php echo $benefit['subtitle'] ?></p>
                                 <?php } ?>
                             </div>
-                            <?php if (isset($benefit['image']['url'])) { ?>
-                                <div class="gwc-benefits-slider-slide-img" style="background:url(<?= $benefit['image']['url'] ?>);background-size: <?= $benefit['image']['background_size'] ?? 'cover' ?>;background-position: <?= $benefit['image']['background_position'] ?? 'center' ?>; background-repeat: no-repeat;"></div>
-                            <?php } ?>
                         </div>
                     <?php } ?>
                 </div>

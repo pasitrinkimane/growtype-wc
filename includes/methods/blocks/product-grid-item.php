@@ -6,12 +6,16 @@
 add_filter('woocommerce_post_class', 'growtype_wc_woocommerce_post_class', 9999, 3);
 function growtype_wc_woocommerce_post_class($classes, $product)
 {
-    $classes[] = get_theme_mod('woocommerce_product_preview_style');
+    $product_preview_style = get_theme_mod('woocommerce_product_preview_style');
+
+    if (!empty($product_preview_style)) {
+        $classes[] = $product_preview_style;
+    }
 
     $preview_style = get_post_meta($product->get_id(), '_preview_style', true);
 
-    if ($preview_style === 'plan') {
-        $classes[] = 'previewstyle-plan';
+    if ($preview_style !== 'default') {
+        $classes[] = $preview_style;
     }
 
     $promo_label = get_post_meta($product->get_id(), '_promo_label', true);
