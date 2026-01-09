@@ -37,6 +37,14 @@ add_action('wp_ajax_growtype_wc_fetch_user_data', 'growtype_wc_fetch_user_data')
 add_action('wp_ajax_nopriv_growtype_wc_fetch_user_data', 'growtype_wc_fetch_user_data');
 function growtype_wc_fetch_user_data()
 {
+    // SECURITY: Verify nonce to prevent CSRF attacks
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'growtype_wc_ajax_nonce')) {
+        error_log('Growtype WC - Fetch user data nonce verification failed');
+        wp_send_json_error([
+            'message' => __('Security verification failed. Please refresh the page and try again.', 'growtype-wc')
+        ], 403);
+    }
+    
     if (is_user_logged_in()) {
         $current_user = wp_get_current_user();
         $current_user_wishlist_ids = get_user_meta($current_user->ID, 'wishlist_ids', true);
@@ -64,7 +72,10 @@ function growtype_wc_fetch_user_data()
         }
 
     } else {
-        $current_user_wishlist_ids = isset($_POST['wishlist_ids']) && !empty($_POST['wishlist_ids']) ? $_POST['wishlist_ids'] : [];
+        // Sanitize wishlist IDs from POST
+        $current_user_wishlist_ids = isset($_POST['wishlist_ids']) && !empty($_POST['wishlist_ids']) 
+            ? array_map('absint', (array)$_POST['wishlist_ids']) 
+            : [];
     }
 
     $wishList = growtype_wc_get_wishlist_html($current_user_wishlist_ids);
@@ -131,11 +142,38 @@ add_action('wp_ajax_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
 add_action('wp_ajax_nopriv_user_wishlist_update', 'growtype_wc_update_wishlist_ajax');
 function growtype_wc_update_wishlist_ajax()
 {
-    if (isset($_POST["user_id"]) && !empty($_POST["user_id"])) {
-        $user_id = $_POST["user_id"];
-        $user_obj = get_user_by('id', $user_id);
+    // SECURITY: Verify nonce to prevent CSRF attacks
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'growtype_wc_ajax_nonce')) {
+        error_log('Growtype WC - Wishlist update nonce verification failed');
+        wp_send_json_error([
+            'message' => __('Security verification failed. Please refresh the page and try again.', 'growtype-wc')
+        ], 403);
+    }
+    
+    // SECURITY: Require authentication for wishlist updates
+    if (!is_user_logged_in()) {
+        wp_send_json_error([
+            'message' => __('You must be logged in to update your wishlist.', 'growtype-wc')
+        ], 401);
+    }
+    
+    $current_user_id = get_current_user_id();
+    $requested_user_id = isset($_POST["user_id"]) ? absint($_POST["user_id"]) : 0;
+    
+    // SECURITY: Prevent IDOR - users can only update their own wishlist
+    if ($requested_user_id !== $current_user_id) {
+        error_log(sprintf('Growtype WC - IDOR attempt: User %d tried to update wishlist for user %d', $current_user_id, $requested_user_id));
+        wp_send_json_error([
+            'message' => __('Unauthorized action.', 'growtype-wc')
+        ], 403);
+    }
+    
+    if (!empty($requested_user_id)) {
+        $user_obj = get_user_by('id', $requested_user_id);
         if (!is_wp_error($user_obj) && is_object($user_obj)) {
-            update_user_meta($user_id, 'wishlist_ids', $_POST["wishlist_ids"]);
+            // Sanitize wishlist IDs
+            $wishlist_ids = isset($_POST["wishlist_ids"]) ? sanitize_text_field($_POST["wishlist_ids"]) : '';
+            update_user_meta($requested_user_id, 'wishlist_ids', $wishlist_ids);
         }
     }
 

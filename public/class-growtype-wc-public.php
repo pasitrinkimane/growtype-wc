@@ -110,7 +110,7 @@ class Growtype_Wc_Public
             'growtype_wc_ajax',
             [
                 'url' => $ajax_url,
-                'nonce' => wp_create_nonce('ajax-nonce'),
+                'nonce' => wp_create_nonce('growtype_wc_ajax_nonce'), // SECURITY: Updated nonce name to match AJAX handlers
                 'action' => self::AJAX_ACTION,
                 'rest_url' => rest_url('wp/v2/product'),
                 'shop_name' => sanitize_title_with_dashes(sanitize_title_with_dashes(get_bloginfo('name'))),

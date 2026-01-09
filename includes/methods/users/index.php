@@ -1,123 +1,190 @@
 <?php
 
+// Exit if accessed directly.
+defined('ABSPATH') || exit;
+
 /**
- * Add new role
+ * Add Editor + Shop Manager Role
  */
-add_action('init', 'growtype_wc_add_editor_plus_shop_manager_role');
-function growtype_wc_add_editor_plus_shop_manager_role()
-{
-    global $wp_roles;
+add_action('init', function () {
 
-    if (!class_exists('WC_Product') && !function_exists('get_core_capabilities')) {
-        $role = get_role('editor_plus_shop_manager');
-        if (!empty($role)) {
-            remove_role('editor_plus_shop_manager');
-        }
+    // Remove old role first
+//    if (get_role('editor_plus_shop_manager')) {
+//        remove_role('editor_plus_shop_manager');
+//    }
 
-        return false;
+    // Full admin caps
+    $admin_caps = [
+        'edit_users' => true,
+        'edit_files' => true,
+        'manage_options' => true,
+        'manage_categories' => true,
+        'manage_links' => true,
+        'upload_files' => true,
+        'unfiltered_html' => true,
+        'edit_posts' => true,
+        'edit_others_posts' => true,
+        'edit_published_posts' => true,
+        'publish_posts' => true,
+        'edit_pages' => true,
+        'read' => true,
+        'level_10' => true,
+        'level_9' => true,
+        'level_8' => true,
+        'level_7' => true,
+        'level_6' => true,
+        'level_5' => true,
+        'level_4' => true,
+        'level_3' => true,
+        'level_2' => true,
+        'level_1' => true,
+        'level_0' => true,
+        'edit_others_pages' => true,
+        'edit_published_pages' => true,
+        'publish_pages' => true,
+        'delete_pages' => true,
+        'delete_others_pages' => true,
+        'delete_published_pages' => true,
+        'delete_posts' => true,
+        'delete_others_posts' => true,
+        'delete_published_posts' => true,
+        'delete_private_posts' => true,
+        'edit_private_posts' => true,
+        'read_private_posts' => true,
+        'delete_private_pages' => true,
+        'edit_private_pages' => true,
+        'read_private_pages' => true,
+    ];
+
+    // Create new role
+    add_role('editor_plus_shop_manager', 'Editor + Shop Manager', $admin_caps);
+
+    $role = get_role('editor_plus_shop_manager');
+
+    // Stop if WooCommerce not active
+    if (!class_exists('WooCommerce') || !class_exists('WC_Install')) {
+        return;
     }
 
-    /**
-     * delete role
-     */
-    add_role(
-        'editor_plus_shop_manager',
-        __('Editor + Shop manager','growtype-wc'),
-        array (
-            'level_9' => true,
-            'level_8' => true,
-            'level_7' => true,
-            'level_6' => true,
-            'level_5' => true,
-            'level_4' => true,
-            'level_3' => true,
-            'level_2' => true,
-            'level_1' => true,
-            'level_0' => true,
-            'read' => true,
-            'delete_others_posts' => true,
-            'delete_others_pages' => true,
-            'moderate_comments' => true,
-            'activate_plugins' => false,
-            'delete_pages' => true,
-            'delete_posts' => true,
-            'delete_private_pages' => true,
-            'delete_private_posts' => true,
-            'delete_published_pages' => true,
-            'delete_published_posts' => true,
-            'edit_dashboard' => true,
-            'edit_others_pages' => true,
-            'edit_others_posts' => true,
-            'edit_post' => true,
-            'edit_page' => true,
-            'edit_pages' => true,
-            'edit_posts' => true,
-            'edit_private_pages' => true,
-            'edit_private_posts' => true,
-            'edit_published_pages' => true,
-            'edit_published_posts' => true,
-            'edit_theme_options' => true,
-            'export' => true,
-            'import' => true,
-            'list_users' => false,
-            'manage_categories' => true,
-            'manage_links' => true,
-            'manage_options' => false,
-            'manage_comments' => true,
-            'promote_users' => false,
-            'publish_pages' => true,
-            'publish_posts' => true,
-            'read_private_pages' => true,
-            'read_private_posts' => true,
-            'remove_users' => false,
-            'switch_themes' => false,
-            'upload_files' => true,
-            'unfiltered_html' => true
-        )
-    );
+    // Add WooCommerce core caps
+    $wc_caps = WC_Install::get_core_capabilities();
+    foreach ($wc_caps as $group) {
+        foreach ($group as $cap) {
+            $role->add_cap($cap);
+        }
+    }
+});
 
-    if (class_exists('WC_Install') && function_exists('get_core_capabilities')) {
-        $wcIntall = new WC_Install();
-        $capabilities = $wcIntall->get_core_capabilities();
+/**
+ * Remove unnecessary capabilities from shop_manager
+ */
+add_action('admin_init', function () {
+    $role = get_role('shop_manager');
+    if ($role) {
+        $caps_to_remove = [
+            'edit_pages',
+            'edit_posts',
+            'list_users',
+            'read_private_pages',
+            'read_private_posts',
+            'edit_published_posts',
+            'edit_published_pages',
+            'edit_private_pages',
+            'edit_private_posts',
+            'edit_others_posts',
+            'publish_posts',
+            'publish_pages',
+            'delete_posts',
+            'delete_pages',
+            'delete_private_pages',
+            'delete_private_posts',
+            'delete_published_pages',
+            'delete_published_posts',
+            'delete_others_posts',
+            'delete_others_pages',
+            'manage_categories',
+            'manage_links',
+            'moderate_comments',
+        ];
 
-        foreach ($capabilities as $cap_group) {
-            foreach ($cap_group as $cap) {
-                $wp_roles->add_cap('editor_plus_shop_manager', $cap);
+        foreach ($caps_to_remove as $cap) {
+            $role->remove_cap($cap);
+        }
+    }
+});
+
+/**
+ * Hide restricted menus for Editor + Shop Manager
+ */
+add_action('admin_menu', function () {
+    if (!current_user_can('editor_plus_shop_manager')) {
+        return;
+    }
+
+    remove_menu_page('edit.php?post_type=acf-field-group'); // ACF
+    remove_menu_page('growtype-theme-settings');            // Theme settings
+    remove_menu_page('options-general.php');               // WP general
+    remove_menu_page('tools.php');                         // Tools
+
+    remove_submenu_page('woocommerce', 'wc-admin&path=/extensions'); // WC Extensions
+    remove_submenu_page('woocommerce', 'wc-status');                 // WC Status
+    remove_submenu_page('woocommerce', 'wc-settings');               // WC Settings top-level
+    remove_submenu_page('woocommerce', 'wc-admin&path=/marketing');  // WC Marketing
+
+    // Remove Checkout → Payments menu item
+    global $submenu, $menu;
+
+    // Remove submenu under WooCommerce
+    if (isset($submenu['woocommerce'])) {
+        foreach ($submenu['woocommerce'] as $key => $item) {
+            if (strpos($item[2], 'wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM') !== false) {
+                unset($submenu['woocommerce'][$key]);
             }
         }
     }
-}
+
+    // Remove top-level menu if it exists
+    foreach ($menu as $key => $item) {
+        if (isset($item[2]) && strpos($item[2], 'wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM') !== false) {
+            unset($menu[$key]);
+        }
+    }
+}, 999);
 
 /**
- * Remove roles from shop_manager role
+ * Redirect Editor + Shop Manager from restricted pages
  */
-add_action('admin_init', 'growtype_wc_remove_roles_from_shop_manager');
-function growtype_wc_remove_roles_from_shop_manager()
-{
-    $role = get_role('shop_manager');
-    if (!empty($role)) {
-        $role->remove_cap('edit_pages');
-        $role->remove_cap('edit_posts');
-        $role->remove_cap('list_users');
-        $role->remove_cap('read_private_pages');
-        $role->remove_cap('read_private_posts');
-        $role->remove_cap('edit_published_posts');
-        $role->remove_cap('edit_published_pages');
-        $role->remove_cap('edit_private_pages');
-        $role->remove_cap('edit_private_posts');
-        $role->remove_cap('edit_others_posts');
-        $role->remove_cap('publish_posts');
-        $role->remove_cap('publish_pages');
-        $role->remove_cap('delete_posts');
-        $role->remove_cap('delete_pages');
-        $role->remove_cap('delete_private_pages');
-        $role->remove_cap('delete_private_posts');
-        $role->remove_cap('delete_published_pages');
-        $role->remove_cap('delete_published_posts');
-        $role->remove_cap('delete_others_posts');
-        $role->remove_cap('delete_others_pages');
-        $role->remove_cap('manage_categories');
-        $role->remove_cap('manage_links');
-        $role->remove_cap('moderate_comments');
+add_action('admin_init', function () {
+    if (!current_user_can('editor_plus_shop_manager')) {
+        return;
     }
-}
+
+    $restricted_pages = [
+        'edit.php?post_type=acf-field-group',
+        'admin.php?page=growtype-theme-settings',
+        'options-general.php',
+        'tools.php',
+        'admin.php?page=wc-admin&path=/extensions',
+        'admin.php?page=wc-status',
+        'admin.php?page=wc-settings',
+        'admin.php?page=wc-admin&path=/marketing',
+    ];
+
+    foreach ($restricted_pages as $page) {
+        if (strpos($_SERVER['REQUEST_URI'], $page) !== false) {
+            wp_redirect(admin_url());
+            exit;
+        }
+    }
+
+    // Block WooCommerce Checkout → Payments tab
+    if (
+        isset($_GET['page'], $_GET['tab'], $_GET['from']) &&
+        $_GET['page'] === 'wc-settings' &&
+        $_GET['tab'] === 'checkout' &&
+        $_GET['from'] === 'PAYMENTS_MENU_ITEM'
+    ) {
+        wp_redirect(admin_url('admin.php?page=wc-settings'));
+        exit;
+    }
+});

@@ -37,12 +37,12 @@ if (empty($product) || !$is_visible) {
 /**
  * Remove firs,last classes
  */
-$classes = wc_get_product_class(get_theme_mod('woocommerce_product_preview_style'), $product);
+$classes = wc_get_product_class($params['product_preview_style'] ?? '', $product);
 
 /**
  * Add auction classes
  */
-if (class_exists('growtype-wc\Methods\auction\Growtype_Auction') && Growtype_Auction::has_started()) {
+if (class_exists('Growtype_Wc_Auction') && Growtype_Wc_Auction::has_started()) {
     array_push($classes, 'auction-has-started');
 }
 

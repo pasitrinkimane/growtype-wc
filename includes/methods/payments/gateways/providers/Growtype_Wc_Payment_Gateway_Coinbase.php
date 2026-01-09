@@ -157,32 +157,33 @@ class Growtype_Wc_Payment_Gateway_Coinbase extends WC_Payment_Gateway
 
     function payment_redirect()
     {
-        if (growtype_wc_is_thankyou_page()) {
-            global $wp;
+        if (!growtype_wc_is_thankyou_page()) {
+            return;
+        }
 
-            $order_id = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
-            $order = wc_get_order($order_id);
+        global $wp;
 
-            if (empty($order)) {
-                wp_redirect(home_url());
-                exit();
-            }
+        $order_id = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
+        $order = wc_get_order($order_id);
 
-            if ($order->get_status() !== 'completed') {
-                $payment_method = $order->get_payment_method();
+        if (!$order || $order->get_status() === 'completed') {
+            return;
+        }
 
-                if ($payment_method === self::PROVIDER_ID) {
-                    $charge_uuid = $order->get_meta('charge_uuid');
-                    $coinbase_charge = $this->get_coinbase_charge($charge_uuid);
+        if ($order->get_status() !== 'completed') {
+            $payment_method = $order->get_payment_method();
 
-                    if ($coinbase_charge['success'] === true) {
-                        $order->payment_complete();
-                    } else {
-                        error_log(sprintf('Order %s is not paid and status is missing. Coinbase charge UUID: %s. Charge data: %s.', $order_id, $charge_uuid, print_r($coinbase_charge, true)));
-                    }
+            if ($payment_method === self::PROVIDER_ID) {
+                $charge_uuid = $order->get_meta('charge_uuid');
+                $coinbase_charge = $this->get_coinbase_charge($charge_uuid);
 
-                    error_log(sprintf('Order %s charged. Coinbase charge UUID: %s. Charge data: %s.', $order_id, $charge_uuid, print_r($coinbase_charge, true)));
+                if ($coinbase_charge['success'] === true) {
+                    $order->payment_complete();
+                } else {
+                    error_log(sprintf('Order %s is not paid and status is missing. Coinbase charge UUID: %s. Charge data: %s.', $order_id, $charge_uuid, print_r($coinbase_charge, true)));
                 }
+
+                error_log(sprintf('Order %s charged. Coinbase charge UUID: %s. Charge data: %s.', $order_id, $charge_uuid, print_r($coinbase_charge, true)));
             }
         }
     }

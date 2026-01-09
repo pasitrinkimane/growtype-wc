@@ -37,7 +37,10 @@ function growtype_wc_display_payment_method_column($column, $order)
         if (empty($payment_method_title)) {
             $payment_method_key = $order->get_payment_method();
             $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-            $payment_method_title = $available_gateways[$payment_method_key]->method_title;
+
+            if (isset($available_gateways[$payment_method_key])) {
+                $payment_method_title = $available_gateways[$payment_method_key]->method_title;
+            }
         }
 
         echo esc_html($payment_method_title);

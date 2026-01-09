@@ -4,9 +4,10 @@ add_filter('growtype_page_is_among_enabled_pages', 'growtype_wc_page_is_among_en
 function growtype_wc_page_is_among_enabled_pages($page_enabled, $enabled_pages)
 {
     if (class_exists('woocommerce') && !empty($enabled_pages)) {
-        if (is_wc_endpoint_url('order-received')) {
-            $page_enabled = false;
-        }
+        #TODO check this problem
+//        if (is_wc_endpoint_url('order-received')) {
+//            $page_enabled = false;
+//        }
 
         if (
             (is_product() && in_array('single_shop_page', $enabled_pages))

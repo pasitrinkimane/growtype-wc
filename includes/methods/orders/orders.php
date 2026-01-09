@@ -147,4 +147,21 @@ class Growtype_Wc_Order
             ],
         ];
     }
+
+    public static function get_user_last_thank_you_url($user_id = null)
+    {
+        $user_id = !empty($user_id) ? $user_id : get_current_user_id();
+
+        if (!$user_id) {
+            return null;
+        }
+
+        $order = wc_get_customer_last_order($user_id);
+
+        if (!$order) {
+            return null;
+        }
+
+        return $order->get_checkout_order_received_url();
+    }
 }

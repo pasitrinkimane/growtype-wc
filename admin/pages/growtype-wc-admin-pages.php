@@ -20,5 +20,11 @@ class Growtype_Wc_Admin_Pages
          */
         require_once 'appearance/growtype-wc-admin-appearance.php';
         new Growtype_Wc_Admin_Appearance();
+
+        /**
+         * Orders
+         */
+        require_once 'orders/growtype-wc-admin-orders.php';
+        new Growtype_Wc_Admin_Orders();
     }
 }

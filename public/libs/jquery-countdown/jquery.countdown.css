@@ -1,11 +1,11 @@
-.auction-time-countdown {
+.gwc-time-countdown {
     font-size: 14px;
     line-height: 16px;
     padding: 0;
     margin: 0;
 }
 
-.auction-time-countdown .countdown_row {
+.gwc-time-countdown .countdown_row {
     display: flex;
     gap: 10px;
 }

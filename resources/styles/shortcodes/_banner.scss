@@ -56,13 +56,18 @@
       min-width: initial;
     }
 
-    .auction-time-countdown {
+    .gwc-time-countdown {
       background: hsl(0deg 0% 0% / 50%);
       padding: 5px 10px;
       border-radius: 40px;
 
       &[data-compact="true"] {
         padding: 5px 20px;
+
+        .countdown_row {
+          text-align: center;
+          justify-content: center;
+        }
       }
     }
   }

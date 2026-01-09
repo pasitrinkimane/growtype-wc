@@ -7,6 +7,14 @@ add_action('wp_ajax_add_to_cart_ajax', 'growtype_wc_wp_ajax_add_to_cart_ajax');
 add_action('wp_ajax_nopriv_add_to_cart_ajax', 'growtype_wc_wp_ajax_add_to_cart_ajax');
 function growtype_wc_wp_ajax_add_to_cart_ajax()
 {
+    // SECURITY: Verify nonce to prevent CSRF attacks
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'growtype_wc_ajax_nonce')) {
+        error_log('Growtype WC - Add to cart nonce verification failed');
+        wp_send_json_error([
+            'message' => __('Security verification failed. Please refresh the page and try again.', 'growtype-wc')
+        ], 403);
+    }
+    
     $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : null;
     $quantity = $_POST['quantity'] ?? 0;
 
@@ -60,8 +68,8 @@ function growtype_wc_wp_ajax_add_to_cart_ajax()
                 }
             }
         }
-    } elseif (class_exists('Growtype_Auction') && $product->is_type('auction')) {
-        $is_reserved = Growtype_Auction::is_reserved($product->get_id());
+    } elseif (class_exists('Growtype_Wc_Auction') && $product->is_type('auction')) {
+        $is_reserved = Growtype_Wc_Product::is_reserved($product->get_id());
 
         if (!$is_reserved && !empty($_REQUEST['place-bid'])) {
             $data = [
@@ -69,7 +77,7 @@ function growtype_wc_wp_ajax_add_to_cart_ajax()
             ];
         } else {
             if (!$is_reserved) {
-                $reservation = Growtype_Auction::reserve_for_user($product->get_id(), get_current_user_id());
+                $reservation = Growtype_Wc_Product::reserve_for_user($product->get_id(), get_current_user_id());
 
                 if ($reservation === false) {
                     $data = [
@@ -81,11 +89,11 @@ function growtype_wc_wp_ajax_add_to_cart_ajax()
                 }
             }
 
-            $is_reserved_for_user = Growtype_Auction::is_reserved_for_user($product->get_id(), get_current_user_id());
+            $is_reserved_for_user = Growtype_Wc_Product::is_reserved_for_user($product->get_id(), get_current_user_id());
 
             if ($is_reserved_for_user) {
                 $data = [
-                    'redirect_url' => Growtype_Auction::get_checkout_url(),
+                    'redirect_url' => wc_get_checkout_url(),
                 ];
             } else {
                 $data = [

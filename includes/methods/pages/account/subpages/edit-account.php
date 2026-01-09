@@ -88,7 +88,6 @@ function woocommerce_api_wc_delete_account()
         $security_check_result = check_admin_referer('wc_delete_user');
         if ($security_check_result) {
             require_once(ABSPATH . 'wp-admin/includes/user.php');
-
             wp_delete_user(get_current_user_id());
             wp_redirect(home_url());
             die();

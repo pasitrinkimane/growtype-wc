@@ -10,7 +10,6 @@ class Growtype_Wc_Admin_Settings
             $this->load_tabs();
 
             add_action('admin_menu', array ($this, 'admin_menu_pages'));
-
             add_action('init', array ($this, 'process_posted_data'));
         }
     }
@@ -67,6 +66,7 @@ class Growtype_Wc_Admin_Settings
                 }
 
                 if ($is_generate_tab) {
+                    wp_nonce_field('growtype_wc_generate_products', 'growtype_wc_generate_nonce');
                     echo '<input type="hidden" name="generate_settings[generate]" value="1" />';
                     echo '<button type="submit" class="button button-primary">Generate</button>';
                 } else {
@@ -82,6 +82,16 @@ class Growtype_Wc_Admin_Settings
     function process_posted_data()
     {
         if (isset($_POST['option_page']) && $_POST['option_page'] === 'growtype_wc_settings_generate') {
+            // Verify nonce
+            if (!isset($_POST['growtype_wc_generate_nonce']) || !wp_verify_nonce($_POST['growtype_wc_generate_nonce'], 'growtype_wc_generate_products')) {
+                wp_die('Security check failed');
+            }
+
+            // Verify user capabilities
+            if (!current_user_can('manage_options')) {
+                wp_die('Unauthorized');
+            }
+
             if (isset($_POST['growtype_wc_generate_products']) && !empty($_POST['growtype_wc_generate_products'])) {
                 $growtype_wc_crud = new Growtype_Wc_Crud();
                 $growtype_wc_crud->generate_products();
@@ -89,7 +99,8 @@ class Growtype_Wc_Admin_Settings
 
             if (isset($_POST['growtype_wc_update_products']) && !empty($_POST['growtype_wc_update_products'])) {
                 $growtype_wc_crud = new Growtype_Wc_Crud();
-                $products_ids = $_POST['growtype_wc_update_products'] === 'all' ? [] : explode(',', $_POST['growtype_wc_update_products']);
+                $update_value = sanitize_text_field($_POST['growtype_wc_update_products']);
+                $products_ids = $update_value === 'all' ? [] : array_map('intval', explode(',', $update_value));
 
                 $growtype_wc_crud->update_products($products_ids);
             }

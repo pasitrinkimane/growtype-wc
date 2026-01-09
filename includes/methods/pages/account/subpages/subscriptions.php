@@ -91,7 +91,6 @@ function woocommerce_account_subscriptions_endpoint_extend()
 
         if ($manage_subscription_externally) {
             $redirect_url = add_query_arg([], growtype_wc_get_account_subpage_url('subscriptions'));
-
             wp_redirect($redirect_url);
             die();
         }

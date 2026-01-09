@@ -13,11 +13,47 @@ class Growtype_Wc_Product
         $this->uploaded_images = [];
     }
 
+    public static function daily_price($product)
+    {
+        $sale_price = (float)$product->get_sale_price();
+
+        if ($sale_price <= 0) {
+            return '';
+        }
+
+        $duration = 1;
+
+        if (growtype_wc_product_is_subscription($product->get_id())) {
+            $duration = growtype_wc_get_subscription_duration($product->get_id());
+        }
+
+        if ($duration === 1) {
+            $days_in_current_month = cal_days_in_month(CAL_GREGORIAN, date('n'), date('Y'));
+        } elseif ($duration === 12) {
+            $days_in_current_month = 365;
+        } else {
+            $days_in_current_month = cal_days_in_month(CAL_GREGORIAN, date('n'), date('Y')) * $duration;
+        }
+
+        $day_price = round($sale_price / $days_in_current_month, 2);
+        $currency_code = get_woocommerce_currency();
+
+        return '
+        <div class="price-wrapper price-daily">
+            <div class="price">' . number_format($day_price, 2) . '</div>
+            <div class="price-details">
+              <div class="currency">' . esc_html($currency_code) . '</div>
+              <div class="e-duration">per day</div>
+            </div>
+        </div>
+    ';
+    }
+
     public static function get_classes($product_id)
     {
         $product = wc_get_product($product_id);
 
-        $classes = wc_get_product_class(get_theme_mod('woocommerce_product_preview_style'), $product);
+        $classes = wc_get_product_class(self::preview_style(), $product);
 
         /**
          * Cta disabled class
@@ -67,15 +103,15 @@ class Growtype_Wc_Product
     /**
      * @return mixed
      */
-    public static function preview_style($product_id): string
+    public static function preview_style($preview_style = null)
     {
-        $product = wc_get_product($product_id);
+        $style = get_theme_mod('woocommerce_product_preview_style', 'default');
 
-        if (!empty($product)) {
-            $preview_style = get_post_meta($product->get_id(), '_preview_style', true);
+        if (!empty($preview_style)) {
+            $style = $preview_style;
         }
 
-        return $preview_style ?? '';
+        return 'preview-style-' . $style;
     }
 
     /**
@@ -672,7 +708,7 @@ class Growtype_Wc_Product
     /**
      * @return mixed
      */
-    public static function add_to_cart_url($product_id = null, $params = []): string
+    public static function add_to_cart_url_custom($product_id = null, $params = []): string
     {
         $product_id = self::get_id($product_id);
 
@@ -686,9 +722,13 @@ class Growtype_Wc_Product
             return '';
         }
 
-        $url = add_query_arg($params, $product->add_to_cart_url());
+        $url = $product->add_to_cart_url();
 
-        return $url;
+        if (!empty($url) && !empty($params)) {
+            $url = add_query_arg($params, $url);
+        }
+
+        return !empty($url) ? esc_url($url) : '';
     }
 
     /**
@@ -1046,7 +1086,6 @@ class Growtype_Wc_Product
 
     /**
      * @param $details
-     * @return WC_Product|WC_Product_Auction|WC_Product_External|WC_Product_Grouped|WC_Product_Simple|WC_Product_Variable
      * @throws Exception
      */
     public function create($details)
@@ -1089,7 +1128,7 @@ class Growtype_Wc_Product
                 wc_delete_product_transients($product->get_id());
             }
         } else {
-            throw new Exception('Sku is not passed. ' . json_encode($details));
+            error_log(sprintf('Sku is not passed. %s', json_encode($details)));
         }
 
         if (empty($product)) {
@@ -1130,7 +1169,7 @@ class Growtype_Wc_Product
 
             if (in_array($post_title, array_pluck($results, 'post_title'))) {
 
-                throw new Exception('Change post title. Title: ' . $post_title);
+                error_log(sprintf('Change post title. Title: %s', $post_title));
 
                 for ($i = 2; $i <= 20; $i++) {
                     $post_title_test = $post_title . ' ' . $i;
