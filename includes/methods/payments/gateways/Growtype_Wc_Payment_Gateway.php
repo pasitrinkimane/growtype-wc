@@ -84,7 +84,7 @@ class Growtype_Wc_Payment_Gateway
         return add_query_arg($query_data, $payment_gateway->get_return_url($order));
     }
 
-    public static function cancel_url($order_id = null, $redirect_to_thankyou_page = false)
+    public static function cancel_url($order_id = null, $redirect_to_thankyou_page = false, $applied_coupons = null)
     {
         // 1) If we have an order and want to go to thank you...
         if ($order_id && $redirect_to_thankyou_page) {
@@ -116,9 +116,16 @@ class Growtype_Wc_Payment_Gateway
                 'ba_token',
                 'order_id',
                 'product_id',
+                'subscription_id',
             ],
             $current_url
         );
+
+        if (!empty($applied_coupons)) {
+            $applied_coupon = reset($applied_coupons);
+            $coupon = new WC_Coupon($applied_coupon);
+            $allowed = add_query_arg('growtype_wc_coupon', $coupon->get_code(), $allowed);
+        }
 
         return esc_url_raw($allowed);
     }

@@ -1,40 +1,48 @@
 <?php
 
-/**
- * Fired during plugin activation
- *
- * @link       http://example.com
- * @since      1.0.0
- *
- * @package    Growtype_Wc
- * @subpackage Growtype_Wc/includes
- */
-
-/**
- * Fired during plugin activation.
- *
- * This class defines all code necessary to run during the plugin's activation.
- *
- * @since      1.0.0
- * @package    Growtype_Wc
- * @subpackage Growtype_Wc/includes
- * @author     Your Name <email@example.com>
- */
 class Growtype_Wc_Activator
 {
+    protected static $plugin_file;
 
-    /**
-     * Short Description. (use period)
-     *
-     * Long Description.
-     *
-     * @since    1.0.0
-     */
+    // Initialize hooks
+    public static function init($plugin_file)
+    {
+        self::$plugin_file = $plugin_file;
+
+        // Register activation hook
+        register_activation_hook($plugin_file, [__CLASS__, 'activate']);
+
+        // Admin notice
+        add_filter('wp_admin_notice_markup', [__CLASS__, 'custom_admin_notice_markup'], 10, 3);
+
+        // Safe deactivation
+        add_action('admin_init', [__CLASS__, 'maybe_deactivate']);
+    }
+
+    // Activation callback
     public static function activate()
     {
-        if (!class_exists('woocommerce')) {
-            exit('Please install WooCommerce before activating Growtype WooCommerce plugin');
+        if (!class_exists('WooCommerce')) {
+            set_transient('growtype_wc_activation_error', true, 10);
         }
     }
 
+    // Show admin notice
+    public static function custom_admin_notice_markup($markup, $message, $args)
+    {
+        if (get_transient('growtype_wc_activation_error')) {
+            $markup = '<div id="message" class="notice is-dismissible error"><p><strong>Growtype WooCommerce Plugin:</strong> Please install and activate WooCommerce first.</p></div>';
+            delete_transient('growtype_wc_activation_error');
+        }
+
+        return $markup;
+    }
+
+    // Deactivate plugin if WooCommerce is missing
+    public static function maybe_deactivate()
+    {
+        if (get_transient('growtype_wc_activation_error')) {
+            deactivate_plugins(self::$plugin_file);
+        }
+    }
 }

@@ -45,7 +45,7 @@ function growtype_wc_render_products($query_args, $params = [])
      * Default params
      */
     $params['current_page'] = isset($params['current_page']) ? $params['current_page'] : 1;
-    $params['preview_style'] = isset($params['preview_style']) ? $params['preview_style'] : '';
+    $params['catalog_preview_style'] = isset($params['catalog_preview_style']) ? $params['catalog_preview_style'] : '';
     $params['products_group'] = isset($params['products_group']) ? $params['products_group'] : '';
     $params['visibility'] = isset($params['visibility']) ? $params['visibility'] : '';
 
@@ -77,7 +77,7 @@ function growtype_wc_render_products($query_args, $params = [])
         }
 
         wc_get_template('loop/loop-start.php', [
-            'preview_style' => $params['preview_style'],
+            'catalog_preview_style' => $params['catalog_preview_style'],
             'products_group' => $params['products_group']
         ]);
 
@@ -89,7 +89,7 @@ function growtype_wc_render_products($query_args, $params = [])
 
         do_action('growtype_wc_after_shop_loop_start', $params);
 
-        if ($params['preview_style'] === 'table') {
+        if ($params['catalog_preview_style'] === 'table') {
             echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
         } else {
             while ($products->have_posts()) : $products->the_post();

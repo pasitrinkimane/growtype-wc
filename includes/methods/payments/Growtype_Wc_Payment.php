@@ -131,8 +131,37 @@ class Growtype_Wc_Payment
                 throw new \Exception('Stripe PaymentIntent status: ' . $pi->status);
             }
 
+            $redirect_url = $gateway->get_return_url($order);
+
+            /**
+             * Determine next upsell
+             */
+            if (class_exists('Growtype_Wc_Upsell')) {
+                $upsells = Growtype_Wc_Upsell::get();
+                $current_product_slug = $product->get_slug();
+                
+                $current_index = -1;
+                foreach ($upsells as $index => $u) {
+                    if ($u['slug'] === $current_product_slug) {
+                        $current_index = $index;
+                        break;
+                    }
+                }
+
+                $next_slug = '';
+                if ($current_index !== -1 && isset($upsells[$current_index + 1])) {
+                    $next_slug = $upsells[$current_index + 1]['slug'];
+                }
+
+                if ($next_slug) {
+                    $redirect_url = add_query_arg('upsell', $next_slug, $redirect_url);
+                } else {
+                    $redirect_url = remove_query_arg('upsell', $redirect_url);
+                }
+            }
+
             // Redirect back to order received (or wherever)
-            wp_safe_redirect($gateway->get_return_url($order));
+            wp_safe_redirect($redirect_url);
             exit;
 
         } catch (\Exception $e) {

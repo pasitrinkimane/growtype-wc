@@ -18,9 +18,48 @@ class Growtype_Wc_Coupon_Shortcode
 
         add_action('wp_loaded', function () {
             if (self::coupon_form_visible()) {
-                setcookie(self::coupon_form_visible_transient_key(), true, time() + (30 * 24 * 60 * 60), '/');
+                $this->set_coupon_form_visible_cookie();
             }
+
+            $this->apply_coupon_by_default();
         });
+    }
+
+    public function set_coupon_form_visible_cookie()
+    {
+        setcookie(self::coupon_form_visible_transient_key(), true, time() + (30 * 24 * 60 * 60), '/');
+    }
+
+    public function apply_coupon_by_default()
+    {
+        if (is_admin()) {
+            return;
+        }
+
+        if (!function_exists('WC') || is_null(WC()->cart)) {
+            return;
+        }
+
+        if (!isset($_GET['growtype_wc_coupon'])) {
+            return;
+        }
+
+        $coupon_code = sanitize_text_field($_GET['growtype_wc_coupon']);
+
+        if (empty($coupon_code)) {
+            return;
+        }
+
+        if (!WC()->cart->has_discount($coupon_code)) {
+            WC()->cart->add_discount($coupon_code);
+        }
+
+        $this->set_coupon_form_visible_cookie();
+
+        $redirect_url = remove_query_arg('growtype_wc_coupon');
+
+        wp_safe_redirect($redirect_url);
+        exit;
     }
 
     public static function coupon_form_visible_transient_key()

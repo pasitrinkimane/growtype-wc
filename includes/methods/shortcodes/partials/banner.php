@@ -286,17 +286,17 @@ class Growtype_Wc_Banner_Shortcode
 
                         <?php
                         if (
-                            ! empty( $current_banner['show_countdown'] ) &&
-                            ! empty( $current_banner['countdown'] )
+                            !empty($current_banner['show_countdown']) &&
+                            !empty($current_banner['countdown'])
                         ) {
-                            $countdown   = $current_banner['countdown'];
-                            $compact     = filter_var( $countdown['compact'] ?? true, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
-                            $time        = intval( $current_banner['duration'] ?? 600 );
-                            $format      = sanitize_text_field( $countdown['format'] ?? 'HMS' );
-                            $labels      = ! empty( $countdown['labels'] )
-                                ? implode( ',', array_map( 'sanitize_text_field', $countdown['labels'] ) )
+                            $countdown = $current_banner['countdown'];
+                            $compact = filter_var($countdown['compact'] ?? true, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+                            $time = intval($current_banner['duration'] ?? 600);
+                            $format = sanitize_text_field($countdown['format'] ?? 'HMS');
+                            $labels = !empty($countdown['labels'])
+                                ? implode(',', array_map('sanitize_text_field', $countdown['labels']))
                                 : '';
-                            $description = sanitize_text_field( $countdown['description'] ?? 'Offer ends in' );
+                            $description = sanitize_text_field($countdown['description'] ?? 'Offer ends in');
 
                             // build the shortcode string in one shot
                             $shortcode = sprintf(
@@ -309,7 +309,7 @@ class Growtype_Wc_Banner_Shortcode
                             );
 
                             echo '<div class="banner-content-timer">';
-                            echo do_shortcode( $shortcode );
+                            echo do_shortcode($shortcode);
                             echo '</div>';
                         }
                         ?>
@@ -355,10 +355,11 @@ class Growtype_Wc_Banner_Shortcode
                         let wcBanner = jQuery('#<?php echo $params['id']; ?>');
                         if (wcBanner.length !== 0) {
                             window.growtype_wc.countdown['over'] = '<?php echo esc_html__('Last Chance', 'growtype-wc'); ?>';
-                            jQuery('#<?php echo $params['id']; ?> .auction-time-countdown').each(function (index, element) {
+
+                            jQuery('#<?php echo $params['id']; ?> .gwc-time-countdown').each(function (index, element) {
                                 let hideOnCountdownExpired = '<?php echo $params['hide_on_countdown_expired']; ?>';
                                 let cookieName = jQuery(this).attr('id');
-                                let isVisible = cookieCustom.getCookie(cookieName) === null || growtypeWcConvertStringToSeconds(cookieCustom.getCookie(cookieName)) > 0 ? true : false;
+                                let isVisible = growtypeCookie.getCookie(cookieName) === null || growtypeWcConvertStringToSeconds(growtypeCookie.getCookie(cookieName)) > 0 ? true : false;
 
                                 if (hideOnCountdownExpired) {
                                     if (isVisible) {
@@ -375,12 +376,14 @@ class Growtype_Wc_Banner_Shortcode
                                 });
                             });
 
-                            wcBanner.click(function () {
-                                let url = $(this).attr('data-url');
+                            jQuery('#<?php echo $params['id']; ?>.growtype-wc-banner').each(function (index, element) {
+                                $(element).on('click', function () {
+                                    let url = $(this).attr('data-url');
 
-                                if (url) {
-                                    window.location.href = url;
-                                }
+                                    if (url) {
+                                        window.location.href = url;
+                                    }
+                                });
                             });
                         }
                     });

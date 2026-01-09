@@ -126,78 +126,73 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
 
     function payment_redirect()
     {
-        if (growtype_wc_is_thankyou_page()) {
-            global $wp;
+        if (!growtype_wc_is_thankyou_page()) {
+            return;
+        }
 
-            $order_id = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
-            $order = wc_get_order($order_id);
+        global $wp;
 
-            if (empty($order)) {
-                wp_redirect(home_url());
-                exit();
+        $order_id = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
+        $order = wc_get_order($order_id);
+
+        if (!$order || $order->get_status() === 'completed') {
+            return;
+        }
+
+        $payment_method = $order->get_payment_method();
+
+        if ($payment_method === self::PROVIDER_ID) {
+            $paypal_order_id = sanitize_text_field($_GET['token'] ?? '');
+            $paypal_ba_token = sanitize_text_field($_GET['ba_token'] ?? '');
+
+            if (Growtype_Wc_Subscription::is_subscription_order($order_id)) {
+                if ($paypal_ba_token !== $order->get_meta('paypal_ba_token')) {
+                    return null;
+                }
+            } else {
+                if ($paypal_order_id !== $order->get_meta('paypal_token')) {
+                    return null;
+                }
             }
 
-            if ($order->get_status() !== 'completed') {
-                $payment_method = $order->get_payment_method();
-                $paypal_order_id = sanitize_text_field($_GET['token'] ?? '');
-                $paypal_ba_token = sanitize_text_field($_GET['ba_token'] ?? '');
+            $access_token = $this->get_access_token($this->client_id, $this->client_secret);
 
-//                d([
-//                    $order->get_meta('paypal_token'),
-//                    $paypal_order_id
-//                ]);
+            $paypal_order_data = $this->get_order_data($access_token, $paypal_order_id);
 
-                if ($payment_method === self::PROVIDER_ID) {
-                    if (Growtype_Wc_Subscription::is_subscription_order($order_id)) {
-                        if ($paypal_ba_token !== $order->get_meta('paypal_ba_token')) {
-                            return null;
-                        }
-                    } else {
-                        if ($paypal_order_id !== $order->get_meta('paypal_token')) {
-                            return null;
-                        }
-                    }
+            $customer_email = $paypal_order_data['payer']['email_address'] ?? '';
 
-                    $access_token = $this->get_access_token($this->client_id, $this->client_secret);
+            if (!empty($customer_email)) {
+                Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists(get_current_user_id(), $customer_email);
+                Growtype_Wc_Payment_Gateway::update_order_email_if_not_exists($order_id, $customer_email);
+            }
 
-                    $paypal_order_data = $this->get_order_data($access_token, $paypal_order_id);
+            if (isset($paypal_order_data['status'])) {
+                if (in_array($paypal_order_data['status'], ['APPROVED', 'COMPLETED'])) {
+                    if ($paypal_order_data['status'] === 'APPROVED') {
+                        $order->add_order_note(__(sprintf('Order id: %s', $paypal_order_id), 'growtype-wc'));
 
-                    $customer_email = $paypal_order_data['payer']['email_address'] ?? '';
-
-                    if (!empty($customer_email)) {
-                        Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists(get_current_user_id(), $customer_email);
-                        Growtype_Wc_Payment_Gateway::update_order_email_if_not_exists($order_id, $customer_email);
-                    }
-
-                    if (isset($paypal_order_data['status'])) {
-                        if (in_array($paypal_order_data['status'], ['APPROVED', 'COMPLETED'])) {
-                            if ($paypal_order_data['status'] === 'APPROVED') {
-                                $order->add_order_note(__(sprintf('Order id: %s', $paypal_order_id), 'growtype-wc'));
-
-                                if (isset($paypal_order_data['intent']) && $paypal_order_data['intent'] === 'CAPTURE') {
-                                    foreach ($paypal_order_data['links'] as $link) {
-                                        if ($link['rel'] === 'capture') {
-                                            $this->capture_order($access_token, $paypal_order_id);
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (Growtype_Wc_Subscription::is_subscription_order($order_id)) {
-                                    $paypal_subscription_id = $order->get_meta('paypal_subscription_id');
-
-                                    $order->add_order_note(__(sprintf('Subscription id: %s', $paypal_subscription_id), 'growtype-wc'));
+                        if (isset($paypal_order_data['intent']) && $paypal_order_data['intent'] === 'CAPTURE') {
+                            foreach ($paypal_order_data['links'] as $link) {
+                                if ($link['rel'] === 'capture') {
+                                    $this->capture_order($access_token, $paypal_order_id);
+                                    break;
                                 }
                             }
-
-                            $order->payment_complete();
-                        } else {
-                            error_log(sprintf('Order %s is not approved. Paypal order id: %s. Order data - %s.', $order_id, $paypal_order_id, print_r($paypal_order_data, true)));
                         }
-                    } else {
-                        error_log(sprintf('Order %s is not payed and status is missing. Paypal order id: %s. Order data - %s.', $order_id, $paypal_order_id, print_r($paypal_order_data, true)));
+
+                        if (Growtype_Wc_Subscription::is_subscription_order($order_id)) {
+                            $paypal_subscription_id = $order->get_meta('paypal_subscription_id');
+
+                            $order->add_order_note(__(sprintf('Subscription id: %s', $paypal_subscription_id), 'growtype-wc'));
+                        }
                     }
+
+                    $order->payment_complete();
+                } else {
+                    error_log(sprintf('Order %s is not approved. Paypal order id: %s. Order data - %s.', $order_id, $paypal_order_id, print_r($paypal_order_data, true)));
                 }
+            } else {
+                error_log(sprintf('Order %s is not payed and status is missing. Paypal order id: %s. Order data - %s.', $order_id, $paypal_order_id, print_r($paypal_order_data, true)));
             }
         }
     }
@@ -300,6 +295,8 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                 $order->set_customer_id(get_current_user_id());
             }
 
+            $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, $applied_coupons);
+
             WC()->cart->empty_cart();
 
             try {
@@ -308,7 +305,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                 if (growtype_wc_product_is_subscription($wc_product->get_id())) {
                     $paypal_product = $this->create_product($access_token, $wc_product->get_id());
 
-                    $subscription_plan = $this->create_billing_plan($access_token, $paypal_product, $wc_product_id);
+                    $subscription_plan = $this->create_billing_plan($access_token, $paypal_product, $wc_product_id, $applied_coupons);
 
                     $subscription_plan_id = $subscription_plan['id'] ?? '';
 
@@ -321,13 +318,13 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                         throw new Exception(__('Subscription plan creation failed.', 'growtype-wc'));
                     }
 
-                    $paypal_checkout = $this->create_subscription($access_token, $subscription_plan_id, $order_id);
+                    $paypal_checkout = $this->create_subscription($access_token, $subscription_plan_id, $order_id, $applied_coupons);
 
                     if (isset($paypal_checkout['id']) && !empty($paypal_checkout['id'])) {
                         $order->update_meta_data('paypal_subscription_id', $paypal_checkout['id']);
                     }
                 } else {
-                    $paypal_checkout = $this->create_order($access_token, $order_id);
+                    $paypal_checkout = $this->create_order($access_token, $order_id, $applied_coupons);
                 }
 
                 if (isset($paypal_checkout['name']) && $paypal_checkout['name'] === 'INVALID_REQUEST') {
@@ -378,7 +375,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                 $order->update_status('failed', sprintf(__('Reason %s.', 'growtype-wc'), wc_clean($e->getMessage())));
             }
 
-            wp_redirect(Growtype_Wc_Payment_Gateway::cancel_url($order_id));
+            wp_redirect($cancel_url);
 
             exit();
         }
@@ -466,7 +463,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         return (array)$data;
     }
 
-    public function create_billing_plan($access_token, $paypal_product, $wc_product_id)
+    public function create_billing_plan($access_token, $paypal_product, $wc_product_id, $applied_coupons = null)
     {
         $plan_url = $this->test_mode
             ? "https://api-m.sandbox.paypal.com/v1/billing/plans"
@@ -492,6 +489,29 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                 "pricing_scheme" => array (
                     "fixed_price" => array (
                         "value" => growtype_wc_get_trial_price($wc_product_id),
+                        "currency_code" => get_woocommerce_currency()
+                    )
+                )
+            );
+
+            $billing_sequence++;
+        }
+
+        if (!empty($applied_coupons)) {
+            $product = wc_get_product($wc_product_id);
+            $sale_price = $product->get_sale_price();
+
+            $billing_cycles[] = array (
+                "frequency" => array (
+                    "interval_unit" => "MONTH",
+                    "interval_count" => 1
+                ),
+                "tenure_type" => "TRIAL",
+                "sequence" => $billing_sequence,
+                "total_cycles" => 1,
+                "pricing_scheme" => array (
+                    "fixed_price" => array (
+                        "value" => growtype_wc_price_apply_coupon_discount($wc_product_id, $sale_price, $applied_coupons),
                         "currency_code" => get_woocommerce_currency()
                     )
                 )
@@ -551,7 +571,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         return (array)$data;
     }
 
-    function create_subscription($access_token, $plan_id, $order_id)
+    function create_subscription($access_token, $plan_id, $order_id, $applied_coupons = null)
     {
         $subscription_url = $this->test_mode
             ? "https://api-m.sandbox.paypal.com/v1/billing/subscriptions"
@@ -619,6 +639,8 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
             $subscriber_data['shipping_address'] = $shipping_details;
         }
 
+        $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, $applied_coupons);
+
         $subscription_data = array (
             "plan_id" => $plan_id,
             "subscriber" => $subscriber_data,
@@ -628,10 +650,9 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                 "shipping_preference" => $shipping_preference, // Based on product type
                 "user_action" => "SUBSCRIBE_NOW",
                 "return_url" => Growtype_Wc_Payment_Gateway::success_url($order_id),  // WooCommerce return URL
-                "cancel_url" => Growtype_Wc_Payment_Gateway::cancel_url($order_id)  // WooCommerce cart URL for cancel
+                "cancel_url" => $cancel_url
             ),
-//            'custom_id' => $order_id,
-            'description' => '1 month subscription plan',
+            'description' => 'Subscription plan',
             'invoice_id' => $order_id,
         );
 
@@ -683,7 +704,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         return $order_data;
     }
 
-    public function create_order($access_token, $wc_order_id)
+    public function create_order($access_token, $wc_order_id, $applied_coupons = null)
     {
         $wc_order = wc_get_order($wc_order_id);
 
@@ -708,6 +729,8 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
             ],
         ];
 
+        $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($wc_order_id, false, $applied_coupons);
+
         // Order body
         $order_body = [
             "intent" => "CAPTURE",  // Immediate payment capture
@@ -715,7 +738,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
             "purchase_units" => $items,
             "application_context" => [
                 "return_url" => Growtype_Wc_Payment_Gateway::success_url($wc_order_id),
-                "cancel_url" => Growtype_Wc_Payment_Gateway::cancel_url($wc_order_id)
+                "cancel_url" => $cancel_url
             ],
         ];
 

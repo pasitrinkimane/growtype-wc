@@ -50,7 +50,7 @@ function growtype_wc_countdown_callback( $atts ) {
     }
 
     // Build the attribute string, escaping each value
-    $attr_str = "id=\"$unique_id\" class=\"auction-time-countdown\"";
+    $attr_str = "id=\"$unique_id\" class=\"gwc-time-countdown\"";
     foreach ( $data_attrs as $name => $value ) {
         $attr_str .= sprintf( ' %s="%s"', esc_attr( $name ), esc_attr( $value ) );
     }

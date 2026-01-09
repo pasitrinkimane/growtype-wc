@@ -12,10 +12,10 @@ function countdown() {
     });
 
     function initCountdown() {
-        if (jQuery(".auction-time-countdown").length > 0 && $.SAcountdown !== 'undefined') {
-            jQuery(".auction-time-countdown").each(function (index, element) {
+        if (jQuery(".gwc-time-countdown").length > 0 && typeof $.fn.SAcountdown !== 'undefined') {
+            jQuery(".gwc-time-countdown").not('.is-initialized').each(function (index, element) {
+                jQuery(this).addClass('is-initialized');
                 let id = jQuery(this).attr('id');
-                let until = jQuery(this).attr('data-time');
                 let format = jQuery(this).attr('data-format') ?? 'yowdHMS';
                 let compact = jQuery(this).attr('data-compact') === 'true' ? true : false;
                 let labels = jQuery(this).attr('data-labels');
@@ -29,13 +29,16 @@ function countdown() {
                     expiryText = '<span class="value over">' + window.growtype_wc.countdown.over + '</span>';
                 }
 
-                if (cookieCustom.getCookie(cookieName) !== null) {
-                    until = growtypeWcConvertStringToSeconds(cookieCustom.getCookie(cookieName));
+                let until = jQuery(this).attr('data-time');
+                const savedValue = growtypeCookie.getCookie(cookieName);
+                if (savedValue !== null) {
+                    let stringToSeconds = growtypeWcConvertStringToSeconds(savedValue);
 
-                    if (until === 0) {
+                    if (stringToSeconds === 0) {
                         $(element).html(expiryText);
                         return;
                     }
+                    until = stringToSeconds;
                 }
 
                 let params = {
@@ -45,7 +48,7 @@ function countdown() {
                     expiryText: expiryText,
                     onTick: function (event) {
                         if (event[6] >= 0) {
-                            cookieCustom.setCookie(cookieName, event);
+                            growtypeCookie.setCookie(cookieName, event);
                         }
                     },
                     onExpiry: function () {
@@ -105,7 +108,7 @@ function countdown() {
     window.growtypeWcConvertStringToSeconds = growtypeWcConvertStringToSeconds;
 }
 
-export {countdown};
+export { countdown };
 
 
 

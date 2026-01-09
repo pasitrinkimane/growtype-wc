@@ -44,14 +44,14 @@ if ($show_downloads) {
 $order_details_title = apply_filters('woocommerce_order_details_title', __('Order details', 'growtype-wc'), $order);
 
 ?>
-<section class="woocommerce-order-details">
+<section class="woocommerce-order-details details-table">
     <?php do_action('woocommerce_order_details_before_order_table', $order); ?>
 
-    <div class="woocommerce-order-detail">
+    <div class="woocommerce-order-detail details-table-intro">
         <h4 class="woocommerce-order-details__title"><?php echo $order_details_title ?></h4>
     </div>
 
-    <div class="woocommerce-table-wrapper">
+    <div class="woocommerce-table-wrapper details-table-content">
         <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
 
             <thead>

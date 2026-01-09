@@ -6,10 +6,7 @@
     text-align: center;
 
     & + .woocommerce-order-details {
-      margin-top: 40px;
-      @include bp-phone-xl(){
-        margin-top: 30px;
-      }
+      margin-top: 30px;
     }
   }
 

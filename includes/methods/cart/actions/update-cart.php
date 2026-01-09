@@ -25,7 +25,15 @@ add_action('wp_ajax_update_cart_ajax', 'update_cart_ajax_callback');
 add_action('wp_ajax_nopriv_update_cart_ajax', 'update_cart_ajax_callback');
 function update_cart_ajax_callback()
 {
-    $cart_item_key = $_POST['cart_item_key'] ?? '';
+    // SECURITY: Verify nonce to prevent CSRF attacks
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'growtype_wc_ajax_nonce')) {
+        error_log('Growtype WC - Update cart nonce verification failed');
+        wp_send_json_error([
+            'message' => __('Security verification failed. Please refresh the page and try again.', 'growtype-wc')
+        ], 403);
+    }
+    
+    $cart_item_key = isset($_POST['cart_item_key']) ? sanitize_text_field($_POST['cart_item_key']) : '';
 
     if (empty($cart_item_key)) {
         $data = [

@@ -1,7 +1,5 @@
 <?php
 
-require GROWTYPE_WC_PATH . '/vendor/autoload.php';
-
 /**
  * Class WC_Gateway_Free
  * No charge payment method
@@ -344,6 +342,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         }
 
         update_user_meta(get_current_user_id(), 'stripe_customer_id', $customer_id);
+
         $order->update_meta_data('stripe_customer_id', $customer_id);
         $order->save();
         $order->payment_complete();
@@ -402,6 +401,8 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                     $order->set_customer_id(get_current_user_id());
                 }
 
+                $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, $applied_coupons);
+
                 WC()->cart->empty_cart();
 
                 try {
@@ -439,12 +440,16 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                 ],
                                 'mode' => 'subscription',
                                 'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID),
-                                'cancel_url' => Growtype_Wc_Payment_Gateway::cancel_url($order_id),
+                                'cancel_url' => $cancel_url,
                                 'subscription_data' => [
+                                    'description' => sprintf('Order #%s - %s', $order_id, $product_name),
                                     'metadata' => [
+                                        'order_id' => $order_id,
+                                        'product_id' => $product_id,
                                         'user_id' => $current_user->ID,
+                                        'site' => home_url(),
                                     ],
-                                ]
+                                ],
                             ];
 
                             if (growtype_wc_product_is_trial($product_id)) {
@@ -456,10 +461,46 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                 $checkout_session_data['subscription_data']['metadata']['user_email'] = $current_user->user_email;
                             }
 
+                            /**
+                             * Apply coupon
+                             */
+                            if (!empty($applied_coupons)) {
+                                $applied_coupon_code = reset($applied_coupons);
+                                $wc_coupon = new WC_Coupon($applied_coupon_code);
+
+                                if ($wc_coupon->is_valid()) {
+                                    $discount_type = $wc_coupon->get_discount_type();
+                                    $discount_amount = (float)$wc_coupon->get_amount();
+
+                                    try {
+                                        if ($discount_type === 'percent') {
+                                            $stripe_coupon = $stripe->coupons->create([
+                                                'percent_off' => $discount_amount,
+                                                'duration' => 'once',
+                                            ]);
+                                        } else {
+                                            $stripe_coupon = $stripe->coupons->create([
+                                                'amount_off' => $discount_amount * 100, // cents
+                                                'currency' => get_woocommerce_currency(),
+                                                'duration' => 'once',
+                                            ]);
+                                        }
+
+                                        // Attach the Stripe coupon to the subscription
+                                        $checkout_session_data['discounts'] = [
+                                            ['coupon' => $stripe_coupon->id],
+                                        ];
+
+                                    } catch (Exception $e) {
+                                        error_log('Stripe coupon creation failed: ' . $e->getMessage());
+                                    }
+                                }
+                            }
+
                             $checkout_session = $stripe->checkout->sessions->create($checkout_session_data);
                         } catch (Exception $e) {
                             error_log(sprintf('growtype_wc_stripe_add_to_cart_error. %s', $e->getMessage()));
-                            wp_redirect(Growtype_Wc_Payment_Gateway::cancel_url($order_id));
+                            wp_redirect($cancel_url);
                         }
                     } else {
                         $checkout_session_data = [
@@ -480,13 +521,17 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                             ],
                             'mode' => 'payment',
                             'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID),
-                            'cancel_url' => Growtype_Wc_Payment_Gateway::cancel_url($order_id),
-                            "payment_intent_data" => [
+                            'cancel_url' => $cancel_url,
+                            'payment_intent_data' => [
+                                'description' => sprintf('Order #%s - %s', $order_id, $product_name),
                                 "statement_descriptor" => sprintf('%s - %s', get_bloginfo('name'), $order_id),
                                 'setup_future_usage' => 'off_session',
-                            ],
-                            'metadata' => [
-                                'user_id' => $current_user->ID,
+                                'metadata' => [
+                                    'order_id' => $order_id,
+                                    'product_id' => $product_id,
+                                    'user_id' => $current_user->ID,
+                                    'site' => home_url(),
+                                ],
                             ],
                         ];
 
@@ -513,7 +558,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
                     wp_redirect($checkout_session->url);
                 } else {
-                    wp_redirect(Growtype_Wc_Payment_Gateway::cancel_url($order_id));
+                    wp_redirect($cancel_url);
                 }
 
                 exit();

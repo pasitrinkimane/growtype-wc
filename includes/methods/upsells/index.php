@@ -73,7 +73,15 @@ class Growtype_Wc_Upsell
             $post = get_page_by_path($slug, OBJECT, 'product');
             if ($post && $post->ID) {
                 $product = wc_get_product($post->ID);
-                if ($product && !growtype_wc_user_has_purchased_product($product->get_id(), $user_id)) {
+
+                $product_id = $product->get_id();
+                $has_purchased = growtype_wc_user_has_purchased_product($product_id, $user_id);
+                
+                if (!$has_purchased) {
+                    $has_purchased = self::has_order_purchased_product($order_id, $product_id);
+                }
+
+                if ($product && !$has_purchased) {
                     // found one they haven’t bought
                     break;
                 }
@@ -91,7 +99,6 @@ class Growtype_Wc_Upsell
 
         if ($current_slug !== $upsells[$pos]['slug']) {
             $next_url = add_query_arg('upsell', $upsells[$pos]['slug'], $next_url);
-
             wp_redirect($next_url);
             exit();
         }
@@ -216,5 +223,34 @@ class Growtype_Wc_Upsell
         }
 
         return $upsells;
+    }
+
+    public static function has_order_purchased_product($order_id, $product_id)
+    {
+        $orders_to_check = [$order_id];
+
+        // Get children (upsell orders)
+        $child_orders = wc_get_orders([
+            'limit' => -1,
+            'meta_key' => 'parent_order_id',
+            'meta_value' => $order_id,
+            'return' => 'ids',
+            'status' => wc_get_is_paid_statuses(),
+        ]);
+
+        if ($child_orders) {
+            $orders_to_check = array_merge($orders_to_check, $child_orders);
+        }
+
+        foreach ($orders_to_check as $oid) {
+            $order = wc_get_order($oid);
+            if (!$order) continue;
+            foreach ($order->get_items() as $item) {
+                if ((int)$item->get_product_id() === (int)$product_id) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

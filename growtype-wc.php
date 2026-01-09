@@ -35,7 +35,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('GROWTYPE_WC_VERSION', '1.2.5.9.3');
+define('GROWTYPE_WC_VERSION', '1.2.6.5');
 
 /**
  * Plugin text domain
@@ -58,18 +58,18 @@ define('GROWTYPE_WC_URL', plugin_dir_url(__FILE__));
 define('GROWTYPE_WC_URL_PUBLIC', plugin_dir_url(__FILE__) . 'public/');
 
 /**
- * The code that runs during plugin activation.
- * This action is documented in includes/class-growtype-wc-activator.php
+ * Autoload vendors
  */
-function activate_growtype_wc()
-{
-    require_once plugin_dir_path(__FILE__) . 'includes/class-growtype-wc-activator.php';
-    Growtype_Wc_Activator::activate();
-}
+require_once GROWTYPE_WC_PATH . '/vendor/autoload.php';
 
 /**
- * The code that runs during plugin deactivation.
- * This action is documented in includes/class-growtype-wc-deactivator.php
+ * Activate plugin
+ */
+require_once plugin_dir_path(__FILE__) . 'includes/class-growtype-wc-activator.php';
+Growtype_Wc_Activator::init(__FILE__);
+
+/**
+ * Deactivate plugin
  */
 function deactivate_growtype_wc()
 {
@@ -77,7 +77,6 @@ function deactivate_growtype_wc()
     Growtype_Wc_Deactivator::deactivate();
 }
 
-register_activation_hook(__FILE__, 'activate_growtype_wc');
 register_deactivation_hook(__FILE__, 'deactivate_growtype_wc');
 
 /**

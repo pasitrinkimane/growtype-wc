@@ -6,7 +6,7 @@
 add_shortcode('growtype_wc_products', 'growtype_wc_products_shortcode');
 function growtype_wc_products_shortcode($atts, $content = null)
 {
-    if (!function_exists('wc_get_products')) {
+    if (!function_exists('wc_get_products') || is_admin()) {
         return '';
     }
 
@@ -20,7 +20,7 @@ function growtype_wc_products_shortcode($atts, $content = null)
         'visibility' => ['catalog', 'search'],
         'products_group' => 'default',
         'product_type' => '',
-        'preview_style' => Growtype_Wc_Product::catalog_default_preview_style(),
+        'catalog_preview_style' => Growtype_Wc_Product::catalog_default_preview_style(),
         'edit_product' => 'false',
         'post_status' => 'publish',
         'cta_btn' => '',
@@ -37,6 +37,8 @@ function growtype_wc_products_shortcode($atts, $content = null)
      * Get properties from shortcode
      */
     extract($shortcode_params);
+
+    $product_preview_style = Growtype_Wc_Product::preview_style($atts['product_preview_style'] ?? '');
 
     $growtype_wc_get_orderby_params = growtype_wc_get_orderby_params($orderby);
 
@@ -171,7 +173,8 @@ function growtype_wc_products_shortcode($atts, $content = null)
     return growtype_wc_render_products($args, [
         'current_page' => $paged,
         'cta_btn' => $cta_btn,
-        'preview_style' => $preview_style,
+        'catalog_preview_style' => $catalog_preview_style,
+        'product_preview_style' => $product_preview_style,
         'products_group' => $products_group,
         'visibility' => $visibility,
         'edit_product' => $edit_product,

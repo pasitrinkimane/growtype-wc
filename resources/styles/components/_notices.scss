@@ -3,6 +3,8 @@
   background: white;
   font-size: $font-size-body;
   margin-bottom: 20px;
+  display: inline-block;
+  width: 100%;
 
   li {
     margin: 0;
@@ -31,6 +33,10 @@
     font-size: 18px;
     color: var(--text-color);
     cursor: pointer;
+    @include bp-phone-xl() {
+      right: 15px;
+      top: 15px;
+    }
   }
 }
 
@@ -55,5 +61,12 @@
   &.woocommerce-error {
     border-top: 3px solid $color-error;
     padding: 1em 2em 1em 3.5em;
+  }
+}
+
+.woocommerce-notices-wrapper {
+  .woocommerce-info {
+    display: inline-block;
+    width: 100%;
   }
 }

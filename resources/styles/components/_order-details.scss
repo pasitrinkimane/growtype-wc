@@ -5,71 +5,81 @@
   }
 }
 
-.woocommerce-order-details {
-  border: 1px solid #E4E6E8;
-  border-radius: 14px;
-  overflow: hidden;
+.woocommerce-page {
+  .details-table {
+    border: 1px solid #E4E6E8;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
 
-  .woocommerce-order-detail {
-    background-color: black;
-    padding: 25px 40px;
-    color: white;
-  }
-
-  .woocommerce-table__line-item {
-    img {
-      max-width: 60px;
-      padding-right: 12px;
-      width: 100%;
-      display: inline-block;
+    & + .details-table {
+      margin-bottom: 20px;
     }
 
-    a {
-      text-decoration: none;
-    }
-  }
-
-  .woocommerce-table-wrapper {
-    padding: 20px 30px 40px 30px;
-    background: white;
-    color: black;
-    @include bp-phone-xl() {
-      padding: 15px 15px 20px 15px;
-    }
-  }
-
-  .woocommerce-table {
-    tr {
-      th:last-child {
-        text-align: right;
+    .details-table-intro {
+      background-color: black;
+      padding: 25px 40px;
+      color: white;
+      @include bp-phone-xl() {
+        padding: 20px 15px;
       }
     }
 
-    td:last-child {
-      text-align: right;
-      font-weight: bold;
+    .woocommerce-table__line-item {
+      img {
+        max-width: 60px;
+        padding-right: 12px;
+        width: 100%;
+        display: inline-block;
+      }
+
+      a {
+        text-decoration: none;
+      }
     }
 
-    tfoot {
+    .details-table-content {
+      padding: 20px 30px 40px 30px;
+      background: white;
+      color: black;
+      @include bp-phone-xl() {
+        padding: 15px 15px 20px 15px;
+      }
+    }
+
+    .woocommerce-table {
       tr {
-        &:last-child {
-          th, td {
-            font-weight: bold;
-            font-size: 16px;
+        th:last-child {
+          text-align: right;
+        }
+      }
+
+      td:last-child {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      tfoot {
+        tr {
+          &:last-child {
+            th, td {
+              font-weight: bold;
+              font-size: 16px;
+            }
           }
         }
       }
     }
-  }
 
-  .order-again {
-    padding-left: 45px;
-    padding-right: 45px;
-    padding-bottom: 50px;
-    @include bp-phone-xl() {
-      padding-left: 15px;
-      padding-right: 15px;
-      padding-bottom: 30px;
+    .order-again {
+      padding-left: 45px;
+      padding-right: 45px;
+      padding-bottom: 50px;
+      @include bp-phone-xl() {
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 30px;
+      }
     }
   }
 }

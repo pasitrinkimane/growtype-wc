@@ -21,4 +21,17 @@ class Growtype_Wc_Auction
 
         return $postids;
     }
+
+    public static function has_started()
+    {
+        if (class_exists('WC_Product_Auction')) {
+            global $product;
+
+            $wc_product_auction = new WC_Product_Auction($product);
+
+            return $wc_product_auction->is_started();
+        }
+
+        return false;
+    }
 }
