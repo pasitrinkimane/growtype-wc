@@ -37,7 +37,7 @@ class Growtype_Wc_Benefits_Shortcode
 
             if ($is_slider) {
                 ?>
-                <div class="gwc-benefits-slider growtype-theme-slider" data-gslick='{"infinite": true, "slidesToShow": 1, "slidesToScroll": 1, "arrows": false, "dots": true, "fade": true, "autoplay": true, "autoplaySpeed": 2000}'>
+                <div class="gwc-benefits-slider growtype-theme-slider" data-gslick='{"infinite": true, "slidesToShow": 1, "slidesToScroll": 1, "arrows": false, "dots": true, "fade": true, "autoplay": false, "autoplaySpeed": 2000}'>
                     <?php foreach ($benefits as $benefit) { ?>
                         <div class="gwc-benefits-slider-slide">
                             <div class="gwc-benefits-slider-slide-images">

@@ -25,6 +25,16 @@ class Growtype_Wc_Order
      */
     function growtype_wc_woocommerce_payment_complete($order_id, $transaction_id)
     {
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+
+        $user_id = $order->get_user_id();
+
+        /**
+         * 1. Subscriptions logic
+         */
         $subscription = Growtype_Wc_Subscription::growtype_wc_order_get_subscription_order($order_id);
 
         if (!empty($subscription)) {
@@ -39,16 +49,21 @@ class Growtype_Wc_Order
             update_post_meta($post_id, '_duration', $subscription->get_data_key('billing_interval'));
             update_post_meta($post_id, '_price', $subscription->get_data_key('billing_price'));
             update_post_meta($post_id, '_period', $subscription->get_data_key('billing_period'));
-            update_post_meta($post_id, '_user_id', get_current_user_id());
+            update_post_meta($post_id, '_user_id', $user_id);
             update_post_meta($post_id, '_start_date', wp_date('Y-m-d H:i:s'));
             update_post_meta($post_id, '_end_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
             update_post_meta($post_id, '_next_charge_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
         }
 
-        if (is_user_logged_in()) {
-            $current_user = wp_get_current_user();
-            $current_user->remove_role('lead');
-            $current_user->add_role('customer');
+        /**
+         * 3. Role management
+         */
+        if ($user_id) {
+            $current_user = get_user_by('id', $user_id);
+            if ($current_user) {
+                $current_user->remove_role('lead');
+                $current_user->add_role('customer');
+            }
         }
     }
 
