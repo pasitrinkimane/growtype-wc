@@ -13,7 +13,7 @@
             </thead>
             <tbody>
             <?php
-            $downloadable_files = Growtype_Wc_Product::shipping_documents($_GET['post']);
+            $downloadable_files = isset($_GET['post']) ? Growtype_Wc_Product::shipping_documents($_GET['post']) : [];
 
             if ($downloadable_files) {
                 foreach ($downloadable_files as $key => $file) {

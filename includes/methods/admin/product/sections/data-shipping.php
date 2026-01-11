@@ -37,7 +37,7 @@ function growtype_wc_product_options_shipping_product_data()
         'id' => '_product_location_country',
         'label' => 'Product location - Country',
         'options' => $field_options,
-        'value' => get_post_meta($_GET['post'], '_product_location_country', true),
+        'value' => isset($_GET['post']) ? get_post_meta($_GET['post'], '_product_location_country', true) : '',
     ));
 
     echo '</div>';
