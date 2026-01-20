@@ -46,3 +46,46 @@ function growtype_wc__pre_get_posts($query)
         );
     }
 }
+
+/**
+ * Orders columns
+ */
+add_filter('manage_edit-shop_order_columns', 'growtype_wc_admin_orders_product_column');
+add_filter('manage_woocommerce_page_wc-orders_columns', 'growtype_wc_admin_orders_product_column');
+function growtype_wc_admin_orders_product_column($columns)
+{
+    $columns['order_products'] = 'Product';
+    return $columns;
+}
+
+/**
+ * Orders columns content
+ */
+add_action('manage_shop_order_posts_custom_column', 'growtype_wc_admin_orders_product_column_content', 10, 2);
+function growtype_wc_admin_orders_product_column_content($column, $post_id)
+{
+    if ($column == 'order_products') {
+        $order = wc_get_order($post_id);
+        if ($order) {
+            $items = $order->get_items();
+            $product_names = [];
+            foreach ($items as $item) {
+                $product_names[] = $item->get_name();
+            }
+            echo implode(', ', $product_names);
+        }
+    }
+}
+
+add_action('manage_woocommerce_page_wc-orders_custom_column', 'growtype_wc_admin_orders_hpos_product_column_content', 10, 2);
+function growtype_wc_admin_orders_hpos_product_column_content($column, $order)
+{
+    if ($column == 'order_products') {
+        $items = $order->get_items();
+        $product_names = [];
+        foreach ($items as $item) {
+            $product_names[] = $item->get_name();
+        }
+        echo implode(', ', $product_names);
+    }
+}
