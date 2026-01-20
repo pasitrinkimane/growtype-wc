@@ -111,12 +111,37 @@ class Growtype_Wc_Payment
             wp_die('Invalid parameters.', 'Error', ['response' => 400]);
         }
 
+        // Prevent double charges - use transient lock
+        $lock_key = 'gwc_upsell_lock_' . $order_id . '_' . $product_id;
+        $existing_lock = get_transient($lock_key);
+        
+        if ($existing_lock) {
+            // Already processing or recently processed - redirect without charging again
+            error_log('Upsell double-charge prevented: Order ' . $order_id . ', Product ' . $product_id);
+            
+            $order = wc_get_order($order_id);
+            if ($order) {
+                $redirect_url = remove_query_arg('upsell', $order->get_checkout_order_received_url());
+                wp_safe_redirect($redirect_url);
+                exit;
+            }
+            
+            // Fallback: redirect to same page without the action
+            $current_url = remove_query_arg(['action', 'order_id', 'product_id']);
+            wp_safe_redirect($current_url);
+            exit;
+        }
+        
+        // Set lock for 30 seconds to prevent duplicate requests
+        set_transient($lock_key, time(), 30);
+
         try {
             $order = wc_get_order($order_id);
 
             $product = wc_get_product($product_id);
 
             if (!$order || !$product) {
+                delete_transient($lock_key); // Release lock on error
                 throw new \Exception('Order or product not found.');
             }
 
@@ -128,8 +153,12 @@ class Growtype_Wc_Payment
             $pi = $gateway->charge_intent($order_id, $product_id, $description);
 
             if ($pi->status !== 'succeeded') {
-                throw new \Exception('Stripe PaymentIntent status: ' . $pi->status);
+                delete_transient($lock_key); // Release lock on failed charge
+                throw new \Exception('Payment Intent status: ' . $pi->status);
             }
+
+            // Extend lock to 5 minutes after successful charge (prevent re-purchase)
+            set_transient($lock_key, time(), 300);
 
             $redirect_url = $gateway->get_return_url($order);
 
@@ -165,6 +194,7 @@ class Growtype_Wc_Payment
             exit;
 
         } catch (\Exception $e) {
+            delete_transient($lock_key); // Release lock on exception
             error_log('Upsell endpoint error: ' . $e->getMessage());
             wp_die('Upsell charge failed: ' . esc_html($e->getMessage()), 'Error', ['response' => 500]);
         }
