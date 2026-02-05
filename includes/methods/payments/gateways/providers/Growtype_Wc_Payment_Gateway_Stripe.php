@@ -9,8 +9,9 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
     const PAYMENT_METHOD_KEY = 'gwc-stripe';
     const PROVIDER_ID = 'growtype_wc_stripe';
     private $visible_in_frontend;
-    private $test_mode;
+    public $test_mode;
     private $secret_key;
+    public $publishable_key;
 
     /**
      * Constructor for the gateway.
@@ -57,6 +58,17 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         $this->test_mode = 'yes' === $this->get_option('test_mode');
         $this->secret_key = $this->test_mode ? $this->get_option('secret_key_test') : $this->get_option('secret_key_live');
+        $this->publishable_key = $this->test_mode ? $this->get_option('publishable_key_test') : $this->get_option('publishable_key_live');
+    }
+
+    public function get_publishable_key()
+    {
+        return $this->publishable_key;
+    }
+
+    public function get_secret_key()
+    {
+        return $this->secret_key;
     }
 
     /**
@@ -105,6 +117,14 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             ),
             'secret_key_live' => array (
                 'title' => __('Secret key - Live', 'growtype-wc'),
+                'type' => 'text',
+            ),
+            'publishable_key_test' => array (
+                'title' => __('Publishable key - Test', 'growtype-wc'),
+                'type' => 'text',
+            ),
+            'publishable_key_live' => array (
+                'title' => __('Publishable key - Live', 'growtype-wc'),
                 'type' => 'text',
             )
         );
@@ -239,111 +259,77 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             return;
         }
 
-        // 3) Validate session ID and guard “run once”
+        // 3) Validate session or intent ID and guard “run once”
         $session_id = sanitize_text_field($_GET['checkout_session_id'] ?? '');
+        $intent_id = sanitize_text_field($_GET['payment_intent'] ?? '');
+        
         $saved_session_id = $order->get_meta('stripe_session_id');
-        if ($session_id !== $saved_session_id) {
+        $saved_intent_id = $order->get_meta('stripe_intent_id');
+
+        if (!$session_id && !$intent_id) {
             return;
         }
-        if ($order->get_meta('stripe_customer_id')) {
+        
+        if ($session_id && $session_id !== $saved_session_id) {
+            return;
+        }
+
+        if ($intent_id && $intent_id !== $saved_intent_id) {
+            return;
+        }
+
+        if ($order->get_meta('stripe_customer_id') && $order->get_meta('stripe_payment_method_id')) {
             return;
         }
 
         $stripe = new \Stripe\StripeClient($this->secret_key);
 
-        // 4) Fetch the Checkout Session
+        $customer_id = '';
+        
+        // 4) Fetch the Checkout Session or Payment Intent
         try {
-            $session = $stripe->checkout->sessions->retrieve($session_id);
+            if ($session_id) {
+                $session = $stripe->checkout->sessions->retrieve($session_id);
+                $customer_id = $session->customer ?? '';
+                
+                // Sync email
+                if ($email = $session->customer_details->email ?? '') {
+                    Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists($order->get_customer_id(), $email);
+                    Growtype_Wc_Payment_Gateway::update_order_email_if_not_exists($order_id, $email);
+                }
+
+                if ($session->mode === 'subscription' && !empty($session->subscription)) {
+                    // (existing subscription logic)
+                    $sub = $stripe->subscriptions->retrieve($session->subscription, ['expand' => ['latest_invoice.payment_intent']]);
+                    $customer_id = $sub->customer;
+                    $order->update_meta_data('stripe_subscription_id', $sub->id);
+                    $order->update_meta_data('stripe_payment_method_id', $sub->latest_invoice->payment_intent->payment_method);
+                } else {
+                    $pi = $stripe->paymentIntents->retrieve($session->payment_intent);
+                    if ($pi->status === 'succeeded') {
+                        $customer_id = $pi->customer;
+                        $order->update_meta_data('stripe_transaction_id', $pi->id);
+                        $order->update_meta_data('stripe_payment_method_id', $pi->payment_method);
+                    }
+                }
+            } elseif ($intent_id) {
+                $pi = $stripe->paymentIntents->retrieve($intent_id);
+                if ($pi->status === 'succeeded') {
+                    $customer_id = $pi->customer;
+                    $order->update_meta_data('stripe_transaction_id', $pi->id);
+                    $order->update_meta_data('stripe_payment_method_id', $pi->payment_method);
+                }
+            }
         } catch (\Exception $e) {
-            error_log('growtype_wc_stripe_order_received_error: ' . $e->getMessage());
+            error_log('growtype_wc_stripe_redirect_handler_error: ' . $e->getMessage());
             return;
         }
 
-        // 5) Sync email back to WP
-        if ($email = $session->customer_details->email ?? '') {
-            Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists(get_current_user_id(), $email);
-            Growtype_Wc_Payment_Gateway::update_order_email_if_not_exists($order_id, $email);
+        if ($customer_id) {
+            update_user_meta($order->get_customer_id(), 'stripe_customer_id', $customer_id);
+            $order->update_meta_data('stripe_customer_id', $customer_id);
         }
-
-        // 6a) Subscription flow
-        if ($session->mode === 'subscription' && !empty($session->subscription)) {
-            if ($session->payment_status === 'paid') {
-                try {
-                    $sub = $stripe->subscriptions->retrieve(
-                        $session->subscription,
-                        ['expand' => ['latest_invoice.payment_intent']]
-                    );
-
-                    $customer_id = $sub->customer;
-                    $subscription_id = $sub->id;
-                    $payment_method_id = $sub->latest_invoice->payment_intent->payment_method;
-                    $invoice_id = $sub->latest_invoice->id;
-
-                    $order->update_meta_data('stripe_subscription_id', $subscription_id);
-                    $order->update_meta_data('stripe_payment_method_id', $payment_method_id);
-                    $order->update_meta_data('stripe_invoice_id', $invoice_id);
-
-                    $order->add_order_note(sprintf(
-                        __('Subscription created: %s', 'growtype-wc'),
-                        $session->subscription
-                    ));
-                } catch (\Exception $e) {
-                    error_log('growtype_wc_stripe_subscription_error: ' . $e->getMessage());
-                    return;
-                }
-            } else {
-                error_log('growtype_wc_stripe_order_received_error: Subscription not paid.');
-                return;
-            }
-        } else {
-            try {
-                $pi = $stripe->paymentIntents->retrieve($session->payment_intent);
-            } catch (\Exception $e) {
-                error_log('growtype_wc_stripe_pi_error: ' . $e->getMessage());
-                return;
-            }
-
-            if ($pi->status === 'succeeded') {
-                // Create customer
-                try {
-                    $cust = $stripe->customers->create([
-                        'email' => $session->customer_email,
-                        'metadata' => ['wp_user_id' => get_current_user_id()],
-                    ]);
-                    $customer_id = $cust->id;
-
-                    // Attach & default payment method
-                    if (!empty($pi->payment_method)) {
-                        $stripe->paymentMethods->attach($pi->payment_method, ['customer' => $customer_id]);
-                        $stripe->customers->update($customer_id, [
-                            'invoice_settings' => ['default_payment_method' => $pi->payment_method],
-                        ]);
-                        $order->update_meta_data('stripe_payment_method_id', $pi->payment_method);
-                        $order->add_order_note(sprintf(
-                            __('Payment method attached: %s', 'growtype-wc'),
-                            $pi->payment_method
-                        ));
-                    }
-
-                    $order->update_meta_data('stripe_transaction_id', $pi->id);
-
-                    $order->add_order_note(sprintf(
-                        __('PaymentIntent succeeded: %s', 'growtype-wc'),
-                        $pi->id
-                    ));
-                } catch (\Exception $e) {
-                    error_log('growtype_wc_stripe_customer_error: ' . $e->getMessage());
-                    return;
-                }
-            } else {
-                error_log('growtype_wc_stripe_order_received_error: PI status ' . $pi->status);
-                return;
-            }
-        }
-
-        update_user_meta(get_current_user_id(), 'stripe_customer_id', $customer_id);
-
-        $order->update_meta_data('stripe_customer_id', $customer_id);
+        
         $order->save();
         $order->payment_complete();
     }
@@ -379,29 +365,13 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             do_action('growtype_wc_before_add_to_cart', $cart_item_key, $product_id, $quantity, $variation_id, $variation_attributes, $cart_item_data);
 
             if ($this->get_option('add_to_card_redirect_stripe_checkout') === 'yes' && isset($_GET['payment_method']) && $_GET['payment_method'] === self::PAYMENT_METHOD_KEY) {
-                $product = wc_get_product($product_id);
-                $order = wc_create_order();
-
+                // Use shared method to create order
+                $order = Growtype_Wc_Payment::create_instant_order($product_id, 1, $this->id);
+                $product = wc_get_product($product_id); // Re-fetch product object if needed for logic below
+                
                 $order_id = $order->get_id();
 
-                $order->add_product($product, 1);
-                $order->set_payment_method($this->id);
-
-                $applied_coupons = WC()->cart->get_applied_coupons();
-
-                if (!empty($applied_coupons)) {
-                    foreach ($applied_coupons as $applied_coupon) {
-                        $order->apply_coupon($applied_coupon);
-                    }
-                }
-
-                $order->calculate_totals();
-
-                if (is_user_logged_in()) {
-                    $order->set_customer_id(get_current_user_id());
-                }
-
-                $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, $applied_coupons);
+                $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, WC()->cart->get_applied_coupons());
 
                 WC()->cart->empty_cart();
 
@@ -439,7 +409,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                     ]
                                 ],
                                 'mode' => 'subscription',
-                                'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID),
+                                'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID, true),
                                 'cancel_url' => $cancel_url,
                                 'subscription_data' => [
                                     'description' => sprintf('Order #%s - %s', $order_id, $product_name),
@@ -520,7 +490,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                 ]
                             ],
                             'mode' => 'payment',
-                            'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID),
+                            'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID, true),
                             'cancel_url' => $cancel_url,
                             'payment_intent_data' => [
                                 'description' => sprintf('Order #%s - %s', $order_id, $product_name),
@@ -602,6 +572,12 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         // 4) Prepare Stripe off-session charge
         $customer_id = $parent->get_meta('stripe_customer_id');
+        
+        // Fallback to user meta if order meta is missing
+        if (!$customer_id && $parent->get_customer_id()) {
+            $customer_id = get_user_meta($parent->get_customer_id(), 'stripe_customer_id', true);
+        }
+
         $payment_method = $parent->get_meta('stripe_payment_method_id');
 
         if (!$customer_id) {
@@ -640,6 +616,18 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         // 5) Mark the new order as paid
         $upsell_order->update_meta_data('stripe_transaction_id', $pi->id);
+
+        // Inherit specific payment method info (Google Pay, Apple Pay etc) from parent
+        $parent_method_type = $parent->get_meta('_stripe_payment_method_type');
+        $parent_method_title = $parent->get_payment_method_title();
+        
+        if ($parent_method_type) {
+            $upsell_order->update_meta_data('_stripe_payment_method_type', $parent_method_type);
+        }
+        
+        if ($parent_method_title) {
+            $upsell_order->set_payment_method_title($parent_method_title);
+        }
 
         $upsell_order->add_order_note(sprintf(
             __('Upsell PaymentIntent succeeded: %s', 'growtype-wc'),

@@ -209,23 +209,21 @@ class Growtype_Wc_Subscription
 
     public static function active_orders($order_id)
     {
-        $posts = growtype_wc_get_subscriptions([
-            'status' => Growtype_Wc_Subscription::STATUS_ACTIVE
+        return growtype_wc_get_subscriptions([
+            'status' => Growtype_Wc_Subscription::STATUS_ACTIVE,
+            'order_id' => $order_id,
+            'limit' => 5 // Usually should be only 1
         ]);
-
-        $subscriptions = [];
-        foreach ($posts as $post) {
-            if ($post->order_id === $order_id) {
-                array_push($subscriptions, $post);
-            }
-        }
-
-        return $subscriptions;
     }
 
     public static function change_status($sub_id, $status)
     {
         update_post_meta($sub_id, '_status', $status);
+
+        $user_id = get_post_meta($sub_id, '_user_id', true);
+        if ($user_id) {
+            delete_transient('growtype_wc_user_has_active_sub_' . $user_id);
+        }
     }
 
     public static function status($sub_id)

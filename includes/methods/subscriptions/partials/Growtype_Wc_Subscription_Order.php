@@ -265,6 +265,11 @@ class Growtype_Wc_Subscription_Order extends WC_Order
                 }
             }
         }
+
+        $user_id = get_post_meta($post->ID, '_user_id', true);
+        if ($user_id) {
+            delete_transient('growtype_wc_user_has_active_sub_' . $user_id);
+        }
     }
 
     function growtype_wc_add_meta_boxes_growtype_wc_subs()

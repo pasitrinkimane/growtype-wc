@@ -11,7 +11,6 @@ class Growtype_Wc_Upsell
 
             if (!empty($upsells)) {
                 $query_data['upsell'] = $upsells[0]['slug'];
-
                 $return_url = add_query_arg($query_data, $return_url);
             }
 
@@ -49,6 +48,11 @@ class Growtype_Wc_Upsell
 
     public static function show($order_id)
     {
+        $order = wc_get_order($order_id);
+        if (!$order || !$order->is_paid()) {
+            return;
+        }
+
         $current_slug = isset($_GET['upsell']) ? sanitize_text_field($_GET['upsell']) : '';
 
         if (!$current_slug) {
@@ -76,7 +80,7 @@ class Growtype_Wc_Upsell
 
                 $product_id = $product->get_id();
                 $has_purchased = growtype_wc_user_has_purchased_product($product_id, $user_id);
-                
+
                 if (!$has_purchased) {
                     $has_purchased = self::has_order_purchased_product($order_id, $product_id);
                 }
@@ -131,7 +135,7 @@ class Growtype_Wc_Upsell
     public static function render_content($product, $params)
     {
         $short_desc = apply_filters('growtype_the_content', $product->get_short_description());
-        $description = $product->get_description();
+        $description = apply_filters('growtype_the_content', $product->get_description());
         $price_html = $product->get_price_html();
         $price = $product->get_price();
 
@@ -146,29 +150,31 @@ class Growtype_Wc_Upsell
                 <div class="upsell-intro"><?= $short_desc ?></div>
             <?php endif; ?>
 
-            <?php if ($description) : ?>
-                <div class="upsell-desc"><?= wp_kses_post($description) ?></div>
-            <?php endif; ?>
+            <div class="gwc-upsell-paymentform">
+                <div class="gwc-upsell-price">
+                    <?= Growtype_Wc_Product::get_discount_percentage_label_formatted($product->get_id()) ?>
+                    <?= Growtype_Wc_Product::get_promo_label_formatted($product->get_id()) ?>
+                    <div class="title"><?= esc_html($product->get_title()) ?></div>
+                    <div class="price-wrapper"><?= $price_html ?></div>
+                    <div class="extra-details">
+                        <?= Growtype_Wc_Product::get_extra_details_formatted($product->get_id()) ?>
+                    </div>
+                </div>
 
-            <div class="gwc-upsell-price">
-                <?= Growtype_Wc_Product::get_discount_percentage_label_formatted($product->get_id()) ?>
-                <?= Growtype_Wc_Product::get_promo_label_formatted($product->get_id()) ?>
-                <div class="title"><?= esc_html($product->get_title()) ?></div>
-                <div class="price-wrapper"><?= $price_html ?></div>
-                <div class="extra-details">
-                    <?= Growtype_Wc_Product::get_extra_details_formatted($product->get_id()) ?>
+                <div class="b-actions">
+                    <?php if (!empty($next_url)) { ?>
+                        <a href="<?= esc_url($next_url) ?>" class="btn btn-secondary"><?= esc_html($link_text) ?></a>
+                    <?php } ?>
+
+                    <a href="<?= esc_url($payment_intent_url) ?>" class="btn btn-primary">
+                        <?= esc_html__('🔓 Unlock Now', 'growtype-wc') ?> – <?= wc_price($price) ?>
+                    </a>
                 </div>
             </div>
 
-            <div class="b-actions">
-                <?php if (!empty($next_url)) { ?>
-                    <a href="<?= esc_url($next_url) ?>" class="btn btn-secondary"><?= esc_html($link_text) ?></a>
-                <?php } ?>
-
-                <a href="<?= esc_url($payment_intent_url) ?>" class="btn btn-primary">
-                    <?= esc_html__('🔓 Unlock Now', 'growtype-wc') ?> – <?= wc_price($price) ?>
-                </a>
-            </div>
+            <?php if ($description) : ?>
+                <div class="upsell-desc"><?= $description ?></div>
+            <?php endif; ?>
         </div>
         <?php
 
@@ -244,7 +250,9 @@ class Growtype_Wc_Upsell
 
         foreach ($orders_to_check as $oid) {
             $order = wc_get_order($oid);
-            if (!$order) continue;
+            if (!$order) {
+                continue;
+            }
             foreach ($order->get_items() as $item) {
                 if ((int)$item->get_product_id() === (int)$product_id) {
                     return true;

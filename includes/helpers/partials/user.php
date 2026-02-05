@@ -17,22 +17,35 @@ function growtype_wc_user_has_active_subscription($user_id = null)
     $user_id = $user_id ?: get_current_user_id();
     if (!$user_id) return false;
 
-    // Prevent redundant DB hits in the same request
+    // 1. Static request-level cache
     static $subscription_check_cache = [];
-
     if (isset($subscription_check_cache[$user_id])) {
         return $subscription_check_cache[$user_id];
     }
 
-    // Lightweight DB call (ensure growtype_wc_get_subscriptions is optimized)
+    // 2. Persistent transient cache (5 minutes)
+    $transient_name = 'growtype_wc_user_has_active_sub_' . $user_id;
+    $cached_status = get_transient($transient_name);
+
+    if ($cached_status !== false) {
+        $has_active = $cached_status === 'yes';
+        $subscription_check_cache[$user_id] = $has_active;
+        return $has_active;
+    }
+
+    // 3. Lightweight DB call with LIMIT 1
     $subscriptions = growtype_wc_get_subscriptions([
         'status' => 'active',
         'user_id' => $user_id,
+        'limit' => 1,
     ]);
 
     $has_active = !empty($subscriptions);
 
+    // Save to both caches
+    set_transient($transient_name, $has_active ? 'yes' : 'no', 5 * MINUTE_IN_SECONDS);
     $subscription_check_cache[$user_id] = $has_active;
+
     return $has_active;
 }
 
