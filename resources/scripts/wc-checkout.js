@@ -1,5 +1,5 @@
-import {message} from "./components/message";
-import {paymentFormLoaded} from "./events/payment-form-loaded";
+import { message } from "./components/message";
+import { paymentFormLoaded } from "./events/payment-form-loaded";
 
 (function ($) {
     "use strict";

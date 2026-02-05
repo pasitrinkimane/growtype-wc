@@ -78,6 +78,11 @@ class Growtype_Wc_Public
         wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', ['jquery'], $this->version, true);
         wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', ['jquery'], $this->version, true);
         wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', ['jquery', 'growtype-wc-countdown'], $this->version, true);
+        
+        $stripe_settings = get_option('woocommerce_growtype_wc_stripe_settings', []);
+        if (isset($stripe_settings['enabled']) && 'yes' === $stripe_settings['enabled']) {
+            wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', [], null, true);
+        }
     }
 
     /**
@@ -91,8 +96,8 @@ class Growtype_Wc_Public
             return;
         }
 
-        // Ensure WooCommerce cart is available
-        if (!function_exists('WC') || !WC() || !WC()->cart) {
+        // Ensure WooCommerce is available
+        if (!function_exists('WC') || !WC()) {
             return;
         }
 
@@ -103,8 +108,28 @@ class Growtype_Wc_Public
 
         $email = class_exists('Growtype_Analytics') ? growtype_analytics_get_user_email() : '';
 
-        $cart_total = WC()->cart->get_cart_contents_total();
+        $cart_total = (WC()->cart) ? WC()->cart->get_cart_contents_total() : 0;
 
+        // Use the gateway instance for settings to ensure consistency between front and back
+        $publishable_key = '';
+        $test_mode = false;
+        if (function_exists('WC') && WC() && WC()->payment_gateways()) {
+            $gateways = WC()->payment_gateways()->payment_gateways();
+            $stripe_gateway = $gateways[Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID] ?? null;
+            if ($stripe_gateway) {
+                $publishable_key = $stripe_gateway->get_publishable_key();
+                $test_mode = $stripe_gateway->test_mode;
+            }
+        }
+
+        // Fallback for direct option access if gateway not found
+        if (empty($publishable_key)) {
+            $stripe_settings = get_option('woocommerce_growtype_wc_stripe_settings', []);
+            $test_mode = isset($stripe_settings['test_mode']) && 'yes' === $stripe_settings['test_mode'];
+            $publishable_key = $test_mode
+                ? ($stripe_settings['publishable_key_test'] ?? '')
+                : ($stripe_settings['publishable_key_live'] ?? '');
+        }
         wp_localize_script(
             $this->growtype_wc,
             'growtype_wc_ajax',
@@ -124,6 +149,11 @@ class Growtype_Wc_Public
                 'cart_total' => $cart_total,
                 'user_id' => get_current_user_id(),
                 'email' => apply_filters('growtype_wc_get_user_email', $email),
+                'stripe' => [
+                    'publishable_key' => $publishable_key,
+                    'test_mode' => $test_mode,
+                    'success_url' => wc_get_checkout_url() . 'order-received/', // Default WC behavior
+                ]
             ]
         );
     }

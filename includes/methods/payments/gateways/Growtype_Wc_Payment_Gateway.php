@@ -57,7 +57,7 @@ class Growtype_Wc_Payment_Gateway
         include_once 'providers/Growtype_Wc_Payment_Gateway_Coinbase.php';
     }
 
-    public static function success_url($order_id, $payment_provider = null)
+    public static function success_url($order_id, $payment_provider = null, $include_session_id = false)
     {
         $order = wc_get_order($order_id);
 
@@ -69,10 +69,6 @@ class Growtype_Wc_Payment_Gateway
             'key' => $order->get_order_key(),
         ];
 
-        if ($payment_provider === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID) {
-            $query_data['checkout_session_id'] = '{CHECKOUT_SESSION_ID}';
-        }
-
         // Get the correct payment gateway object from the order
         $payment_method = $order->get_payment_method();
         $payment_gateway = WC()->payment_gateways()->payment_gateways()[$payment_method] ?? null;
@@ -81,7 +77,14 @@ class Growtype_Wc_Payment_Gateway
             return $order->get_checkout_order_received_url(); // fallback URL
         }
 
-        return add_query_arg($query_data, $payment_gateway->get_return_url($order));
+        $url = add_query_arg($query_data, $payment_gateway->get_return_url($order));
+
+        if ($payment_provider === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID && $include_session_id && !$order->is_paid()) {
+            $url = add_query_arg('checkout_session_id', '{CHECKOUT_SESSION_ID}', $url);
+            $url = str_replace(['%7B', '%7D'], ['{', '}'], $url);
+        }
+
+        return $url;
     }
 
     public static function cancel_url($order_id = null, $redirect_to_thankyou_page = false, $applied_coupons = null)

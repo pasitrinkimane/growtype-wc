@@ -126,8 +126,10 @@ function growtype_wc_get_subscriptions($args = [])
         ];
     }
 
+    $limit = $args['limit'] ?? 50;
+
     $query = new WP_Query([
-        'posts_per_page' => -1,
+        'posts_per_page' => $limit,
         'post_type' => 'growtype_wc_subs',
         'post_status' => 'any',
         'orderby' => 'post_date',

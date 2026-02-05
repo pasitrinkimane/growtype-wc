@@ -53,6 +53,9 @@ class Growtype_Wc_Order
             update_post_meta($post_id, '_start_date', wp_date('Y-m-d H:i:s'));
             update_post_meta($post_id, '_end_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
             update_post_meta($post_id, '_next_charge_date', wp_date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + ' . $subscription->get_data_key('billing_interval') . ' ' . $subscription->get_data_key('billing_period'))));
+
+            // Clear active subscription cache for this user
+            delete_transient('growtype_wc_user_has_active_sub_' . $user_id);
         }
 
         /**
@@ -76,24 +79,28 @@ class Growtype_Wc_Order
         $min_time_threshold = $current_time - ($min_age_in_minutes * MINUTE_IN_SECONDS);
         $period_start_time = $current_time - ($orders_period_in_minutes * MINUTE_IN_SECONDS);
 
-        $orders = wc_get_orders([
-            'customer' => $user_email,
-            'limit' => 1, // Check the last order only
-            'orderby' => 'date',
-            'order' => 'DESC',
-            'date_query' => [
-                'after' => date('Y-m-d H:i:s', $period_start_time), // Search orders created within the last 60 minutes
-            ],
-        ]);
+        try {
+            $orders = wc_get_orders([
+                'customer' => $user_email,
+                'limit' => 1, // Check the last order only
+                'orderby' => 'date',
+                'order' => 'DESC',
+                'date_query' => [
+                    'after' => date('Y-m-d H:i:s', $period_start_time), // Search orders created within the last 60 minutes
+                ],
+            ]);
 
-        if ($orders) {
-            $last_order = $orders[0];
+            if ($orders) {
+                $last_order = $orders[0];
 
-            $order_timestamp = $last_order->get_date_created()->getOffsetTimestamp(); // Get order time in site's timezone
+                $order_timestamp = $last_order->get_date_created()->getOffsetTimestamp(); // Get order time in site's timezone
 
-            if (!$last_order->is_paid() && $order_timestamp < $min_time_threshold) {
-                return $last_order->get_id();
+                if (!$last_order->is_paid() && $order_timestamp < $min_time_threshold) {
+                    return $last_order->get_id();
+                }
             }
+        } catch (Exception $e) {
+            error_log('Growtype Mail Error: Failed to fetch abandoned cart order for ' . $user_email . ' - ' . $e->getMessage());
         }
 
         return null;
