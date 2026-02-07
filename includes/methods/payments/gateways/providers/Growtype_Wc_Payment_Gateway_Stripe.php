@@ -490,6 +490,8 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                 ]
                             ],
                             'mode' => 'payment',
+                            // Always create a Stripe customer so we can charge upsells later
+                            'customer_creation' => 'always',
                             'success_url' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID, true),
                             'cancel_url' => $cancel_url,
                             'payment_intent_data' => [

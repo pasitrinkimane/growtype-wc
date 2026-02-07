@@ -199,6 +199,8 @@ class GrowtypeWcStripeProvider {
             });
 
             expressCheckout.on('error', (err) => {
+                this.handleStripeError(err);
+
                 const targetEl = document.querySelector(detail.container);
                 const parentEl = targetEl ? targetEl.parentElement : null;
                 if (parentEl) {
@@ -337,6 +339,7 @@ class GrowtypeWcStripeProvider {
                 this.handleFallback(detail);
             }
         } catch (err) {
+            this.handleStripeError(err);
             console.error('GrowtypeWcStripeProvider Error:', err);
             this.handleFallback(detail);
         }
@@ -410,6 +413,15 @@ class GrowtypeWcStripeProvider {
         if (loader) {
             loader.style.opacity = '0';
             setTimeout(() => loader.remove(), 300);
+        }
+    }
+
+    handleStripeError(err) {
+        if (!err) return;
+
+        const message = err.message || '';
+        if (message.includes('Another PaymentRequest UI is already showing')) {
+            alert('Another PaymentRequest UI is already showing in a different tab or window. Please close it before continuing.');
         }
     }
 }
