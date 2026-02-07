@@ -70,37 +70,59 @@ class Growtype_Wc_Order
         }
     }
 
+    private static $user_last_order_cache = [];
+
     /**
      * Check if the user has an unpaid, abandoned cart order
      */
     public static function get_abandoned_cart_order($user_email, $min_age_in_minutes = 10, $orders_period_in_minutes = 7200)
     {
+        if (!array_key_exists($user_email, self::$user_last_order_cache)) {
+            $current_time = current_time('timestamp');
+            $period_start_time = $current_time - ($orders_period_in_minutes * MINUTE_IN_SECONDS);
+            $order_info = null;
+
+            try {
+                $orders = wc_get_orders([
+                    'customer' => $user_email,
+                    'limit' => 1,
+                    'orderby' => 'date',
+                    'order' => 'DESC',
+                    'date_query' => [
+                        'after' => date('Y-m-d H:i:s', $period_start_time),
+                    ],
+                ]);
+
+                if ($orders) {
+                    $order = $orders[0];
+                    $order_info = [
+                        'id' => $order->get_id(),
+                        'status' => $order->get_status(),
+                        'is_paid' => $order->is_paid(),
+                        'timestamp' => $order->get_date_created()->getOffsetTimestamp(),
+                        'created_str' => $order->get_date_created()->date('Y-m-d H:i:s')
+                    ];
+                } else {
+                    error_log("Growtype Mail Debug: No recent orders found for $user_email");
+                }
+            } catch (Exception $e) {
+                error_log('Growtype Mail Error: Failed to fetch order - ' . $e->getMessage());
+            }
+
+            self::$user_last_order_cache[$user_email] = $order_info;
+        }
+
+        $order_info = self::$user_last_order_cache[$user_email];
+        
+        if (!$order_info) {
+            return null;
+        }
+
         $current_time = current_time('timestamp');
         $min_time_threshold = $current_time - ($min_age_in_minutes * MINUTE_IN_SECONDS);
-        $period_start_time = $current_time - ($orders_period_in_minutes * MINUTE_IN_SECONDS);
 
-        try {
-            $orders = wc_get_orders([
-                'customer' => $user_email,
-                'limit' => 1, // Check the last order only
-                'orderby' => 'date',
-                'order' => 'DESC',
-                'date_query' => [
-                    'after' => date('Y-m-d H:i:s', $period_start_time), // Search orders created within the last 60 minutes
-                ],
-            ]);
-
-            if ($orders) {
-                $last_order = $orders[0];
-
-                $order_timestamp = $last_order->get_date_created()->getOffsetTimestamp(); // Get order time in site's timezone
-
-                if (!$last_order->is_paid() && $order_timestamp < $min_time_threshold) {
-                    return $last_order->get_id();
-                }
-            }
-        } catch (Exception $e) {
-            error_log('Growtype Mail Error: Failed to fetch abandoned cart order for ' . $user_email . ' - ' . $e->getMessage());
+        if (!$order_info['is_paid'] && $order_info['timestamp'] < $min_time_threshold) {
+             return $order_info['id'];
         }
 
         return null;
