@@ -14,7 +14,10 @@ function growtype_wc_get_user_subscriptions($user_id = null): array
 
 function growtype_wc_user_has_active_subscription($user_id = null)
 {
+    if (growtype_child_all_premium_features_unlocked()) return true;
+
     $user_id = $user_id ?: get_current_user_id();
+
     if (!$user_id) return false;
 
     // 1. Static request-level cache

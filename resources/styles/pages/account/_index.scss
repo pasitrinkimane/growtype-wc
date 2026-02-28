@@ -29,7 +29,7 @@
     width: 100%;
     float: left;
 
-    & + .woocommerce-MyAccount-content {
+    &+.woocommerce-MyAccount-content {
       width: 100%;
     }
 
@@ -49,9 +49,11 @@
         width: calc(100% / 3);
         padding: 10px;
         margin: 0;
+
         @include bp-tablet() {
           width: 50%;
         }
+
         @include bp-phone-xl() {
           width: 100%;
           padding: 10px 0px;
@@ -132,7 +134,7 @@
   }
 
   .woocommerce-MyAccount-navigation {
-    & + .woocommerce-MyAccount-content {
+    &+.woocommerce-MyAccount-content {
       padding: 0 30px;
     }
   }
@@ -144,7 +146,7 @@
     min-height: 500px;
 
     .woocommerce-notices-wrapper {
-      > * {
+      >* {
         margin-bottom: 40px !important;
       }
     }
@@ -163,13 +165,15 @@
     color: white;
     border-radius: 10px;
     padding: 25px 30px;
-    margin-bottom: 35px;
+    margin-bottom: 25px;
+
     @include bp-phone-xl() {
       padding: 15px;
     }
 
     .b-info-header-cta {
       margin-right: 20px;
+
       @include bp-phone-xl() {
         margin-right: 15px;
       }

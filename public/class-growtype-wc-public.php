@@ -78,11 +78,6 @@ class Growtype_Wc_Public
         wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', ['jquery'], $this->version, true);
         wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', ['jquery'], $this->version, true);
         wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', ['jquery', 'growtype-wc-countdown'], $this->version, true);
-        
-        $stripe_settings = get_option('woocommerce_growtype_wc_stripe_settings', []);
-        if (isset($stripe_settings['enabled']) && 'yes' === $stripe_settings['enabled']) {
-            wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', [], null, true);
-        }
     }
 
     /**
