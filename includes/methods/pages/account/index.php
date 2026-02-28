@@ -133,6 +133,10 @@ function growtype_wc_woocommerce_account_extend_menu_items($items)
 
         $new_items[$key] = $item;
 
+        if ($key === 'orders' || (empty($new_items['earnings']) && $key === 'edit-account')) {
+             $new_items['earnings'] = growtype_wc_get_account_subpage_intro_details('earnings');
+        }
+
         /**
          * Purchased products tab
          */

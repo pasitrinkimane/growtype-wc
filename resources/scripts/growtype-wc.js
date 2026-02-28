@@ -14,6 +14,9 @@ import { growtypeWcStripeProvider } from "./providers/stripe/growtypeWcStripePro
 
 window.growtype_wc = {}
 
+window.growtypeWcPaymentButton = growtypeWcPaymentButton;
+window.growtypeWcStripeProvider = growtypeWcStripeProvider;
+
 jQuery(document).ready(() => {
     justpurchased();
     message();

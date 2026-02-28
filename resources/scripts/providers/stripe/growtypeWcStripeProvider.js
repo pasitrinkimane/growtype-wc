@@ -29,7 +29,7 @@ class GrowtypeWcStripeProvider {
     async mountExpressCheckout(detail) {
         const config = await this.getConfig();
 
-        if (!config || !this.initStripe(config)) {
+        if (!config || !await this.initStripe(config)) {
             this.handleFallback(detail);
             return;
         }
@@ -233,7 +233,7 @@ class GrowtypeWcStripeProvider {
         return config;
     }
 
-    initStripe(config) {
+    async initStripe(config) {
         if (!config || !config.publishable_key) {
             console.error('GrowtypeWcStripeProvider: Publishable key is missing');
             return false;
@@ -241,8 +241,12 @@ class GrowtypeWcStripeProvider {
 
         if (!this.stripe) {
             if (typeof Stripe === 'undefined') {
-                console.error('GrowtypeWcStripeProvider: Stripe.js not loaded');
-                return false;
+                try {
+                    await this.loadStripeScript();
+                } catch (e) {
+                    console.error('GrowtypeWcStripeProvider: Stripe.js not loaded', e);
+                    return false;
+                }
             }
             try {
                 this.stripe = Stripe(config.publishable_key);
@@ -252,6 +256,24 @@ class GrowtypeWcStripeProvider {
             }
         }
         return true;
+    }
+
+    loadStripeScript() {
+        if (typeof Stripe !== 'undefined') {
+            return Promise.resolve(true);
+        }
+
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/';
+            script.async = true;
+            script.onload = () => {
+                console.log('GrowtypeWcStripeProvider: Stripe.js loaded dynamically');
+                resolve(true);
+            };
+            script.onerror = () => reject(new Error('Stripe.js failed to load.'));
+            document.head.appendChild(script);
+        });
     }
 
     async finalizeOrder(config, orderId, paymentIntentId) {
@@ -295,7 +317,7 @@ class GrowtypeWcStripeProvider {
     async handlePaymentRequest(detail) {
         console.log('GrowtypeWcStripeProvider: Handling manual request', detail);
         const config = await this.getConfig();
-        if (!config || !this.initStripe(config)) {
+        if (!config || !await this.initStripe(config)) {
             this.handleFallback(detail);
             return;
         }

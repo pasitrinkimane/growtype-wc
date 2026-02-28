@@ -102,8 +102,6 @@ class Growtype_Wc_Order
                         'timestamp' => $order->get_date_created()->getOffsetTimestamp(),
                         'created_str' => $order->get_date_created()->date('Y-m-d H:i:s')
                     ];
-                } else {
-                    error_log("Growtype Mail Debug: No recent orders found for $user_email");
                 }
             } catch (Exception $e) {
                 error_log('Growtype Mail Error: Failed to fetch order - ' . $e->getMessage());
@@ -126,6 +124,23 @@ class Growtype_Wc_Order
         }
 
         return null;
+    }
+
+    public static function get_abandoned_cart_purchase_url($user_email, $min_age_in_minutes = 10, $orders_period_in_minutes = 7200)
+    {
+        $order_id = self::get_abandoned_cart_order($user_email, $min_age_in_minutes, $orders_period_in_minutes);
+
+        if (empty($order_id)) {
+            return null;
+        }
+
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            return null;
+        }
+
+        return $order->get_checkout_payment_url();
     }
 
     public static function growtype_wc_get_items_with_upsells($order, $types = 'line_item')
