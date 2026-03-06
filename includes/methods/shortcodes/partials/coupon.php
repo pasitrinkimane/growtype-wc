@@ -151,7 +151,7 @@ class Growtype_Wc_Coupon_Shortcode
                 ?>
                 <div class="woocommerce-form-coupon-discount">
                     <div class="woocommerce-message">
-                        <?php echo sprintf('Code "%s" was applied with a discount of %s.', esc_html($applied_coupon_code), esc_html($discount_amount)); ?>
+                        <?php echo sprintf('Code "%s" was applied with extra discount of %s.', esc_html($applied_coupon_code), esc_html($discount_amount)); ?>
                         <button type="button" class="btn-close" aria-label="Close"></button>
                     </div>
                 </div>
