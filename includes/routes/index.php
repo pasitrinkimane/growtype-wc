@@ -43,7 +43,8 @@ add_action('template_redirect', function () {
      * Check if login page and redirect accordingly
      */
     if (!is_user_logged_in() && growtype_wc_is_account_page() && class_exists('Growtype_Form') && !empty(growtype_form_login_page_url())) {
-        wp_redirect(growtype_form_login_page_url());
+        $redirect_after = home_url($_SERVER['REQUEST_URI'] ?? '');
+        wp_safe_redirect(growtype_form_login_page_url(['redirect_after' => $redirect_after]));
         exit;
     }
 
