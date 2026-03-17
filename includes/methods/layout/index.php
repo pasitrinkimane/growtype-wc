@@ -104,6 +104,5 @@ function growtype_wc_extend_body_classes($classes)
             $classes[] = 'single-item-available';
         }
     }
-
     return $classes;
 }

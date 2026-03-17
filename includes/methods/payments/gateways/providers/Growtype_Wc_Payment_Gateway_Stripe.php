@@ -195,10 +195,169 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             echo wpautop(wptexturize($description));
         }
 
+        if (is_account_page() && is_wc_endpoint_url('add-payment-method')) {
+            $this->render_add_payment_method_fields();
+            return;
+        }
+
         $cc_form = new WC_Payment_Gateway_CC();
         $cc_form->id = $this->id;
         $cc_form->supports = $this->supports;
         $cc_form->form();
+    }
+
+    protected function render_add_payment_method_fields()
+    {
+        ?>
+        <fieldset id="wc-<?php echo esc_attr($this->id); ?>-cc-form" class="wc-credit-card-form wc-payment-form">
+            <p class="form-row form-row-wide">
+                <label for="<?php echo esc_attr($this->id); ?>-card-holder-name"><?php esc_html_e('Name on card', 'woocommerce'); ?>&nbsp;<span class="required">*</span></label>
+                <input id="<?php echo esc_attr($this->id); ?>-card-holder-name" class="input-text wc-credit-card-form-card-holder-name" inputmode="text" autocomplete="cc-name" autocorrect="no" autocapitalize="no" spellcheck="no" type="text" placeholder="<?php esc_attr_e('Full name', 'growtype-wc'); ?>" name="<?php echo esc_attr($this->id); ?>_card_holder_name">
+            </p>
+            <p class="form-row form-row-wide">
+                <label for="<?php echo esc_attr($this->id); ?>-card-number"><?php esc_html_e('Card number', 'woocommerce'); ?>&nbsp;<span class="required">*</span></label>
+                <input id="<?php echo esc_attr($this->id); ?>-card-number" class="input-text wc-credit-card-form-card-number" inputmode="numeric" autocomplete="cc-number" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" placeholder="•••• •••• •••• ••••" name="<?php echo esc_attr($this->id); ?>_card_number">
+            </p>
+            <p class="form-row form-row-first">
+                <label for="<?php echo esc_attr($this->id); ?>-card-expiry"><?php esc_html_e('Expiry (MM/YY)', 'woocommerce'); ?>&nbsp;<span class="required">*</span></label>
+                <input id="<?php echo esc_attr($this->id); ?>-card-expiry" class="input-text wc-credit-card-form-card-expiry" inputmode="numeric" autocomplete="cc-exp" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" placeholder="MM / YY" name="<?php echo esc_attr($this->id); ?>_card_expiry">
+            </p>
+            <p class="form-row form-row-last">
+                <label for="<?php echo esc_attr($this->id); ?>-card-cvc"><?php esc_html_e('Card code', 'woocommerce'); ?>&nbsp;<span class="required">*</span></label>
+                <input id="<?php echo esc_attr($this->id); ?>-card-cvc" class="input-text wc-credit-card-form-card-cvc" inputmode="numeric" autocomplete="off" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" maxlength="4" placeholder="CVC" style="width:100px" name="<?php echo esc_attr($this->id); ?>_card_cvc">
+            </p>
+            <div class="clear"></div>
+        </fieldset>
+        <?php
+    }
+
+    public function add_payment_method()
+    {
+        if (!is_user_logged_in()) {
+            wc_add_notice(__('You must be logged in to add a payment method.', 'growtype-wc'), 'error');
+            return ['result' => 'failure'];
+        }
+
+        $holder_name = sanitize_text_field(wp_unslash($_POST[$this->id . '_card_holder_name'] ?? ''));
+        $card_number = preg_replace('/\D+/', '', (string)wp_unslash($_POST[$this->id . '_card_number'] ?? ''));
+        $card_expiry = sanitize_text_field(wp_unslash($_POST[$this->id . '_card_expiry'] ?? ''));
+        $card_cvc = preg_replace('/\D+/', '', (string)wp_unslash($_POST[$this->id . '_card_cvc'] ?? ''));
+
+        $passed_validation = true;
+
+        if (empty($holder_name)) {
+            wc_add_notice(__('Please enter card holder name.', 'growtype-wc'), 'error');
+            $passed_validation = false;
+        }
+
+        if (!growtype_wc_card_number_is_valid($card_number)) {
+            wc_add_notice(__('Please enter a valid card number.', 'growtype-wc'), 'error');
+            $passed_validation = false;
+        }
+
+        if (!growtype_wc_card_expiry_is_valid($card_expiry)) {
+            wc_add_notice(__('Please enter a valid card expiry date.', 'growtype-wc'), 'error');
+            $passed_validation = false;
+        }
+
+        if (empty($card_cvc)) {
+            wc_add_notice(__('Please enter card cvc.', 'growtype-wc'), 'error');
+            $passed_validation = false;
+        }
+
+        if (!$passed_validation) {
+            return ['result' => 'failure'];
+        }
+
+        [$exp_month, $exp_year] = array_pad(array_map('trim', explode('/', $card_expiry)), 2, '');
+        $exp_month = absint($exp_month);
+        $exp_year = absint(strlen($exp_year) === 2 ? '20' . $exp_year : $exp_year);
+
+        if ($exp_month < 1 || $exp_month > 12 || $exp_year < (int)gmdate('Y')) {
+            wc_add_notice(__('Please enter a valid card expiry date.', 'growtype-wc'), 'error');
+            return ['result' => 'failure'];
+        }
+
+        try {
+            $user_id = get_current_user_id();
+            $user = get_userdata($user_id);
+
+            $stripe = new \Stripe\StripeClient($this->secret_key);
+
+            $customer_id = get_user_meta($user_id, 'stripe_customer_id', true);
+
+            if (empty($customer_id)) {
+                $customer = $stripe->customers->create([
+                    'name' => $holder_name,
+                    'email' => $user->user_email ?? '',
+                    'metadata' => [
+                        'user_id' => $user_id,
+                        'site' => home_url(),
+                    ],
+                ]);
+                $customer_id = $customer->id ?? '';
+
+                if (empty($customer_id)) {
+                    throw new \Exception(__('Unable to create customer profile.', 'growtype-wc'));
+                }
+
+                update_user_meta($user_id, 'stripe_customer_id', $customer_id);
+            }
+
+            $payment_method = $stripe->paymentMethods->create([
+                'type' => 'card',
+                'card' => [
+                    'number' => $card_number,
+                    'exp_month' => $exp_month,
+                    'exp_year' => $exp_year,
+                    'cvc' => $card_cvc,
+                ],
+                'billing_details' => [
+                    'name' => $holder_name,
+                    'email' => $user->user_email ?? '',
+                ],
+            ]);
+
+            if (empty($payment_method->id)) {
+                throw new \Exception(__('Unable to create payment method.', 'growtype-wc'));
+            }
+
+            $stripe->paymentMethods->attach($payment_method->id, [
+                'customer' => $customer_id,
+            ]);
+
+            $stripe->customers->update($customer_id, [
+                'invoice_settings' => [
+                    'default_payment_method' => $payment_method->id,
+                ],
+            ]);
+
+            $token = new WC_Payment_Token_CC();
+            $token->set_token($payment_method->id);
+            $token->set_gateway_id($this->id);
+            $token->set_user_id($user_id);
+            $token->set_card_type($payment_method->card->brand ?? 'card');
+            $token->set_last4($payment_method->card->last4 ?? substr($card_number, -4));
+            $token->set_expiry_month($payment_method->card->exp_month ?? $exp_month);
+            $token->set_expiry_year($payment_method->card->exp_year ?? $exp_year);
+            $token->set_default(true);
+
+            if (!$token->save()) {
+                throw new \Exception(__('Unable to save payment method.', 'growtype-wc'));
+            }
+
+            wc_add_notice(__('Payment method successfully added.', 'growtype-wc'));
+
+            return [
+                'result' => 'success',
+                'redirect' => wc_get_endpoint_url('payment-methods'),
+            ];
+        } catch (\Throwable $e) {
+            error_log('growtype_wc_add_payment_method_stripe_error: ' . $e->getMessage());
+            wc_add_notice($e->getMessage(), 'error');
+
+            return ['result' => 'failure'];
+        }
     }
 
     public function subscription_details($stripe_subscription_id, $existing_subscription_id)
@@ -262,14 +421,14 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         // 3) Validate session or intent ID and guard “run once”
         $session_id = sanitize_text_field($_GET['checkout_session_id'] ?? '');
         $intent_id = sanitize_text_field($_GET['payment_intent'] ?? '');
-        
+
         $saved_session_id = $order->get_meta('stripe_session_id');
         $saved_intent_id = $order->get_meta('stripe_intent_id');
 
         if (!$session_id && !$intent_id) {
             return;
         }
-        
+
         if ($session_id && $session_id !== $saved_session_id) {
             return;
         }
@@ -285,13 +444,13 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         $stripe = new \Stripe\StripeClient($this->secret_key);
 
         $customer_id = '';
-        
+
         // 4) Fetch the Checkout Session or Payment Intent
         try {
             if ($session_id) {
                 $session = $stripe->checkout->sessions->retrieve($session_id);
                 $customer_id = $session->customer ?? '';
-                
+
                 // Sync email
                 if ($email = $session->customer_details->email ?? '') {
                     Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists($order->get_customer_id(), $email);
@@ -310,6 +469,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                         $customer_id = $pi->customer;
                         $order->update_meta_data('stripe_transaction_id', $pi->id);
                         $order->update_meta_data('stripe_payment_method_id', $pi->payment_method);
+                        Growtype_Wc_Payment::persist_stripe_display_details_from_payment_intent($order, $pi);
                     }
                 }
             } elseif ($intent_id) {
@@ -318,6 +478,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                     $customer_id = $pi->customer;
                     $order->update_meta_data('stripe_transaction_id', $pi->id);
                     $order->update_meta_data('stripe_payment_method_id', $pi->payment_method);
+                    Growtype_Wc_Payment::persist_stripe_display_details_from_payment_intent($order, $pi);
                 }
             }
         } catch (\Exception $e) {
@@ -329,7 +490,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             update_user_meta($order->get_customer_id(), 'stripe_customer_id', $customer_id);
             $order->update_meta_data('stripe_customer_id', $customer_id);
         }
-        
+
         $order->save();
         $order->payment_complete();
     }
@@ -368,7 +529,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                 // Use shared method to create order
                 $order = Growtype_Wc_Payment::create_instant_order($product_id, 1, $this->id);
                 $product = wc_get_product($product_id); // Re-fetch product object if needed for logic below
-                
+
                 $order_id = $order->get_id();
 
                 $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($order_id, false, WC()->cart->get_applied_coupons());
@@ -574,7 +735,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         // 4) Prepare Stripe off-session charge
         $customer_id = $parent->get_meta('stripe_customer_id');
-        
+
         // Fallback to user meta if order meta is missing
         if (!$customer_id && $parent->get_customer_id()) {
             $customer_id = get_user_meta($parent->get_customer_id(), 'stripe_customer_id', true);
@@ -589,6 +750,9 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         if (!$payment_method) {
             throw new \Exception('Missing Stripe payment method.');
         }
+
+        $upsell_order->update_meta_data('stripe_customer_id', $customer_id);
+        $upsell_order->update_meta_data('stripe_payment_method_id', $payment_method);
 
         $stripe = new \Stripe\StripeClient($this->secret_key);
 
@@ -622,11 +786,11 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         // Inherit specific payment method info (Google Pay, Apple Pay etc) from parent
         $parent_method_type = $parent->get_meta('_stripe_payment_method_type');
         $parent_method_title = $parent->get_payment_method_title();
-        
+
         if ($parent_method_type) {
             $upsell_order->update_meta_data('_stripe_payment_method_type', $parent_method_type);
         }
-        
+
         if ($parent_method_title) {
             $upsell_order->set_payment_method_title($parent_method_title);
         }
@@ -641,6 +805,13 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         // 6) Save everything
         $upsell_order->save();
 
-        return $pi;
+        if ($upsell_order->get_customer_id() && $customer_id) {
+            update_user_meta($upsell_order->get_customer_id(), 'stripe_customer_id', $customer_id);
+        }
+
+        return [
+            'pi' => $pi,
+            'order_id' => $upsell_order->get_id()
+        ];
     }
 }

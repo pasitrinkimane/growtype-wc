@@ -50,6 +50,7 @@ class GrowtypeWcPaymentButton {
     renderStripeButton(container, method, type, label) {
         // Standard data- attributes with fallback to custom attributes
         let fallbackUrl = container.dataset.fallback || container.getAttribute('data-fallback');
+        const returnUrl = container.dataset.returnUrl || container.getAttribute('data-return-url') || '';
 
         // If container is an anchor and no fallback set, use href
         if (!fallbackUrl && container.tagName === 'A') {
@@ -79,6 +80,14 @@ class GrowtypeWcPaymentButton {
         // 2. Base Classes & Styles - Inherit from container
         el.className = container.className || '';
         if (productId) el.dataset.productId = productId;
+        if (returnUrl) {
+            el.dataset.returnUrl = returnUrl;
+            el.setAttribute('data-return-url', returnUrl);
+        }
+        if (fallbackUrl) {
+            el.dataset.fallback = fallbackUrl;
+            el.setAttribute('data-fallback', fallbackUrl);
+        }
         if (label) el.textContent = label;
 
         el.style.cssText = container.style.cssText || '';
@@ -135,7 +144,9 @@ class GrowtypeWcPaymentButton {
                     method: method,
                     container: `#${mountId} .stripe-express-element-target`,
                     productId: productId,
-                    label: label
+                    label: label,
+                    returnUrl: returnUrl,
+                    fallback: fallbackUrl
                 }
             }));
 
@@ -185,5 +196,3 @@ function growtypeWcPaymentButton() {
 }
 
 export { growtypeWcPaymentButton };
-
-

@@ -7,6 +7,7 @@ import { productVariation } from "./components/product-variation"
 import { selectCart } from "./components/select-cart";
 import { message } from "./components/message";
 import { justpurchased } from "./components/popup/justpurchased";
+import { upsellModal } from "./components/upsell-modal";
 import { sidebar } from "./sidebar";
 
 import { growtypeWcPaymentButton } from "./components/buttons/GrowtypeWcPaymentButton";
@@ -18,7 +19,11 @@ window.growtypeWcPaymentButton = growtypeWcPaymentButton;
 window.growtypeWcStripeProvider = growtypeWcStripeProvider;
 
 jQuery(document).ready(() => {
+    growtypeWcStripeProvider();
+    growtypeWcPaymentButton();
+
     justpurchased();
+    upsellModal();
     message();
     productSlider();
     productsSlider();
@@ -28,7 +33,8 @@ jQuery(document).ready(() => {
     selectCart();
     countdown();
     sidebar();
+});
 
-    growtypeWcStripeProvider();
+jQuery(document).on('growtypeModalLoaded shown.bs.modal', () => {
     growtypeWcPaymentButton();
 });

@@ -32,6 +32,7 @@ function growtype_wc_user_has_active_subscription($user_id = null)
 
     if ($cached_status !== false) {
         $has_active = $cached_status === 'yes';
+        $has_active = apply_filters('growtype_wc_user_has_active_subscription', $has_active, $user_id);
         $subscription_check_cache[$user_id] = $has_active;
         return $has_active;
     }
@@ -44,6 +45,7 @@ function growtype_wc_user_has_active_subscription($user_id = null)
     ]);
 
     $has_active = !empty($subscriptions);
+    $has_active = apply_filters('growtype_wc_user_has_active_subscription', $has_active, $user_id);
 
     // Save to both caches
     set_transient($transient_name, $has_active ? 'yes' : 'no', 5 * MINUTE_IN_SECONDS);

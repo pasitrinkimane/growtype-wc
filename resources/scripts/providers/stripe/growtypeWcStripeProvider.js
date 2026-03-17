@@ -133,7 +133,7 @@ class GrowtypeWcStripeProvider {
             });
 
             expressCheckout.on('click', (event) => {
-                this.intentPromise = this.fetchIntent(config, productId, event.expressPaymentType);
+                this.intentPromise = this.fetchIntent(config, productId, event.expressPaymentType, detail.returnUrl || '');
 
                 // Resolve immediately to avoid 1s timeout and maximize responsiveness
                 event.resolve();
@@ -145,7 +145,7 @@ class GrowtypeWcStripeProvider {
                 try {
                     // Wait for the intent to be created if it was started in 'click'
                     if (!this.intentPromise) {
-                        this.intentPromise = this.fetchIntent(config, productId);
+                        this.intentPromise = this.fetchIntent(config, productId, '', detail.returnUrl || '');
                     }
 
                     const intentResponse = await this.intentPromise;
@@ -301,7 +301,7 @@ class GrowtypeWcStripeProvider {
         });
     }
 
-    async fetchIntent(config, productId, paymentMethodType = '') {
+    async fetchIntent(config, productId, paymentMethodType = '', returnUrl = '') {
         return jQuery.ajax({
             url: config.ajax_url,
             method: 'POST',
@@ -309,6 +309,7 @@ class GrowtypeWcStripeProvider {
                 action: 'growtype_wc_create_payment_intent',
                 product_id: productId,
                 payment_method_type: paymentMethodType,
+                return_url: returnUrl,
                 nonce: config.nonce || ''
             }
         });
@@ -324,7 +325,7 @@ class GrowtypeWcStripeProvider {
 
         try {
             const productId = detail.productId || this.getProductIdFromPage();
-            const response = await this.fetchIntent(config, productId);
+            const response = await this.fetchIntent(config, productId, '', detail.returnUrl || '');
 
             if (!response.success) throw new Error(response.data.message);
 
