@@ -2,6 +2,19 @@
   border-color: $color-error;
 }
 
-.woocommerce form .form-row.woocommerce-invalid label, .woocommerce-page form .form-row.woocommerce-invalid label {
+.woocommerce form .form-row.woocommerce-invalid label,
+.woocommerce-page form .form-row.woocommerce-invalid label {
   color: $color-error;
+}
+
+#add_payment_method #payment div.payment_box .wc-credit-card-form-card-cvc,
+#add_payment_method #payment div.payment_box .wc-credit-card-form-card-expiry,
+#add_payment_method #payment div.payment_box .wc-credit-card-form-card-number,
+.woocommerce-cart #payment div.payment_box .wc-credit-card-form-card-cvc,
+.woocommerce-cart #payment div.payment_box .wc-credit-card-form-card-expiry,
+.woocommerce-cart #payment div.payment_box .wc-credit-card-form-card-number,
+.woocommerce-checkout #payment div.payment_box .wc-credit-card-form-card-cvc,
+.woocommerce-checkout #payment div.payment_box .wc-credit-card-form-card-expiry,
+.woocommerce-checkout #payment div.payment_box .wc-credit-card-form-card-number {
+  font-size: 16px;
 }

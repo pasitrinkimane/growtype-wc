@@ -220,7 +220,7 @@ class Growtype_Wc_Banner_Shortcode
         }
 
         if (!isset($current_banner['discount_label'])) {
-            $current_banner['discount_label'] = sprintf(__('GET %s OFF', 'growtype-child'), $params['discount_amount'] . '%');
+            $current_banner['discount_label'] = sprintf(__('GET %s OFF', 'growtype-wc'), $params['discount_amount'] . '%');
         }
 
         if (!isset($current_banner['show_countdown'])) {

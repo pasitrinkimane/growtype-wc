@@ -263,6 +263,37 @@ function growtype_wc_woocommerce_add_cart_item_data($cart_item_data)
 }
 
 /**
+ * Enforce true single-item carts after WooCommerce finishes adding the product.
+ *
+ * The pre-add cleanup above can still race with WooCommerce's own add-to-cart flow,
+ * which leaves duplicate/default items in the cart on plans/credits purchase pages.
+ * Keeping only the cart item created by the current request makes the final cart deterministic.
+ */
+add_action('woocommerce_add_to_cart', 'growtype_wc_enforce_single_item_cart_after_add', 30, 6);
+function growtype_wc_enforce_single_item_cart_after_add($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data)
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return;
+    }
+
+    if (!growtype_wc_single_item_purchase_mode_is_enabled()) {
+        return;
+    }
+
+    foreach (WC()->cart->get_cart() as $key => $item) {
+        if ($key !== $cart_item_key) {
+            WC()->cart->remove_cart_item($key);
+        }
+    }
+
+    $current_item = WC()->cart->get_cart_item($cart_item_key);
+
+    if (!empty($current_item) && (int)($current_item['quantity'] ?? 0) > 1) {
+        WC()->cart->set_quantity($cart_item_key, 1, true);
+    }
+}
+
+/**
  * Added to cart ajax
  */
 add_action('woocommerce_ajax_added_to_cart', 'growtype_wc_woocommerce_ajax_added_to_cart');

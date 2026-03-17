@@ -102,6 +102,38 @@ class Growtype_Wc_Payment_Gateway
             }
         }
 
+        $explicit_return_url = '';
+
+        if ($order_id) {
+            $order = wc_get_order($order_id);
+
+            if ($order) {
+                $explicit_return_url = (string)$order->get_meta('_growtype_return_after_payment_url');
+            }
+        }
+
+        if (empty($explicit_return_url) && isset($_GET['growtype_return_after_payment_url'])) {
+            $explicit_return_url = rawurldecode(wp_unslash($_GET['growtype_return_after_payment_url']));
+        }
+
+        if (!empty($explicit_return_url)) {
+            if (class_exists('Growtype_Wc_Payment')) {
+                $explicit_return_url = Growtype_Wc_Payment::sanitize_return_url($explicit_return_url);
+            } else {
+                $explicit_return_url = esc_url_raw($explicit_return_url);
+            }
+
+            if (!empty($explicit_return_url)) {
+                if (!empty($applied_coupons)) {
+                    $applied_coupon = reset($applied_coupons);
+                    $coupon = new WC_Coupon($applied_coupon);
+                    $explicit_return_url = add_query_arg('growtype_wc_coupon', $coupon->get_code(), $explicit_return_url);
+                }
+
+                return esc_url_raw($explicit_return_url);
+            }
+        }
+
         // 2) Otherwise, return “current page” minus checkout/query args.
         //    Start with the fully-qualified current URL:
         $current_url = (is_ssl() ? 'https://' : 'http://')
