@@ -12,19 +12,25 @@ class Growtype_Wc_Admin_Pages
         /**
          * Settings
          */
-        require_once 'settings/growtype-wc-admin-settings.php';
+        require GROWTYPE_WC_PATH . '/admin/pages/settings/growtype-wc-admin-settings.php';
         new Growtype_Wc_Admin_Settings();
 
         /**
          * Appearance
          */
-        require_once 'appearance/growtype-wc-admin-appearance.php';
+        require GROWTYPE_WC_PATH . '/admin/pages/appearance/growtype-wc-admin-appearance.php';
         new Growtype_Wc_Admin_Appearance();
 
         /**
          * Orders
          */
-        require_once 'orders/growtype-wc-admin-orders.php';
+        require GROWTYPE_WC_PATH . '/admin/pages/orders/growtype-wc-admin-orders.php';
         new Growtype_Wc_Admin_Orders();
+
+        /**
+         * WP Users tweaks
+         */
+        require GROWTYPE_WC_PATH . '/admin/pages/users/growtype-wc-admin-users.php';
+        new Growtype_Wc_Admin_Users();
     }
 }

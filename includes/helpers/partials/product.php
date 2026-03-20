@@ -92,7 +92,8 @@ function growtype_wc_render_products($query_args, $params = [])
         if ($params['catalog_preview_style'] === 'table') {
             echo growtype_wc_include_view('woocommerce.components.table.product-table', ['products' => $products]);
         } else {
-            while ($products->have_posts()) : $products->the_post();
+            while ($products->have_posts()):
+                $products->the_post();
                 echo growtype_wc_include_view('woocommerce.content-product', ['params' => $params]);
             endwhile;
         }

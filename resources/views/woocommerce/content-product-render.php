@@ -1,4 +1,4 @@
-<li <?php echo $classes ?>>
+<li <?php echo $classes ?> data-growtype-analytics-track-id="<?php echo esc_attr($product->get_id()); ?>" data-growtype-analytics-track-name="<?php echo esc_attr($product->get_name()); ?>">
     <?php
     /**
      * Hook: woocommerce_before_shop_loop_item.
