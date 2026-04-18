@@ -13,16 +13,21 @@ class Growtype_Wc_Upsell_Modal
 
     public static function render_modal()
     {
-        $is_allowed = apply_filters('growtype_wc_upsell_modal_render_allowed', is_user_logged_in());
+        $user_id = get_current_user_id();
 
-        if (!$is_allowed) {
-            return;
+        if (self::is_forced_display()) {
+            $queue_ids = self::get_forced_queue_ids();
+            $is_allowed = true;
+        } else {
+            if (!is_user_logged_in()) {
+                return;
+            }
+
+            $queue_ids = Growtype_Wc_Upsell_Queue::get_product_ids($user_id);
+            $is_allowed = apply_filters('growtype_wc_upsell_modal_render_allowed', !empty($queue_ids));
         }
 
-        $user_id = get_current_user_id();
-        $queue_ids = Growtype_Wc_Upsell_Queue::get_validated_queue($user_id);
-
-        if (empty($queue_ids)) {
+        if (!$is_allowed) {
             return;
         }
 
@@ -184,5 +189,27 @@ class Growtype_Wc_Upsell_Modal
                     data-return-url="' . esc_url($return_url) . '"
                     data-fallback="' . esc_url($fallback_url) . '">
                 </div>';
+    }
+
+    /**
+     * Check if we should force the display via URL parameter.
+     */
+    public static function is_forced_display(): bool
+    {
+        return !empty($_GET[Growtype_Wc_Upsell::FORCE_TRIGGER_QUERY_PARAM]);
+    }
+
+    /**
+     * Build a queue containing all active upsells from the catalog.
+     */
+    public static function get_forced_queue_ids(): array
+    {
+        if (!class_exists('Growtype_Wc_Upsell_Catalog')) {
+            return [];
+        }
+
+        return array_map(function ($product) {
+            return $product->get_id();
+        }, Growtype_Wc_Upsell_Catalog::get_products());
     }
 }
