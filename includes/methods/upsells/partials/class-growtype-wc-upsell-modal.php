@@ -151,6 +151,8 @@ class Growtype_Wc_Upsell_Modal
             $saved_payment_url = Growtype_Wc_Payment::get_repeat_purchase_url($product_id, $return_url);
         }
 
+        $saved_payment_url = apply_filters('growtype_wc_upsell_modal_payment_url', $saved_payment_url, $product, $return_url);
+
         if (!empty($saved_payment_url)) {
             return '<div class="gwc-upsell-payment-instant">
                         <a href="' . esc_url($saved_payment_url) . '" class="btn btn-primary btn-lg w-100 mx-auto"
@@ -168,6 +170,8 @@ class Growtype_Wc_Upsell_Modal
                 $return_query_key => rawurlencode($return_url),
             ], $fallback_url);
         }
+
+        $fallback_url = apply_filters('growtype_wc_upsell_modal_fallback_url', $fallback_url, $product, $return_url);
 
         return '<div class="growtype-wc-payment-button btn btn-primary btn-lg w-100 mx-auto"
                     style="font-size: 1.05rem; min-height: 50px;"

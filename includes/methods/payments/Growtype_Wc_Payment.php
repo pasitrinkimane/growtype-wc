@@ -26,12 +26,96 @@ class Growtype_Wc_Payment
 
         add_action('wp_ajax_growtype_wc_finalize_order', [$this, 'ajax_finalize_order']);
         add_action('wp_ajax_nopriv_growtype_wc_finalize_order', [$this, 'ajax_finalize_order']);
+
+        add_action('wp_footer', [$this, 'render_upsell_error_alert']);
     }
 
     protected function load_methods()
     {
         include_once __DIR__ . '/gateways/Growtype_Wc_Payment_Gateway.php';
         new Growtype_Wc_Payment_Gateway();
+    }
+
+    /**
+     * Show a JS alert when an upsell charge fails and the user is redirected back.
+     * The alert includes the error message and a link to update their payment method.
+     */
+    public function render_upsell_error_alert()
+    {
+        if (empty($_GET['upsell_failed'])) {
+            return;
+        }
+
+        $error_msg = sanitize_text_field(urldecode($_GET['upsell_error'] ?? 'Payment failed. Please try again.'));
+        $payment_methods_url = '/my-account/payment-methods/';
+        ?>
+        <style>
+        #gwc-upsell-error-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            min-width: 320px;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,.18);
+            border-radius: 10px;
+            padding: 16px 20px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #664d03;
+            font-size: 15px;
+            line-height: 1.5;
+            animation: gwc-slide-down .35s ease;
+        }
+        @keyframes gwc-slide-down {
+            from { opacity: 0; top: 0; }
+            to   { opacity: 1; top: 20px; }
+        }
+        #gwc-upsell-error-alert .gwc-alert-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            color: #664d03;
+            margin-left: 12px;
+        }
+        #gwc-upsell-error-alert a {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        </style>
+        <script>
+        (function () {
+            var cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('upsell_failed');
+            cleanUrl.searchParams.delete('upsell_error');
+            window.history.replaceState({}, '', cleanUrl.toString());
+
+            var msg  = <?php echo wp_json_encode($error_msg); ?>;
+            var link = <?php echo wp_json_encode($payment_methods_url); ?>;
+
+            var el = document.createElement('div');
+            el.id = 'gwc-upsell-error-alert';
+            el.innerHTML =
+                '<button class="gwc-alert-close" aria-label="Close">&times;</button>' +
+                '<strong>Payment failed:</strong> ' + msg +
+                '<br><br>Please <a href="' + link + '">update your payment method</a> to continue.';
+
+            document.body.appendChild(el);
+
+            el.querySelector('.gwc-alert-close').addEventListener('click', function () {
+                el.remove();
+            });
+
+            // Auto-dismiss after 8s
+            setTimeout(function () { if (el.parentNode) el.remove(); }, 8000);
+        })();
+        </script>
+        <?php
     }
 
     public static function disabled_payment_methods_notice(): string
@@ -93,7 +177,9 @@ class Growtype_Wc_Payment
             ], $url);
         }
 
-        return wp_nonce_url($url, self::CHARGE_INTENT_NONCE_ACTION);
+        $url = wp_nonce_url($url, self::CHARGE_INTENT_NONCE_ACTION);
+
+        return apply_filters('growtype_wc_payment_repeat_purchase_url', $url, $product_id, $return_url, $user_id);
     }
 
     public static function user_can_charge_with_saved_payment(?int $user_id = null): bool
@@ -710,7 +796,19 @@ class Growtype_Wc_Payment
         } catch (\Exception $e) {
             $this->release_instant_charge_lock($lock_key);
             error_log('Upsell endpoint error: ' . $e->getMessage());
-            wp_die('Upsell charge failed: ' . esc_html($e->getMessage()), 'Error', ['response' => 500]);
+
+            $back_url = !empty($explicit_return_url)
+                ? $explicit_return_url
+                : (wp_get_referer() ?: home_url('/'));
+
+            $back_url = remove_query_arg(['action', 'order_id', 'product_id', '_wpnonce', self::RETURN_URL_QUERY_ARG], $back_url);
+            $back_url = add_query_arg([
+                'upsell_error'  => rawurlencode($e->getMessage()),
+                'upsell_failed' => '1',
+            ], $back_url);
+
+            wp_safe_redirect($back_url);
+            exit;
         }
     }
 

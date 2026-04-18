@@ -173,8 +173,14 @@ class Growtype_Wc_Upsell_Return_Url
             return '';
         }
 
-        if (!$args['allow_checkout'] && !empty($path) && false !== strpos((string)$path, '/checkout')) {
-            return '';
+        if (!$args['allow_checkout'] && !empty($path)) {
+            $normalized = untrailingslashit((string)$path);
+            // Block pure checkout paths but allow the order-received thank-you page
+            $is_checkout = false !== strpos($normalized, '/checkout');
+            $is_order_received = false !== strpos($normalized, '/order-received');
+            if ($is_checkout && !$is_order_received) {
+                return '';
+            }
         }
 
         return $url;
