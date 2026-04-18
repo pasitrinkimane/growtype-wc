@@ -25,22 +25,34 @@ class Growtype_Wc_Upsell_Queue
 
         self::queue_for_order($order);
     }
+
     public static function queue_for_order($order): array
     {
         if (!$order || !is_a($order, 'WC_Order') || !$order->is_paid()) {
+            error_log('[Upsell] queue_for_order: skipped — order not paid or invalid.');
             return [];
         }
 
         $user_id = (int)$order->get_user_id();
 
         if ($user_id < 1) {
+            error_log('[Upsell] queue_for_order: skipped — no user on order.');
             return [];
         }
 
         // A new successful purchase starts a fresh upsell cycle.
         delete_user_meta($user_id, Growtype_Wc_Upsell::DISMISSED_META_KEY);
 
+        $catalog_count = count(Growtype_Wc_Upsell_Catalog::get_products());
         $queue_ids = self::build_eligible_product_ids($user_id);
+
+        error_log(sprintf(
+            '[Upsell] queue_for_order: order=%d user=%d catalog_products=%d eligible_ids=%s',
+            $order->get_id(),
+            $user_id,
+            $catalog_count,
+            implode(',', $queue_ids) ?: 'none'
+        ));
 
         if (empty($queue_ids)) {
             delete_user_meta($user_id, Growtype_Wc_Upsell::QUEUE_META_KEY);

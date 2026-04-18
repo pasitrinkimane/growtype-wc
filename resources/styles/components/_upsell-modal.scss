@@ -93,6 +93,11 @@
     gap: 12px;
     margin-bottom: 2rem;
 
+    .gwc-upsell-promo {
+      display: flex;
+      gap: 10px;
+    }
+
     .badge-promo {
       background: linear-gradient(135deg, #fcb901 0%, #ff8a00 100%);
       color: #000;

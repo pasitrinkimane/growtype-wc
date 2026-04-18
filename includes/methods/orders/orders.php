@@ -143,23 +143,100 @@ class Growtype_Wc_Order
         return $order->get_checkout_payment_url();
     }
 
+    /**
+     * Efficiently find all paid descendant orders (children, grandchildren, etc.)
+     * of a given root order ID.
+     *
+     * @return WC_Order[]
+     */
+    public static function get_associated_descendants(WC_Order $order): array
+    {
+        $root_id     = $order->get_id();
+        $customer_id = $order->get_customer_id();
+        $email       = $order->get_billing_email();
+
+        $args = [
+            'status'       => wc_get_is_paid_statuses(),
+            'limit'        => -1,
+            'meta_key'     => 'parent_order_id',
+            'meta_compare' => 'EXISTS',
+            'return'       => 'objects',
+        ];
+
+        if ($customer_id) {
+            $args['customer_id'] = $customer_id;
+        } elseif ($email) {
+            $args['billing_email'] = $email;
+        }
+
+        $candidate_orders = wc_get_orders($args);
+        if (empty($candidate_orders)) {
+            return [];
+        }
+
+        $relationship_map = [];
+        foreach ($candidate_orders as $candidate) {
+            $parent_id = (int) $candidate->get_meta('parent_order_id', true);
+            if ($parent_id) {
+                $relationship_map[$parent_id][] = $candidate;
+            }
+        }
+
+        $descendants   = [];
+        $stack         = [$root_id];
+        $processed_ids = [];
+
+        while (!empty($stack)) {
+            $current_id = array_pop($stack);
+            if (isset($processed_ids[$current_id])) {
+                continue;
+            }
+            $processed_ids[$current_id] = true;
+
+            if (isset($relationship_map[$current_id])) {
+                foreach ($relationship_map[$current_id] as $child_order) {
+                    $descendants[] = $child_order;
+                    $stack[]       = $child_order->get_id();
+                }
+            }
+        }
+
+        return $descendants;
+    }
+
     public static function growtype_wc_get_items_with_upsells($order, $types = 'line_item')
     {
-        // Return only the current order's items to avoid confusion with previous purchases
-        return $order->get_items($types);
+        $items       = $order->get_items($types);
+        $descendants = self::get_associated_descendants($order);
+
+        foreach ($descendants as $child_order) {
+            foreach ($child_order->get_items($types) as $child_item) {
+                $items[] = $child_item;
+            }
+        }
+
+        return $items;
     }
 
     public static function growtype_wc_get_order_totals_with_upsells(WC_Order $order)
     {
-        // Return only the current order's totals
+        $subtotal    = (float) $order->get_subtotal();
+        $total       = (float) $order->get_total();
+        $descendants = self::get_associated_descendants($order);
+
+        foreach ($descendants as $child_order) {
+            $subtotal += (float) $child_order->get_subtotal();
+            $total    += (float) $child_order->get_total();
+        }
+
         return [
             'cart_subtotal' => [
                 'label' => __('Subtotal:'),
-                'value' => wc_price($order->get_subtotal()),
+                'value' => wc_price($subtotal, ['currency' => $order->get_currency()]),
             ],
-            'order_total' => [
+            'order_total'   => [
                 'label' => __('Total:'),
-                'value' => wc_price($order->get_total()),
+                'value' => wc_price($total, ['currency' => $order->get_currency()]),
             ],
         ];
     }

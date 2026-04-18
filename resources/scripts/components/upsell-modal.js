@@ -194,12 +194,12 @@ class GrowtypeWcUpsellModal {
 
         if (this.promoElement) {
             this.promoElement.innerHTML = data.promo_label_html || '';
-            this.promoElement.style.display = data.promo_label_html ? 'inline-block' : 'none';
+            this.promoElement.style.display = data.promo_label_html ? '' : 'none';
         }
 
         if (this.discountElement) {
             this.discountElement.innerHTML = data.discount_label_html || '';
-            this.discountElement.style.display = data.discount_label_html ? 'inline-block' : 'none';
+            this.discountElement.style.display = data.discount_label_html ? '' : 'none';
         }
 
         if (this.skipButton) {
