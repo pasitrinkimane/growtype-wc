@@ -12,6 +12,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
     public $test_mode;
     private $secret_key;
     public $publishable_key;
+    private $webhook_secret;
 
     /**
      * Constructor for the gateway.
@@ -37,6 +38,14 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         add_filter('woocommerce_payment_complete_order_status', array ($this, 'change_payment_complete_order_status'), 10, 3);
         add_filter('template_redirect', array ($this, 'payment_redirect'));
         add_action('woocommerce_add_to_cart', array ($this, 'woocommerce_add_to_cart_extend'), 20, 6);
+
+        $this->load_partials();
+    }
+
+    protected function load_partials()
+    {
+        include_once 'partials/Growtype_Wc_Payment_Gateway_Stripe_Webhook.php';
+        new Growtype_Wc_Payment_Gateway_Stripe_Webhook($this);
     }
 
     protected function setup_properties()
@@ -59,6 +68,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         $this->test_mode = 'yes' === $this->get_option('test_mode');
         $this->secret_key = $this->test_mode ? $this->get_option('secret_key_test') : $this->get_option('secret_key_live');
         $this->publishable_key = $this->test_mode ? $this->get_option('publishable_key_test') : $this->get_option('publishable_key_live');
+        $this->webhook_secret = $this->test_mode ? $this->get_option('webhook_secret_test') : $this->get_option('webhook_secret_live');
     }
 
     public function get_publishable_key()
@@ -69,6 +79,11 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
     public function get_secret_key()
     {
         return $this->secret_key;
+    }
+
+    public function get_webhook_secret()
+    {
+        return $this->webhook_secret;
     }
 
     /**
@@ -126,6 +141,16 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             'publishable_key_live' => array (
                 'title' => __('Publishable key - Live', 'growtype-wc'),
                 'type' => 'text',
+            ),
+            'webhook_secret_test' => array (
+                'title' => __('Webhook Secret - Test', 'growtype-wc'),
+                'type' => 'text',
+                'description' => __('Find this in your Stripe Dashboard -> Developers -> Webhooks.', 'growtype-wc'),
+            ),
+            'webhook_secret_live' => array (
+                'title' => __('Webhook Secret - Live', 'growtype-wc'),
+                'type' => 'text',
+                'description' => __('Find this in your Stripe Dashboard -> Developers -> Webhooks.', 'growtype-wc'),
             )
         );
     }

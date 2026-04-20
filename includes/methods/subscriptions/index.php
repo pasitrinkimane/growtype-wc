@@ -19,6 +19,9 @@ class Growtype_Wc_Subscription
             if (class_exists('woocommerce')) {
                 include_once 'partials/Growtype_Wc_Subscription_Order.php';
                 new Growtype_Wc_Subscription_Order();
+
+                include_once 'partials/Growtype_Wc_Admin_User_Subscriptions.php';
+                new Growtype_Wc_Admin_User_Subscriptions();
             }
         });
     }

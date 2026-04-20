@@ -45,6 +45,14 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         add_filter('woocommerce_payment_complete_order_status', array ($this, 'change_payment_complete_order_status'), 10, 3);
         add_filter('template_redirect', array ($this, 'payment_redirect'));
         add_action('growtype_wc_change_subscription_status', array ($this, 'change_subscription_status'), 0, 2);
+
+        $this->load_partials();
+    }
+
+    protected function load_partials()
+    {
+        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Webhook.php';
+        new Growtype_Wc_Payment_Gateway_Paypal_Webhook($this);
     }
 
     protected function setup_properties()
@@ -726,6 +734,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
                     "currency_code" => get_woocommerce_currency(),
                     "value" => $wc_order->get_total(),
                 ],
+                "invoice_id" => (string)$wc_order_id,
             ],
         ];
 
