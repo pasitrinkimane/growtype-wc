@@ -50,11 +50,11 @@ class Growtype_Wc_Payment_Gateway
 
     public function load_gateways()
     {
-        include_once 'providers/Growtype_Wc_Payment_Gateway_Free.php';
-        include_once 'providers/Growtype_Wc_Payment_Gateway_Paypal.php';
-        include_once 'providers/Growtype_Wc_Payment_Gateway_Cc.php';
-        include_once 'providers/Growtype_Wc_Payment_Gateway_Stripe.php';
-        include_once 'providers/Growtype_Wc_Payment_Gateway_Coinbase.php';
+        include_once 'providers/free/Growtype_Wc_Payment_Gateway_Free.php';
+        include_once 'providers/paypal/Growtype_Wc_Payment_Gateway_Paypal.php';
+        include_once 'providers/cc/Growtype_Wc_Payment_Gateway_Cc.php';
+        include_once 'providers/stripe/Growtype_Wc_Payment_Gateway_Stripe.php';
+        include_once 'providers/coinbase/Growtype_Wc_Payment_Gateway_Coinbase.php';
     }
 
     public static function success_url($order_id, $payment_provider = null, $include_session_id = false)
