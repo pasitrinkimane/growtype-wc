@@ -935,21 +935,25 @@ class Growtype_Wc_Payment
             throw new \Exception('Product not found');
         }
 
-        $order = wc_create_order();
+        $order = wc_create_order([
+            'payment_method' => $payment_method
+        ]);
+        
         $order->add_product($product, $qty);
 
         if ($payment_method) {
             $order->set_payment_method($payment_method);
 
-            // Enhance title with specific type if provided
-            if ($payment_method === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID && !empty($payment_method_type)) {
-                $gateways = WC()->payment_gateways()->payment_gateways();
-                $stripe_gateway = $gateways[$payment_method] ?? null;
-                $base_title = $stripe_gateway ? $stripe_gateway->method_title : 'Growtype WC - ' . Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID;
+            $gateways = WC()->payment_gateways()->payment_gateways();
+            $gateway = $gateways[$payment_method] ?? null;
+            $base_title = $gateway ? $gateway->method_title : __('Stripe', 'growtype-wc');
 
+            if ($payment_method === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID && !empty($payment_method_type)) {
                 $type_formatted = ucfirst($payment_method_type);
                 $order->set_payment_method_title("$base_title ($type_formatted)");
                 $order->update_meta_data('_stripe_payment_method_type', $payment_method_type);
+            } else {
+                $order->set_payment_method_title($base_title);
             }
         }
 
