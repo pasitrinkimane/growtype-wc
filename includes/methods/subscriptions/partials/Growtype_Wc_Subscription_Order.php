@@ -256,6 +256,10 @@ class Growtype_Wc_Subscription_Order extends WC_Order
 
         global $post;
 
+        if (empty($post)) {
+            return;
+        }
+
         $meta_fields_groups = self::get_meta_fields();
 
         foreach ($meta_fields_groups as $meta_fields_group) {
@@ -267,6 +271,7 @@ class Growtype_Wc_Subscription_Order extends WC_Order
         }
 
         $user_id = get_post_meta($post->ID, '_user_id', true);
+        
         if ($user_id) {
             delete_transient('growtype_wc_user_has_active_sub_' . $user_id);
         }

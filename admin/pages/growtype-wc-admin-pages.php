@@ -32,5 +32,11 @@ class Growtype_Wc_Admin_Pages
          */
         require GROWTYPE_WC_PATH . '/admin/pages/users/growtype-wc-admin-users.php';
         new Growtype_Wc_Admin_Users();
+
+        /**
+         * WP Users tweaks
+         */
+        include_once GROWTYPE_WC_PATH . 'admin/pages/payments/Growtype_Wc_Payment_Settings.php';
+        new Growtype_Wc_Payment_Settings();
     }
 }
