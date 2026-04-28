@@ -1,0 +1,78 @@
+// ─── Express Checkout Container ──────────────────────────────────────────────
+
+.paypal-express-checkout-container {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  // Google Pay button wrapper
+  .paypal-google-pay-container {
+    width: 100%;
+
+    >div {
+      width: 100%;
+    }
+
+    // Google Pay native button
+    .gpay-card-info-container {
+      width: 100% !important;
+      border-radius: 8px !important;
+      // min-height: 48px !important;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 0.9;
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    button {
+      width: 100% !important;
+      border-radius: 8px !important;
+      // min-height: 48px !important;
+    }
+  }
+
+  // Apple Pay button wrapper
+  .paypal-apple-pay-container {
+    width: 100%;
+    margin-top: 8px;
+
+    apple-pay-button {
+      --apple-pay-button-width: 100%;
+      --apple-pay-button-height: 48px;
+      --apple-pay-button-border-radius: 8px;
+      --apple-pay-button-padding: 0;
+      display: block;
+      width: 100%;
+    }
+  }
+}
+
+// ─── Stripe Express Checkout Container ───────────────────────────────────────
+
+.stripe-express-checkout-container {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .stripe-express-element-target {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+// ─── Shared Express Spinner ───────────────────────────────────────────────────
+
+.growtype-wc-payment-button-providers {
+  .spinner-border {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-width: 2px;
+  }
+}

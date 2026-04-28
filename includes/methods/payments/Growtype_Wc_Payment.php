@@ -586,8 +586,19 @@ class Growtype_Wc_Payment
             return true;
         }
 
+        // For PayPal, a vault token must actually exist on the order or user meta.
+        // Without it, charge_intent will fall back to a redirect anyway — no instant charge possible.
         if ($order->get_payment_method() === Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID) {
-            return true;
+            $vault_id = (string)$order->get_meta('paypal_vault_id');
+
+            if (empty($vault_id)) {
+                $customer_id = (int)$order->get_customer_id();
+                if ($customer_id > 0) {
+                    $vault_id = (string)get_user_meta($customer_id, 'paypal_vault_id', true);
+                }
+            }
+
+            return !empty($vault_id);
         }
 
         return false;
@@ -788,6 +799,9 @@ class Growtype_Wc_Payment
             }
 
             $this->refresh_instant_charge_lock($lock_key, 10);
+
+            // Append success flag so the landing page can show a confirmation toast
+            $redirect_url = add_query_arg('gwc_upsell_success', '1', $redirect_url);
 
             // Redirect back to order received (or wherever)
             wp_safe_redirect($redirect_url);
@@ -1081,6 +1095,7 @@ class Growtype_Wc_Payment
             $order->save();
 
             $success_url = Growtype_Wc_Payment_Gateway::success_url($order_id, Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID);
+            
             if (!empty($return_url)) {
                 $success_url = add_query_arg('growtype_return_after_payment_url', rawurlencode($return_url), $success_url);
             }

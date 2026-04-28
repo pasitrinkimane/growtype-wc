@@ -10,16 +10,19 @@ import { justpurchased } from "./components/popup/justpurchased";
 import { upsellModal } from "./components/upsell-modal";
 import { sidebar } from "./sidebar";
 
-import { growtypeWcPaymentButton } from "./components/buttons/GrowtypeWcPaymentButton";
+import { growtypeWcPaymentButton } from "./components/buttons/growtypeWcPaymentButton";
 import { growtypeWcStripeProvider } from "./providers/stripe/growtypeWcStripeProvider";
+import { growtypeWcPaypalProvider } from "./providers/paypal/growtypeWcPaypalProvider";
 
 window.growtype_wc = {}
 
 window.growtypeWcPaymentButton = growtypeWcPaymentButton;
 window.growtypeWcStripeProvider = growtypeWcStripeProvider;
+window.growtypeWcPaypalProvider = growtypeWcPaypalProvider;
 
 jQuery(document).ready(() => {
     growtypeWcStripeProvider();
+    growtypeWcPaypalProvider();
     growtypeWcPaymentButton();
 
     justpurchased();

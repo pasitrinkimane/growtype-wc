@@ -46,6 +46,9 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
     {
         include_once 'partials/Growtype_Wc_Payment_Gateway_Stripe_Webhook.php';
         new Growtype_Wc_Payment_Gateway_Stripe_Webhook($this);
+
+        include_once 'partials/Growtype_Wc_Payment_Gateway_Stripe_Identification.php';
+        new Growtype_Wc_Payment_Gateway_Stripe_Identification($this);
     }
 
     protected function setup_properties()

@@ -107,24 +107,38 @@ class Growtype_Wc_Public
 
         // Use the gateway instance for settings to ensure consistency between front and back
         $publishable_key = '';
-        $test_mode = false;
-        if (function_exists('WC') && WC() && WC()->payment_gateways()) {
-            $gateways = WC()->payment_gateways()->payment_gateways();
-            $stripe_gateway = $gateways[Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID] ?? null;
-            if ($stripe_gateway) {
-                $publishable_key = $stripe_gateway->get_publishable_key();
-                $test_mode = $stripe_gateway->test_mode;
-            }
-        }
+        $stripe_test_mode = false;
+        $stripe_enabled = false;
+        $gateways = (function_exists('WC') && WC() && WC()->payment_gateways()) ? WC()->payment_gateways()->payment_gateways() : [];
 
-        // Fallback for direct option access if gateway not found
-        if (empty($publishable_key)) {
+        // Stripe configuration
+        $stripe_gateway = $gateways[Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID] ?? null;
+        if ($stripe_gateway) {
+            $publishable_key = $stripe_gateway->get_publishable_key();
+            $stripe_test_mode = $stripe_gateway->test_mode;
+            $stripe_enabled = $stripe_gateway->is_available();
+        } else {
             $stripe_settings = get_option('woocommerce_growtype_wc_stripe_settings', []);
-            $test_mode = isset($stripe_settings['test_mode']) && 'yes' === $stripe_settings['test_mode'];
-            $publishable_key = $test_mode
+            $stripe_test_mode = isset($stripe_settings['test_mode']) && 'yes' === $stripe_settings['test_mode'];
+            $publishable_key = $stripe_test_mode
                 ? ($stripe_settings['publishable_key_test'] ?? '')
                 : ($stripe_settings['publishable_key_live'] ?? '');
+            $stripe_enabled = isset($stripe_settings['enabled']) && 'yes' === $stripe_settings['enabled'];
         }
+
+        // PayPal configuration
+        $paypal_enabled = false;
+        $paypal_client_id = '';
+        $paypal_merchant_id = '';
+        $paypal_test_mode = false;
+        $paypal_gateway = $gateways[Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID] ?? null;
+        if ($paypal_gateway) {
+            $paypal_enabled = $paypal_gateway->is_available();
+            $paypal_client_id = $paypal_gateway->get_client_id();
+            $paypal_merchant_id = $paypal_gateway->get_merchant_id();
+            $paypal_test_mode = $paypal_gateway->is_test_mode();
+        }
+
         wp_localize_script(
             $this->growtype_wc,
             'growtype_wc_ajax',
@@ -144,11 +158,31 @@ class Growtype_Wc_Public
                 'cart_total' => $cart_total,
                 'user_id' => get_current_user_id(),
                 'email' => apply_filters('growtype_wc_get_user_email', $email),
+                'public_url' => plugin_dir_url(__FILE__),
                 'stripe' => [
+                    'enabled' => $stripe_enabled,
                     'publishable_key' => $publishable_key,
-                    'test_mode' => $test_mode,
+                    'test_mode' => $stripe_test_mode,
                     'success_url' => wc_get_checkout_url() . 'order-received/', // Default WC behavior
+                ],
+                'paypal' => [
+                    'enabled'      => $paypal_enabled,
+                    'client_id'    => $paypal_client_id,
+                    'merchant_id'  => $paypal_merchant_id,
+                    'test_mode'    => $paypal_test_mode,
+                    'country_code' => wc_get_base_location()['country'] ?? 'US',
+                    'success_url'  => wc_get_checkout_url() . 'order-received/',
+                    'nonce'        => wp_create_nonce('gwc_paypal_hosted_fields'),
                 ]
+            ]
+        );
+
+        wp_localize_script(
+            $this->growtype_wc,
+            'growtype_wc_params',
+            [
+                'assets_url' => plugin_dir_url(dirname(__FILE__)) . 'assets',
+                'public_url' => plugin_dir_url(__FILE__),
             ]
         );
     }

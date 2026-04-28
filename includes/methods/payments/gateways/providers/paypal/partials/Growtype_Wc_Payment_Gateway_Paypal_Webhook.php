@@ -39,12 +39,25 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
             return;
         }
 
+        // ── Signature verification ─────────────────────────────────────────────
+        // Verify the webhook came from PayPal using the REST API verification endpoint.
+        // This prevents attackers from faking events to complete unpaid orders.
+        $webhook_id = $this->gateway->get_option('webhook_id');
+        
+        if (!empty($webhook_id) && !$this->verify_webhook_signature($body, $webhook_id)) {
+            error_log('[GWC PayPal Webhook] ⚠ Signature verification FAILED — rejecting event ' . ($data['event_type'] ?? 'unknown'));
+            status_header(400);
+            exit;
+        }
+        
+        if (empty($webhook_id)) {
+            error_log('[GWC PayPal Webhook] WARNING: webhook_id not configured — skipping signature verification. Set it in WooCommerce → PayPal settings.');
+        }
+        // ── End verification ───────────────────────────────────────────────────
+
         $event_type = $data['event_type'];
 
         error_log('Growtype WC: PayPal Webhook reached. Event details: ' . json_encode($data));
-
-        // Note: Full PayPal signature verification is complex. 
-        // We rely on our Self-Healing logic for reliability.
 
         switch ($event_type) {
             case 'PAYMENT.CAPTURE.COMPLETED':
@@ -59,6 +72,60 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
 
         status_header(200);
         exit;
+    }
+
+    /**
+     * Verify the PayPal webhook signature via the REST API.
+     * @see https://developer.paypal.com/api/rest/webhooks/rest/#link-verifywebhooksignature
+     */
+    protected function verify_webhook_signature(string $raw_body, string $webhook_id): bool
+    {
+        $headers = getallheaders();
+
+        $verify_url = $this->gateway->get_api_url('/v1/notifications/verify-webhook-signature');
+
+        $access_token = $this->gateway->get_access_token(
+            $this->gateway->get_client_id(),
+            $this->gateway->get_client_secret()
+        );
+
+        if (empty($access_token)) {
+            error_log('[GWC PayPal Webhook] Could not obtain access token for signature verification.');
+            return false;
+        }
+
+        $payload = [
+            'auth_algo'         => $headers['PAYPAL-AUTH-ALGO']         ?? $headers['Paypal-Auth-Algo']         ?? '',
+            'cert_url'          => $headers['PAYPAL-CERT-URL']           ?? $headers['Paypal-Cert-Url']           ?? '',
+            'transmission_id'   => $headers['PAYPAL-TRANSMISSION-ID']   ?? $headers['Paypal-Transmission-Id']   ?? '',
+            'transmission_sig'  => $headers['PAYPAL-TRANSMISSION-SIG']  ?? $headers['Paypal-Transmission-Sig']  ?? '',
+            'transmission_time' => $headers['PAYPAL-TRANSMISSION-TIME'] ?? $headers['Paypal-Transmission-Time'] ?? '',
+            'webhook_id'        => $webhook_id,
+            'webhook_event'     => json_decode($raw_body, true),
+        ];
+
+        $response = wp_remote_post($verify_url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $access_token,
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode($payload),
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            error_log('[GWC PayPal Webhook] Signature verify HTTP error: ' . $response->get_error_message());
+            return false;
+        }
+
+        $result = json_decode(wp_remote_retrieve_body($response), true);
+        $verified = ($result['verification_status'] ?? '') === 'SUCCESS';
+
+        if (!$verified) {
+            error_log('[GWC PayPal Webhook] Signature verify response: ' . wp_remote_retrieve_body($response));
+        }
+
+        return $verified;
     }
 
     /**

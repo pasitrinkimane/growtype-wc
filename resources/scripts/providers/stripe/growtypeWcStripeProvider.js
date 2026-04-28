@@ -29,7 +29,13 @@ class GrowtypeWcStripeProvider {
     async mountExpressCheckout(detail) {
         const config = await this.getConfig();
 
-        if (!config || !await this.initStripe(config)) {
+        if (!config || !config.enabled) {
+            console.log('GrowtypeWcStripeProvider: Stripe is disabled, falling back.');
+            this.handleFallback(detail);
+            return;
+        }
+
+        if (!await this.initStripe(config)) {
             this.handleFallback(detail);
             return;
         }
@@ -225,6 +231,7 @@ class GrowtypeWcStripeProvider {
         const config = {
             ajax_url: mainConfig ? mainConfig.url : '',
             nonce: mainConfig ? mainConfig.nonce : '',
+            enabled: stripeConfig ? stripeConfig.enabled === true : false,
             publishable_key: stripeConfig ? stripeConfig.publishable_key : '',
             test_mode: stripeConfig ? stripeConfig.test_mode : false,
             success_url: stripeConfig ? stripeConfig.success_url : ''
@@ -318,7 +325,14 @@ class GrowtypeWcStripeProvider {
     async handlePaymentRequest(detail) {
         console.log('GrowtypeWcStripeProvider: Handling manual request', detail);
         const config = await this.getConfig();
-        if (!config || !await this.initStripe(config)) {
+
+        if (!config || !config.enabled) {
+            console.log('GrowtypeWcStripeProvider: Stripe is disabled, falling back.');
+            this.handleFallback(detail);
+            return;
+        }
+
+        if (!await this.initStripe(config)) {
             this.handleFallback(detail);
             return;
         }
