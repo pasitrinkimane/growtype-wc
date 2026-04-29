@@ -34,9 +34,10 @@ class GrowtypeWcPaypalProvider {
             return true;
         }
 
-        // Fetch a server-generated client token so the SDK can establish
-        // an authenticated session with PayPal’s backend.
-        // Without this, confirmOrder() fails with csnwCorrelationId="prebuild" / paypalDebugId=null.
+        // Fetch a PayPal id_token (data-user-id-token) for Google Pay / Apple Pay.
+        // This is different from client_token (Hosted Fields) — it uses the OAuth id_token endpoint.
+        // Matches the official WooCommerce PayPal Payments plugin (UserIdToken.php).
+        // Without this, confirmOrder() stays in csnwCorrelationId="prebuild" and fails.
         let clientToken = null;
         try {
             const configAjaxPre = window.growtype_wc_ajax || window.growtype_wc_params || {};
@@ -44,18 +45,18 @@ class GrowtypeWcPaypalProvider {
                 url: configAjaxPre.url,
                 method: 'POST',
                 data: {
-                    action: 'gwc_paypal_client_token',
+                    action: 'gwc_paypal_user_id_token',
                     _ajax_nonce: config.nonce,
                 }
             });
-            if (tokenRes.success && tokenRes.data?.client_token) {
-                clientToken = tokenRes.data.client_token;
-                console.log('[PayPal] Client token fetched successfully.');
+            if (tokenRes.success && tokenRes.data?.id_token) {
+                clientToken = tokenRes.data.id_token;
+                console.log('[PayPal] User id_token fetched successfully (data-user-id-token).');
             } else {
-                console.warn('[PayPal] Client token fetch returned no token — SDK may not fully initialize.', tokenRes);
+                console.warn('[PayPal] User id_token fetch returned no token — wallet payments may fail.', tokenRes);
             }
         } catch (e) {
-            console.warn('[PayPal] Client token fetch failed — proceeding without it.', e);
+            console.error('[PayPal] User id_token fetch failed:', e?.responseJSON || e?.responseText || e);
         }
 
         return new Promise((resolve, reject) => {
@@ -87,10 +88,10 @@ class GrowtypeWcPaypalProvider {
 
             // Attach the client token so the SDK can authenticate with PayPal’s backend on load.
             if (clientToken) {
-                script.setAttribute('data-client-token', clientToken);
+                script.setAttribute('data-user-id-token', clientToken);
             }
 
-            console.log('[PayPal] Loading SDK:', src, '| client-token set:', !!clientToken);
+            console.log('[PayPal] Loading SDK:', src, '| data-user-id-token set:', !!clientToken);
 
             script.src = src;
             script.async = true;
@@ -307,6 +308,7 @@ class GrowtypeWcPaypalProvider {
             }
 
             const { allowedPaymentMethods, merchantInfo, apiVersion, apiVersionMinor, countryCode: gpCountryCode } = gpConfig;
+            console.log('[PayPal/GooglePay] merchantInfo (googleMerchantId check):', JSON.parse(JSON.stringify(merchantInfo || {})));
             console.log('[PayPal/GooglePay] allowedPaymentMethods[0] tokenizationSpecification:',
                 JSON.parse(JSON.stringify(allowedPaymentMethods[0]?.tokenizationSpecification || {})));
 
@@ -383,10 +385,21 @@ class GrowtypeWcPaypalProvider {
                         console.log('[PayPal/GooglePay] Step 3 done — confirmOrder status:', status);
 
                         if (status === 'APPROVED') {
-                            console.log('[PayPal/GooglePay] Step 4: Capturing order...');
+                            // No 3DS required — capture immediately.
+                            console.log('[PayPal/GooglePay] Step 4: Capturing order (no 3DS required)...');
                             await this.captureOrder(orderId, this.wcOrderId);
+
+                        } else if (status === 'PAYER_ACTION_REQUIRED') {
+                            // 3D Secure authentication required.
+                            // initiatePayerAction opens a PayPal popup for the buyer to
+                            // complete the card challenge, then resolves when done.
+                            console.log('[PayPal/GooglePay] Step 4: 3DS required — calling initiatePayerAction...');
+                            await googlepay.initiatePayerAction({ orderId });
+                            console.log('[PayPal/GooglePay] Step 4 done — 3DS completed, capturing order...');
+                            await this.captureOrder(orderId, this.wcOrderId);
+
                         } else {
-                            console.warn('[PayPal/GooglePay] Order not APPROVED, status:', status, '— redirecting to PayPal.');
+                            console.warn('[PayPal/GooglePay] Unexpected confirmOrder status:', status, '— falling back to PayPal.');
                             this._redirectToPaypal(detail, orderId);
                         }
                     } catch (clickErr) {
@@ -414,7 +427,7 @@ class GrowtypeWcPaypalProvider {
                                 'PayPal Debug ID: ' + (clickErr?.paypalDebugId || 'n/a')
                             );
                         } else {
-                            console.error('[PayPal/GooglePay] ❌ Payment error:', clickErr?.message, clickErr);
+                            console.error('[PayPal/GooglePay] ❌ Payment error:', clickErr?.message, '| debug-id:', clickErr?.paypalDebugId, '| full:', clickErr);
                         }
 
                         console.log('[PayPal/GooglePay] Redirecting to PayPal fallback — orderId:', orderId);
@@ -492,6 +505,8 @@ class GrowtypeWcPaypalProvider {
                     currencyCode: configAjax.currency || 'USD',
                     merchantCapabilities: apConfig.merchantCapabilities || ['supports3DS'],
                     supportedNetworks: apConfig.supportedNetworks || ['visa', 'masterCard', 'amex', 'discover'],
+                    // Request billing contact so PayPal's confirmOrder has the full payload.
+                    requiredBillingContactFields: ['postalAddress', 'email'],
                     total: {
                         label: configAjax.shop_name || 'Total',
                         amount: '0.00',
@@ -536,40 +551,37 @@ class GrowtypeWcPaypalProvider {
 
                 // Step 3: user authorised — confirm + capture
                 session.onpaymentauthorized = async (event) => {
-                    console.log('[PayPal/ApplePay] onpaymentauthorized — token received.');
-                    console.log('[PayPal/ApplePay] DEBUG — orderId:', orderId);
-                    console.log('[PayPal/ApplePay] DEBUG — applepay object type:', typeof applepay);
-                    console.log('[PayPal/ApplePay] DEBUG — applepay.confirmOrder type:', typeof applepay?.confirmOrder);
-                    console.log('[PayPal/ApplePay] DEBUG — token header (first 40 chars):', JSON.stringify(event.payment.token?.paymentData)?.substring(0, 80));
-                    console.log('[PayPal/ApplePay] DEBUG — billingContact:', JSON.stringify(event.payment.billingContact));
                     try {
-                        const confirmPayload = {
-                            orderId,
-                            token: event.payment.token,
-                            billingContact: event.payment.billingContact,
-                        };
-                        console.log('[PayPal/ApplePay] Step 3: Confirming order with PayPal — payload keys:', Object.keys(confirmPayload));
+                        const confirmPayload = { orderId, token: event.payment.token };
+
+                        if (event.payment.billingContact) {
+                            confirmPayload.billingContact = event.payment.billingContact;
+                        }
+
                         const confirmResult = await applepay.confirmOrder(confirmPayload);
-                        console.log('[PayPal/ApplePay] Step 3 raw result:', JSON.stringify(confirmResult));
-                        const { status } = confirmResult;
-                        console.log('[PayPal/ApplePay] Step 3 done — status:', status);
+
+                        // The SDK returns approveApplePayPayment.status (official plugin pattern)
+                        // or top-level status — handle both.
+                        const status = confirmResult?.approveApplePayPayment?.status || confirmResult?.status;
+
+                        console.log('[PayPal/ApplePay] confirmOrder status:', status);
 
                         if (status === 'APPROVED') {
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                            console.log('[PayPal/ApplePay] Step 4: Capturing order...');
                             await this.captureOrder(orderId, this.wcOrderId);
+
+                        } else if (status === 'PAYER_ACTION_REQUIRED') {
+                            session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                            await applepay.initiatePayerAction({ orderId });
+                            await this.captureOrder(orderId, this.wcOrderId);
+
                         } else {
                             session.completePayment(ApplePaySession.STATUS_FAILURE);
-                            console.warn('[PayPal/ApplePay] Order not APPROVED, status:', status, '— redirecting to PayPal.');
+                            console.warn('[PayPal/ApplePay] Unexpected status:', status);
                             this._redirectToPaypal(detail, orderId);
                         }
                     } catch (err) {
-                        console.error('[PayPal/ApplePay] confirmOrder failed:');
-                        console.error('  message:', err?.message);
-                        console.error('  name:', err?.name);
-                        console.error('  full error object:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-                        console.error('  paypalDebugId:', err?.paypalDebugId);
-                        console.error('  details:', JSON.stringify(err?.details));
+                        console.error('[PayPal/ApplePay] confirmOrder failed:', err?.message, '| debug-id:', err?.paypalDebugId);
                         session.completePayment(ApplePaySession.STATUS_FAILURE);
                         this._redirectToPaypal(detail, orderId);
                     }
@@ -603,8 +615,6 @@ class GrowtypeWcPaypalProvider {
     _redirectToPaypal(detail, orderId = null) {
         const configAjax = window.growtype_wc_ajax || {};
         const isSandbox = configAjax.paypal?.test_mode;
-
-        console.log('[PayPal] _redirectToPaypal — orderId:', orderId, '| fallback:', detail?.fallback, '| sandbox:', isSandbox);
 
         // Priority 1: Direct PayPal redirect using the existing orderId.
         // fundingSource=card → PayPal shows the card form directly (guest checkout).

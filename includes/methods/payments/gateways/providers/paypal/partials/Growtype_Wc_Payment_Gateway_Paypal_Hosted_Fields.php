@@ -31,20 +31,98 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         add_action('wp_ajax_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
         add_action('wp_ajax_nopriv_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
 
-        // Client token — needed for PayPal SDK to establish a backend session for Apple/Google Pay.
+        // Client token — needed for PayPal Hosted Fields (card form).
         add_action('wp_ajax_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
         add_action('wp_ajax_nopriv_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
+
+        // User id_token — needed for Google Pay / Apple Pay confirmOrder() (data-user-id-token).
+        add_action('wp_ajax_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
+        add_action('wp_ajax_nopriv_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
 
         add_action('wp_footer', [$this, 'render_paypal_hosted_fields_modal']);
     }
 
     /**
-     * Generate a PayPal client token for the JS SDK.
-     * Required for the SDK to authenticate with PayPal's backend (exits "prebuild" state).
-     * Without this, Apple Pay / Google Pay confirmOrder() fails with paypalDebugId=null.
+     * Generate a PayPal id_token for use as data-user-id-token on the PayPal JS SDK.
      *
-     * Cached for 55 minutes (token TTL is 1 hour).
-     * Returns JSON: { client_token: string }
+     * This is DIFFERENT from the client_token (Hosted Fields) — it uses:
+     *   POST /v1/oauth2/token?grant_type=client_credentials&response_type=id_token
+     *   Auth: Basic base64(client_id:secret)
+     *
+     * Required for Google Pay / Apple Pay confirmOrder() to exit "prebuild" state.
+     * Matches the official WooCommerce PayPal Payments plugin (UserIdToken.php).
+     * Cached for 4 minutes (token TTL is ~5 min per official plugin).
+     */
+    public function ajax_get_user_id_token()
+    {
+        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.'], 403);
+        }
+
+        $client_id     = $this->gateway->get_client_id();
+        $client_secret = $this->gateway->get_client_secret();
+        $cache_key     = 'gwc_paypal_user_id_token_' . md5($client_id . get_current_user_id());
+        $cached        = get_transient($cache_key);
+        if ($cached) {
+            wp_send_json_success(['id_token' => $cached]);
+            return;
+        }
+
+        try {
+            $base_url = $this->gateway->get_api_url('/v1/oauth2/token');
+            $url      = add_query_arg([
+                'grant_type'    => 'client_credentials',
+                'response_type' => 'id_token',
+            ], $base_url);
+
+            // If the logged-in user has a PayPal Customer ID, pass it so PayPal
+            // links the id_token to their vault record (matches official plugin).
+            $user_id    = get_current_user_id();
+            $pp_cust_id = $user_id > 0 ? (string) get_user_meta($user_id, 'paypal_customer_id', true) : '';
+            if (!empty($pp_cust_id)) {
+                $url = add_query_arg(['target_customer_id' => $pp_cust_id], $url);
+            }
+
+            $credentials = base64_encode($client_id . ':' . $client_secret);
+
+            $response = wp_remote_post($url, [
+                'headers' => [
+                    'Authorization' => 'Basic ' . $credentials,
+                    'Content-Type'  => 'application/x-www-form-urlencoded',
+                ],
+                'body'    => '',
+                'timeout' => 15,
+            ]);
+
+            if (is_wp_error($response)) {
+                throw new \Exception('HTTP error: ' . $response->get_error_message());
+            }
+
+            $body = json_decode(wp_remote_retrieve_body($response), true) ?: [];
+            $code = (int) wp_remote_retrieve_response_code($response);
+
+            if ($code !== 200 || empty($body['id_token'])) {
+                throw new \Exception(sprintf(
+                    'PayPal id_token request failed (HTTP %d): %s',
+                    $code,
+                    wp_remote_retrieve_body($response)
+                ));
+            }
+
+            $id_token = trim($body['id_token']);
+            set_transient($cache_key, $id_token, 4 * MINUTE_IN_SECONDS);
+
+            wp_send_json_success(['id_token' => $id_token]);
+        } catch (\Exception $e) {
+            error_log('[GWC PayPal] ajax_get_user_id_token error: ' . $e->getMessage());
+            wp_send_json_error(['message' => 'Could not generate id_token.'], 500);
+        }
+    }
+
+    /**
+     * Generate a PayPal client_token for Hosted Fields (card form).
+     * Uses: POST /v1/identity/generate-token with Bearer auth.
+     * Cached for 55 minutes.
      */
     public function ajax_get_client_token()
     {
@@ -84,7 +162,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 throw new \Exception('PayPal did not return a client_token. Response: ' . wp_remote_retrieve_body($response));
             }
 
-            $token = trim($body['client_token']); // raw JWT — sanitize_text_field would be fine too but trim is explicit
+            $token = trim($body['client_token']);
             set_transient($cache_key, $token, 55 * MINUTE_IN_SECONDS);
 
             wp_send_json_success(['client_token' => $token]);
