@@ -18,12 +18,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
     public function woocommerce_add_to_cart_extend($cart_item_key, $wc_product_id, $quantity, $variation_id, $variation_attributes, $cart_item_data)
     {
-        $setting_enabled = $this->gateway->get_option('add_to_card_redirect_paypal_checkout') === 'yes' 
+        $setting_enabled = $this->gateway->get_option('add_to_card_redirect_paypal_checkout') === 'yes'
             || get_option(Growtype_Wc_Payment_Settings::OPTION_REDIRECT_PAYPAL) === 'yes';
         $method_match = isset($_GET['payment_method']) && $_GET['payment_method'] === Growtype_Wc_Payment_Gateway_Paypal::PAYMENT_METHOD_KEY;
 
-        error_log(sprintf('[GWC PayPal] woocommerce_add_to_cart_extend: product=%d setting_enabled=%s method_match=%s', 
-            $wc_product_id, 
+        error_log(sprintf('[GWC PayPal] woocommerce_add_to_cart_extend: product=%d setting_enabled=%s method_match=%s',
+            $wc_product_id,
             $setting_enabled ? 'yes' : 'no',
             $method_match ? 'yes' : 'no'
         ));
@@ -37,6 +37,29 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                 error_log('[GWC PayPal] woocommerce_add_to_cart_extend: Product not found.');
                 return;
             }
+
+            // ── Idempotency guard ─────────────────────────────────────────────────────────────────────
+            // For subscription products: if the user already has a completed/processing
+            // order for this product, do NOT create a second PayPal order.
+            // This prevents duplicate charges from double-clicks, browser back/retry.
+            if (is_user_logged_in() && growtype_wc_product_is_subscription($wc_product_id)) {
+                $existing_orders = wc_get_orders([
+                    'customer' => get_current_user_id(),
+                    'status'   => ['completed', 'processing'],
+                    'limit'    => 5,
+                    'orderby'  => 'date',
+                    'order'    => 'DESC',
+                ]);
+                foreach ($existing_orders as $existing) {
+                    foreach ($existing->get_items() as $item) {
+                        if ((int)$item->get_product_id() === (int)$wc_product_id) {
+                            error_log(sprintf('[GWC PayPal] woocommerce_add_to_cart_extend: user %d already has completed order #%d for product %d — skipping duplicate.', get_current_user_id(), $existing->get_id(), $wc_product_id));
+                            return;
+                        }
+                    }
+                }
+            }
+            // ── End idempotency guard ─────────────────────────────────────────────────────────────────────
 
             $order = wc_create_order();
             if (!$order) {
@@ -80,10 +103,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     $subscription_plan_id = $subscription_plan['id'] ?? '';
 
                     if (empty($subscription_plan_id)) {
-                    error_log('[GWC PayPal] Subscription plan creation failed.');
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('[GWC PayPal] Subscription plan response: ' . wp_json_encode($subscription_plan));
-                    }
+                        error_log('[GWC PayPal] Subscription plan creation failed.');
+                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                            error_log('[GWC PayPal] Subscription plan response: ' . wp_json_encode($subscription_plan));
+                        }
                         throw new \Exception(__('Subscription plan creation failed.', 'growtype-wc'));
                     }
 
@@ -139,7 +162,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
                             // Validate the redirect URL is a PayPal domain (defense-in-depth)
                             $parsed = parse_url($checkout_url);
-                            $host   = strtolower($parsed['host'] ?? '');
+                            $host = strtolower($parsed['host'] ?? '');
                             if (!str_ends_with($host, 'paypal.com')) {
                                 error_log('[GWC PayPal] Redirect URL rejected — not a PayPal domain: ' . $checkout_url);
                                 break;
@@ -207,8 +230,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     return null;
                 }
             } else {
-                $stored_token         = $order->get_meta('paypal_token');
-                $stored_hosted_token  = $order->get_meta('_paypal_hosted_order_id');
+                $stored_token = $order->get_meta('paypal_token');
+                $stored_hosted_token = $order->get_meta('_paypal_hosted_order_id');
 
                 if ($paypal_order_id !== $stored_token && $paypal_order_id !== $stored_hosted_token) {
                     error_log(sprintf(
@@ -227,6 +250,13 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                 if (!empty($subscription_id)) {
                     $order->update_meta_data('paypal_subscription_id', $subscription_id);
                 }
+
+                // Cannot verify a subscription without its ID — bail out cleanly.
+                if (empty($subscription_id)) {
+                    error_log(sprintf('[GWC PayPal] payment_redirect: order %d — subscription_id empty in both $_GET and meta. Aborting.', $order_id));
+                    return;
+                }
+
                 $paypal_order_data = $this->gateway->subscriptions->get_subscription_data($access_token, $subscription_id);
             } else {
                 $paypal_order_data = $this->gateway->orders->get_order_data($access_token, $paypal_order_id);
@@ -287,11 +317,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     // ── End diagnostic ───────────────────────────────────────────────────
 
                     // Path 1: top-level payment_source (hosted-fields / card flow)
-                    $vault_id    = $capture_data['payment_source']['paypal']['attributes']['vault']['id'] ?? '';
+                    $vault_id = $capture_data['payment_source']['paypal']['attributes']['vault']['id'] ?? '';
                     $pp_customer = $capture_data['payment_source']['paypal']['attributes']['vault']['customer']['id'] ?? '';
 
                     if (empty($vault_id)) {
-                        $vault_id    = $capture_data['payment_source']['card']['attributes']['vault']['id'] ?? '';
+                        $vault_id = $capture_data['payment_source']['card']['attributes']['vault']['id'] ?? '';
                         $pp_customer = $capture_data['payment_source']['card']['attributes']['vault']['customer']['id'] ?? '';
                     }
 
@@ -306,7 +336,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                                     ?? $cap['payment_source']['card']['attributes']['vault']['customer']['id']
                                     ?? '';
                                 if (!empty($v)) {
-                                    $vault_id    = $v;
+                                    $vault_id = $v;
                                     $pp_customer = $c;
                                     error_log(sprintf('[GWC Vault] Found vault_id in purchase_units captures: %s customer: %s', $vault_id, $pp_customer));
                                     break 2;
@@ -317,7 +347,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
                     // Path 3: paypal_vault_id may have been set on the order by create_order already
                     if (empty($vault_id)) {
-                        $vault_id    = $order->get_meta('paypal_vault_id');
+                        $vault_id = $order->get_meta('paypal_vault_id');
                         $pp_customer = $order->get_meta('paypal_customer_id');
                         if (!empty($vault_id)) {
                             error_log(sprintf('[GWC Vault] Using vault_id from order meta (set during create_order): %s', $vault_id));
@@ -345,7 +375,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
                     if (Growtype_Wc_Subscription::is_subscription_order($order_id)) {
                         $paypal_subscription_id = $order->get_meta('paypal_subscription_id');
-                        $order->add_order_note(__(sprintf('Subscription id: %s', $paypal_subscription_id), 'growtype-wc'));
+
+                        if (!empty($paypal_subscription_id)) {
+                            $order->add_order_note(__(sprintf('Subscription id: %s', $paypal_subscription_id), 'growtype-wc'));
+                        }
                     }
 
                     $order->save();

@@ -34,6 +34,30 @@ class GrowtypeWcPaypalProvider {
             return true;
         }
 
+        // Fetch a server-generated client token so the SDK can establish
+        // an authenticated session with PayPal’s backend.
+        // Without this, confirmOrder() fails with csnwCorrelationId="prebuild" / paypalDebugId=null.
+        let clientToken = null;
+        try {
+            const configAjaxPre = window.growtype_wc_ajax || window.growtype_wc_params || {};
+            const tokenRes = await jQuery.ajax({
+                url: configAjaxPre.url,
+                method: 'POST',
+                data: {
+                    action: 'gwc_paypal_client_token',
+                    _ajax_nonce: config.nonce,
+                }
+            });
+            if (tokenRes.success && tokenRes.data?.client_token) {
+                clientToken = tokenRes.data.client_token;
+                console.log('[PayPal] Client token fetched successfully.');
+            } else {
+                console.warn('[PayPal] Client token fetch returned no token — SDK may not fully initialize.', tokenRes);
+            }
+        } catch (e) {
+            console.warn('[PayPal] Client token fetch failed — proceeding without it.', e);
+        }
+
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             const configAjax = window.growtype_wc_ajax || window.growtype_wc_params || {};
@@ -43,8 +67,11 @@ class GrowtypeWcPaypalProvider {
 
             const components = ['buttons'];
             const requested = requestedMethods.map(m => m.toLowerCase());
-            if (requested.includes('applepay')) components.push('applepay');
-            if (requested.includes('googlepay')) components.push('googlepay');
+
+            // Only load the wallet component relevant to the current browser.
+            const isSafariApple = this.isSafariAppleDevice();
+            if (requested.includes('applepay') && isSafariApple) components.push('applepay');
+            if (requested.includes('googlepay') && !isSafariApple) components.push('googlepay');
 
             let src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&components=${components.join(',')}`;
 
@@ -58,7 +85,12 @@ class GrowtypeWcPaypalProvider {
                 );
             }
 
-            console.log('[PayPal] Loading SDK:', src);
+            // Attach the client token so the SDK can authenticate with PayPal’s backend on load.
+            if (clientToken) {
+                script.setAttribute('data-client-token', clientToken);
+            }
+
+            console.log('[PayPal] Loading SDK:', src, '| client-token set:', !!clientToken);
 
             script.src = src;
             script.async = true;
@@ -102,16 +134,22 @@ class GrowtypeWcPaypalProvider {
             let anyExpressMounted = false;
 
             if (hasExpressMethods) {
-                console.log('[PayPal] Express methods requested — attempting to mount in parallel:', requestedMethods);
+                // ── Browser-aware wallet routing ──────────────────────────────
+                // Apple Pay  → Safari / WebKit on iOS/macOS only
+                // Google Pay → everything else (Chrome, Firefox, Samsung, etc.)
+                // Never show both: they are mutually exclusive environments.
+                const isSafariApple = this.isSafariAppleDevice();
+                console.log('[PayPal] Browser detection — isSafariApple:', isSafariApple,
+                    '| UA:', navigator.userAgent);
 
-                // Run express method mounting in parallel and track which ones succeed
+                const shouldTryApplePay = isSafariApple && requestedMethods.includes('applepay') && window.paypal.Applepay;
+                const shouldTryGooglePay = !isSafariApple && requestedMethods.includes('googlepay') && window.paypal.Googlepay;
+
+                console.log('[PayPal] Express wallet routing — tryApplePay:', shouldTryApplePay, '| tryGooglePay:', shouldTryGooglePay);
+
                 const results = await Promise.all([
-                    requestedMethods.includes('googlepay') && window.paypal.Googlepay
-                        ? this.mountGooglePay(detail, config)
-                        : Promise.resolve(false),
-                    requestedMethods.includes('applepay') && window.paypal.Applepay
-                        ? this.mountApplePay(detail, config)
-                        : Promise.resolve(false),
+                    shouldTryGooglePay ? this.mountGooglePay(detail, config) : Promise.resolve(false),
+                    shouldTryApplePay ? this.mountApplePay(detail, config) : Promise.resolve(false),
                 ]);
 
                 anyExpressMounted = results.some(Boolean);
@@ -119,10 +157,18 @@ class GrowtypeWcPaypalProvider {
             }
 
             // Render standard PayPal Buttons if:
-            //  - No express methods were requested, OR
-            //  - Express methods were requested but none successfully mounted (fallback)
-            if (window.paypal.Buttons && (!hasExpressMethods || !anyExpressMounted)) {
-                console.log('[PayPal] Rendering PayPal Buttons' + (hasExpressMethods ? ' (express fallback — no wallet available)' : '') + ' in:', detail.container);
+            //  - 'paypal' is explicitly in the requested methods (not just wallet-only), OR
+            //  - No express methods were requested at all (standard mode)
+            // If only wallet methods (applePay/googlePay) were requested and none mounted,
+            // collapse the container instead of showing a generic PayPal button in the wallet slot.
+            const paypalButtonRequested = requestedMethods.includes('paypal');
+
+            if (anyExpressMounted) {
+                // Express wallet button mounted — skip standard PayPal buttons regardless
+                console.log('[PayPal] Skipping standard PayPal Buttons — express method(s) successfully mounted.');
+            } else if (!hasExpressMethods || paypalButtonRequested) {
+                // No wallet methods requested, OR PayPal button was explicitly requested as fallback
+                console.log('[PayPal] Rendering PayPal Buttons' + (hasExpressMethods ? ' (explicit paypal fallback)' : '') + ' in:', detail.container);
                 paypal.Buttons({
                     createOrder: () => {
                         console.log('[PayPal] Buttons: createOrder called, productId:', detail.productId);
@@ -139,8 +185,13 @@ class GrowtypeWcPaypalProvider {
                         console.error('[PayPal] Buttons: SDK error:', err);
                     }
                 }).render(detail.container);
-            } else if (hasExpressMethods && anyExpressMounted) {
-                console.log('[PayPal] Skipping standard PayPal Buttons — express method(s) successfully mounted.');
+            } else {
+                // Wallet-only methods requested, none available — hide the container silently
+                console.log('[PayPal] Express wallet methods requested but none available and paypal button not in list — collapsing container.');
+                const parentEl = document.querySelector(detail.container);
+                if (parentEl) {
+                    parentEl.style.display = 'none';
+                }
             }
 
             // Signal that we're ready
@@ -179,6 +230,49 @@ class GrowtypeWcPaypalProvider {
             };
             document.head.appendChild(script);
         });
+    }
+
+    /**
+     * Load Apple's <apple-pay-button> web-component script (once).
+     * Without this the custom element is an invisible no-op in the DOM.
+     */
+    loadApplePayButtonScript() {
+        const APPLE_PAY_BTN_SRC = 'https://applepay.cdn-apple.com/jsapi/v1.1.0/apple-pay-button.js';
+        return new Promise((resolve) => {
+            if (document.querySelector(`script[src="${APPLE_PAY_BTN_SRC}"]`)) {
+                console.log('[PayPal/ApplePay] Apple Pay button script already loaded.');
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = APPLE_PAY_BTN_SRC;
+            script.async = true;
+            script.crossOrigin = 'anonymous';
+            script.onload = () => {
+                console.log('[PayPal/ApplePay] Apple Pay button script loaded.');
+                resolve();
+            };
+            script.onerror = () => {
+                console.warn('[PayPal/ApplePay] Failed to load Apple Pay button script — button may be invisible.');
+                resolve(); // non-fatal: still append element, it just won't style
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    /**
+     * Returns true when the browser natively supports Apple Pay.
+     *
+     * window.ApplePaySession is injected by WebKit/Safari on Apple devices only —
+     * no UA parsing needed. This is the same signal Stripe uses internally.
+     * canMakePayments() is a cheap sync check that confirms Apple Pay is usable
+     * (device enrolled, not disabled by MDM, etc.).
+     *
+     * If this returns false → show Google Pay (Android, Chrome, Firefox, etc.)
+     */
+    isSafariAppleDevice() {
+        return typeof window.ApplePaySession !== 'undefined'
+            && ApplePaySession.canMakePayments();
     }
 
     async mountGooglePay(detail, config) {
@@ -254,7 +348,7 @@ class GrowtypeWcPaypalProvider {
                     let orderId = null;
                     try {
                         console.log('[PayPal/GooglePay] Step 1: Creating WC + PayPal order...');
-                        orderId = await this.createOrder(productId, 'paypal');
+                        orderId = await this.createOrder(productId, 'googlepay');
                         console.log('[PayPal/GooglePay] Step 1 done — orderId:', orderId);
 
                         // Use gpConfig.countryCode as the authoritative value — it reflects the
@@ -362,6 +456,9 @@ class GrowtypeWcPaypalProvider {
                 return false;
             }
 
+            // ── Load Apple Pay button web-component script (once) ────────────
+            await this.loadApplePayButtonScript();
+
             // ── Render the Apple Pay button ───────────────────────────────────
             const apContainer = document.createElement('div');
             apContainer.className = 'paypal-apple-pay-container';
@@ -381,87 +478,109 @@ class GrowtypeWcPaypalProvider {
             console.log('[PayPal/ApplePay] Apple Pay button mounted.');
 
             // ── Wire up click → ApplePaySession ──────────────────────────────
-            apBtn.addEventListener('click', async () => {
+            // IMPORTANT: new ApplePaySession() MUST be called synchronously inside
+            // the click handler. Safari destroys the user-gesture context the moment
+            // you await anything. Async work (createOrder, validateMerchant) goes
+            // inside the Apple Pay event callbacks, where async is always allowed.
+            apBtn.addEventListener('click', () => {
                 console.log('[PayPal/ApplePay] Button clicked — productId:', detail.productId);
 
-                try {
-                    // Step 1: create PayPal + WC order to get the amount
-                    console.log('[PayPal/ApplePay] Step 1: Creating order...');
-                    let orderId = null;
-                    orderId = await this.createOrder(detail.productId, 'paypal');
-                    console.log('[PayPal/ApplePay] Step 1 done — orderId:', orderId, '| amount:', this.orderAmount);
+                // Start with a 'pending' total — we don't have the real amount yet.
+                // onpaymentmethodselected will update it once createOrder resolves.
+                const paymentRequest = {
+                    countryCode: apConfig.merchantCountry || apConfig.countryCode || (configAjax.paypal && configAjax.paypal.country_code) || 'US',
+                    currencyCode: configAjax.currency || 'USD',
+                    merchantCapabilities: apConfig.merchantCapabilities || ['supports3DS'],
+                    supportedNetworks: apConfig.supportedNetworks || ['visa', 'masterCard', 'amex', 'discover'],
+                    total: {
+                        label: configAjax.shop_name || 'Total',
+                        amount: '0.00',
+                        type: 'pending', // real amount filled after createOrder
+                    },
+                };
 
-                    const paymentRequest = {
-                        countryCode: apConfig.countryCode || (configAjax.paypal && configAjax.paypal.country_code) || 'US',
-                        currencyCode: this.orderCurrency || configAjax.currency || 'USD',
-                        merchantCapabilities: apConfig.merchantCapabilities || ['supports3DS'],
-                        supportedNetworks: apConfig.supportedNetworks || ['visa', 'masterCard', 'amex', 'discover'],
-                        total: {
+                console.log('[PayPal/ApplePay] Creating ApplePaySession synchronously...', paymentRequest);
+                const session = new ApplePaySession(4, paymentRequest);
+                let orderId = null;
+
+                // Step 1 + 2a: create order AND validate merchant (both async — OK here)
+                session.onvalidatemerchant = async (event) => {
+                    console.log('[PayPal/ApplePay] onvalidatemerchant — validationURL:', event.validationURL);
+                    try {
+                        console.log('[PayPal/ApplePay] Step 1: Creating PayPal order...');
+                        orderId = await this.createOrder(detail.productId, 'applepay');
+                        console.log('[PayPal/ApplePay] Step 1 done — orderId:', orderId, '| amount:', this.orderAmount);
+
+                        const validationData = await applepay.validateMerchant({
+                            validationUrl: event.validationURL,
+                            displayName: configAjax.shop_name || 'Store',
+                        });
+                        console.log('[PayPal/ApplePay] Merchant validated.');
+                        session.completeMerchantValidation(validationData.merchantSession);
+                    } catch (err) {
+                        console.error('[PayPal/ApplePay] onvalidatemerchant failed:', err);
+                        session.abort();
+                    }
+                };
+
+                // Step 2b: update the payment sheet total with the real amount
+                session.onpaymentmethodselected = () => {
+                    session.completePaymentMethodSelection({
+                        newTotal: {
                             label: configAjax.shop_name || 'Total',
                             amount: this.orderAmount || '0.00',
-                            type: 'final',
+                            type: this.orderAmount ? 'final' : 'pending',
                         },
-                    };
+                    });
+                };
 
-                    console.log('[PayPal/ApplePay] Step 2: Starting ApplePaySession...', paymentRequest);
-                    const session = new ApplePaySession(4, paymentRequest);
+                // Step 3: user authorised — confirm + capture
+                session.onpaymentauthorized = async (event) => {
+                    console.log('[PayPal/ApplePay] onpaymentauthorized — token received.');
+                    console.log('[PayPal/ApplePay] DEBUG — orderId:', orderId);
+                    console.log('[PayPal/ApplePay] DEBUG — applepay object type:', typeof applepay);
+                    console.log('[PayPal/ApplePay] DEBUG — applepay.confirmOrder type:', typeof applepay?.confirmOrder);
+                    console.log('[PayPal/ApplePay] DEBUG — token header (first 40 chars):', JSON.stringify(event.payment.token?.paymentData)?.substring(0, 80));
+                    console.log('[PayPal/ApplePay] DEBUG — billingContact:', JSON.stringify(event.payment.billingContact));
+                    try {
+                        const confirmPayload = {
+                            orderId,
+                            token: event.payment.token,
+                            billingContact: event.payment.billingContact,
+                        };
+                        console.log('[PayPal/ApplePay] Step 3: Confirming order with PayPal — payload keys:', Object.keys(confirmPayload));
+                        const confirmResult = await applepay.confirmOrder(confirmPayload);
+                        console.log('[PayPal/ApplePay] Step 3 raw result:', JSON.stringify(confirmResult));
+                        const { status } = confirmResult;
+                        console.log('[PayPal/ApplePay] Step 3 done — status:', status);
 
-                    // Step 2a: validate merchant with PayPal
-                    session.onvalidatemerchant = async (event) => {
-                        console.log('[PayPal/ApplePay] onvalidatemerchant — validationURL:', event.validationURL);
-                        try {
-                            const validationData = await applepay.validateMerchant({
-                                validationUrl: event.validationURL,
-                                displayName: configAjax.shop_name || 'Store',
-                            });
-                            console.log('[PayPal/ApplePay] Merchant validated.');
-                            session.completeMerchantValidation(validationData.merchantSession);
-                        } catch (err) {
-                            console.error('[PayPal/ApplePay] Merchant validation failed:', err);
-                            session.abort();
-                        }
-                    };
-
-                    // Step 2b: user authorised payment
-                    session.onpaymentauthorized = async (event) => {
-                        console.log('[PayPal/ApplePay] onpaymentauthorized — token received.');
-                        try {
-                            console.log('[PayPal/ApplePay] Step 3: Confirming order with PayPal...');
-                            const { status } = await applepay.confirmOrder({
-                                orderId,
-                                token: event.payment.token,
-                                billingContact: event.payment.billingContact,
-                                shippingContact: event.payment.shippingContact,
-                            });
-                            console.log('[PayPal/ApplePay] Step 3 done — status:', status);
-
-                            if (status === 'APPROVED') {
-                                session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                                console.log('[PayPal/ApplePay] Step 4: Capturing order...');
-                                await this.captureOrder(orderId, this.wcOrderId);
-                            } else {
-                                session.completePayment(ApplePaySession.STATUS_FAILURE);
-                                console.warn('[PayPal/ApplePay] Order not APPROVED, status:', status, '— redirecting to PayPal.');
-                                this._redirectToPaypal(detail, orderId);
-                            }
-                        } catch (err) {
-                            console.error('[PayPal/ApplePay] confirmOrder failed — redirecting to PayPal:', err);
+                        if (status === 'APPROVED') {
+                            session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                            console.log('[PayPal/ApplePay] Step 4: Capturing order...');
+                            await this.captureOrder(orderId, this.wcOrderId);
+                        } else {
                             session.completePayment(ApplePaySession.STATUS_FAILURE);
+                            console.warn('[PayPal/ApplePay] Order not APPROVED, status:', status, '— redirecting to PayPal.');
                             this._redirectToPaypal(detail, orderId);
                         }
-                    };
-
-                    session.oncancel = () => {
-                        console.log('[PayPal/ApplePay] Session cancelled by user — redirecting to PayPal.');
+                    } catch (err) {
+                        console.error('[PayPal/ApplePay] confirmOrder failed:');
+                        console.error('  message:', err?.message);
+                        console.error('  name:', err?.name);
+                        console.error('  full error object:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+                        console.error('  paypalDebugId:', err?.paypalDebugId);
+                        console.error('  details:', JSON.stringify(err?.details));
+                        session.completePayment(ApplePaySession.STATUS_FAILURE);
                         this._redirectToPaypal(detail, orderId);
-                    };
+                    }
+                };
 
-                    session.begin();
+                session.oncancel = () => {
+                    console.log('[PayPal/ApplePay] Session cancelled by user.');
+                    this._redirectToPaypal(detail, orderId);
+                };
 
-                } catch (clickErr) {
-                    console.error('[PayPal/ApplePay] Payment error during onClick:', clickErr);
-                    this._redirectToPaypal(detail, null);
-                }
+                session.begin();
             });
 
             return true;
@@ -485,21 +604,24 @@ class GrowtypeWcPaypalProvider {
         const configAjax = window.growtype_wc_ajax || {};
         const isSandbox = configAjax.paypal?.test_mode;
 
-        console.log('[PayPal] _redirectToPaypal called — orderId:', orderId, '| detail.fallback:', detail?.fallback, '| isSandbox:', isSandbox);
+        console.log('[PayPal] _redirectToPaypal — orderId:', orderId, '| fallback:', detail?.fallback, '| sandbox:', isSandbox);
 
-        // Priority 1: Direct PayPal redirect with existing orderId.
-        // The order was already created in Step 1 — send the user straight to PayPal to complete it.
+        // Priority 1: Direct PayPal redirect using the existing orderId.
+        // fundingSource=card → PayPal shows the card form directly (guest checkout).
+        // Without it PayPal shows the "Sign in to PayPal" login screen.
+        // Apple Pay / Google Pay on PayPal's hosted page also require IC++ (same as
+        // our custom buttons), so card guest checkout is the right fallback for now.
         if (orderId) {
             const base = isSandbox
                 ? 'https://www.sandbox.paypal.com'
                 : 'https://www.paypal.com';
-            const url = `${base}/checkoutnow?token=${encodeURIComponent(orderId)}`;
-            console.log('[PayPal] Redirecting to PayPal checkout (existing order):', url);
+            const url = `${base}/checkoutnow?token=${encodeURIComponent(orderId)}&fundingSource=card`;
+            console.log('[PayPal] Redirecting to PayPal guest checkout (card):', url);
             window.location.href = url;
             return;
         }
 
-        // Priority 2: WC checkout fallback — no orderId yet; creates a fresh order.
+        // Priority 2: WC checkout fallback — no orderId available yet.
         const fallback = detail?.fallback;
         if (fallback) {
             this._redirectToFallback(fallback);
