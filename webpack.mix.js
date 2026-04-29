@@ -17,6 +17,7 @@ mix
     .js('resources/scripts/wc-checkout.js', 'scripts')
     .js('resources/scripts/wc-login.js', 'scripts')
     .js('resources/scripts/wc-coupon.js', 'scripts')
+    .js('resources/scripts/wc-payment-form.js', 'scripts')
     .js('resources/scripts/growtype-wc.js', 'scripts')
 
     /**

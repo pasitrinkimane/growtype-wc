@@ -75,6 +75,11 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Webhook.php';
         new Growtype_Wc_Payment_Gateway_Paypal_Webhook($this);
 
+        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Card_Form.php';
+        
+        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Payment_Form.php';
+        Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::init();
+
         include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields.php';
         new Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields($this);
 

@@ -394,167 +394,17 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 <div style="color:#666; font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:1px;"><?php _e('Loading...', 'growtype-child'); ?></div>
                             </div>
 
-                            <div id="card-form" class="card_container">
-                                <div class="gwc-hf-group">
-                                    <label class="gwc-hf-label"><?php _e('Cardholder name', 'growtype-child'); ?> <span style="color:#e05c5c">*</span></label>
-                                    <div id="card-name-field-container" class="gwc-hf-frame"></div>
-                                </div>
-                                <div class="gwc-hf-group">
-                                    <label class="gwc-hf-label"><?php _e('Card Number', 'growtype-child'); ?> <span style="color:#e05c5c">*</span></label>
-                                    <div id="card-number-field-container" class="gwc-hf-frame"></div>
-                                </div>
-                                <div class="gwc-hf-row">
-                                    <div class="gwc-hf-group">
-                                        <label class="gwc-hf-label"><?php _e('Expiry (MM/YY)', 'growtype-child'); ?> <span style="color:#e05c5c">*</span></label>
-                                        <div id="card-expiry-field-container" class="gwc-hf-frame"></div>
-                                    </div>
-                                    <div class="gwc-hf-group">
-                                        <label class="gwc-hf-label"><?php _e('CVV', 'growtype-child'); ?> <span style="color:#e05c5c">*</span></label>
-                                        <div id="card-cvv-field-container" class="gwc-hf-frame"></div>
-                                    </div>
-                                </div>
+                            <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render(); ?>
 
-                                <div id="gwc-hf-errors" style="display:none;margin-bottom:5px;padding:10px 14px;background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);border-radius:6px;color:#e05c5c;font-size:13px"></div>
-
-                                <button id="card-field-submit-button" class="gwc-hf-submit" disabled>
-                                     <?php _e('Complete Secure Payment', 'growtype-child'); ?> <span style="position:relative;top:-2px;"><svg class="gwc-hf-lock-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-                                </button>
-
-                                <div class="gwc-hf-footer-badge">
+                            <div class="gwc-hf-footer-badge">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
                                     <span>Your data is encrypted and never stored on our servers.</span>
                                 </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <style>
-
-:root {
-    --gwc-hf-primary: #4f8ef7;
-    --gwc-hf-bg: #141414;
-    --gwc-hf-header-bg: #0d0d0d;
-    --gwc-hf-border: rgba(255, 255, 255, 0.08);
-    --gwc-hf-text-muted: #888;
-    --gwc-hf-error: #e05c5c;
-    --gwc-hf-success: #4caf50;
-    --gwc-hf-radius: 12px;
-    --gwc-hf-input-radius: 10px;
-    --gwc-hf-font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-}
-
-.modal .modal-header .btn-close {
-   color: #7b7b7b;
-}
-
-            .gwc-hf-group  { margin-bottom:14px; }
-            .gwc-hf-row    { display:flex; gap:12px; }
-            .gwc-hf-row .gwc-hf-group { flex:1; }
-            .gwc-hf-label  { display:block; color:#aaa; font-size:12px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;padding-left:5px;padding-right:5px; }
-            /* Unified style for all inputs (standard and iframe) */
-            .gwc-hf-input, .gwc-hf-frame { width:100%; height:65px !important; min-height:65px !important; border-radius:8px; color:#fff !important; font-size:15px; box-sizing:border-box; outline:none; transition:border-color .2s,box-shadow .2s; }
-            .gwc-hf-input { padding:0 14px; }
-            .gwc-hf-frame { position:relative; overflow:hidden;    
-                /* margin-left: -5px;
-    width: calc(100% + 12px);  */
-}
-
-            .gwc-hf-input:focus, .gwc-hf-frame.gwc-focused { border-color:#4f8ef7; box-shadow:0 0 0 3px rgba(79,142,247,.15); }
-            .gwc-hf-frame.gwc-valid   { border-color:#4caf50; }
-            .gwc-hf-frame.gwc-invalid { border-color:#e05c5c; }
-
-            /* Spinner styling */
-            .gwc-hf-spinner {
-                width: 28px;
-                height: 28px;
-                border: 3px solid rgba(255,255,255,0.1);
-                border-top-color: #4f8ef7;
-                border-radius: 50%;
-                animation: gwc-spin 0.8s linear infinite;
-            }
-            @keyframes gwc-spin {
-                to { transform: rotate(360deg); }
-            }
-
-            /* Force PayPal's iframes and all their wrappers to be exactly 65px */
-            .gwc-hf-frame div, 
-            .gwc-hf-frame iframe { 
-                position: absolute !important; 
-                top: 0 !important; 
-                left: 0 !important; 
-                width: 100% !important; 
-                height: 65px !important; 
-                min-height: 65px !important;
-                border: none !important; 
-                background: transparent !important;
-            }
-
-            .gwc-hf-submit {margin-top:10px; width:100%; padding:14px; font-size:18px; font-weight:600; letter-spacing:.5px; border-radius:8px; background:#ff9000; border:none; color:#fff; cursor:pointer; transition:opacity .2s,transform .1s; }
-            .gwc-hf-submit:hover:not(:disabled) { opacity:.92; }
-            .gwc-hf-submit:active  { transform:scale(.99); }
-            .gwc-hf-submit:disabled { opacity:.5; cursor:not-allowed; }
-            .gwc-hf-badge  { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px; color:#555; font-size:12px; }
-            .btn-addtocart.processing { opacity:.5!important; pointer-events:none!important; }
-
-            .gwc-hf-footer-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 24px;
-    color: #555;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.gwc-hf-footer-badge svg {
-    color: #4caf50;
-}
-
-.gwc-hf-modal-header {
-    background: var(--gwc-hf-header-bg) !important;
-    border-bottom: 1px solid var(--gwc-hf-border) !important;
-    padding: 24px 28px !important;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.gwc-hf-header-title-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.gwc-hf-secure-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #4caf50;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.gwc-hf-modal-header .modal-title {
-    color: #fff !important;
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
-    letter-spacing: -0.02em;
-}
-
-.gwc-hf-trust-badges {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin-right: 30px;
-}
-        </style>
 
         <script>
         (function($) {
@@ -863,3 +713,4 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         <?php
     }
 }
+
