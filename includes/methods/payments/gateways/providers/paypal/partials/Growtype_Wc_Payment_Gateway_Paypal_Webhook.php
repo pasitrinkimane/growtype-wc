@@ -141,7 +141,17 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
 
         // 1. Try by Invoice ID (WooCommerce Order ID)
         if (!empty($invoice_id)) {
-            $order = wc_get_order($invoice_id);
+            $candidate = wc_get_order($invoice_id);
+            // Only accept it if it is a PayPal order and not a child/upsell order.
+            if ($candidate instanceof WC_Order
+                && $candidate->get_payment_method() === $this->gateway->id
+                && empty($candidate->get_meta('parent_order_id'))
+            ) {
+                error_log(sprintf('[GWC PayPal Webhook] invoice_id %s matched order #%d — accepted.', $invoice_id, $candidate->get_id()));
+                $order = $candidate;
+            } elseif ($candidate) {
+                error_log(sprintf('[GWC PayPal Webhook] invoice_id %s matched order #%d but rejected — payment_method=%s parent_order_id=%s', $invoice_id, $candidate->get_id(), $candidate->get_payment_method(), $candidate->get_meta('parent_order_id')));
+            }
         }
 
         // 2. Self-healing fallback: Email and Amount
@@ -224,15 +234,18 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
     protected function find_order_by_email_and_amount($email, $amount)
     {
         $orders = wc_get_orders([
-            'limit' => 5,
-            'status' => ['pending', 'on-hold', 'failed'],
+            'limit'         => 5,
+            'status'        => ['pending', 'on-hold', 'failed'],
             'billing_email' => $email,
-            'orderby' => 'date',
-            'order' => 'DESC',
+            'orderby'       => 'date',
+            'order'         => 'DESC',
         ]);
 
         foreach ($orders as $order) {
-            if (abs($order->get_total() - $amount) < 0.01) {
+            if (abs($order->get_total() - $amount) < 0.01
+                && $order->get_payment_method() === $this->gateway->id
+                && empty($order->get_meta('parent_order_id'))
+            ) {
                 return $order;
             }
         }

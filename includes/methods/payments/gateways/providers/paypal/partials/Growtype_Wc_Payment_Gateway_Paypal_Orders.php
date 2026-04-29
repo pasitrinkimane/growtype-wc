@@ -36,12 +36,26 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
 
     public function build_vault_payment_source(string $vault_source, string $paypal_customer_id = ''): array
     {
+        if ($vault_source === 'applepay') {
+            // PayPal requires payment_source.apple_pay declared at order creation so its backend
+            // knows to route the order through Apple Pay processing. Without this declaration,
+            // confirmOrder() returns HTTP 400 "An internal server error has occurred".
+            // The empty object ({}) tells PayPal the payment method type; the token is attached
+            // by the JS SDK during confirmOrder — no vault attributes needed here.
+            return ['apple_pay' => new \stdClass()];
+        }
+
+        if ($vault_source === 'googlepay') {
+            // Same requirement for Google Pay.
+            return ['google_pay' => new \stdClass()];
+        }
+
         if ($vault_source === 'paypal') {
             $vault_attrs = [
                 'store_in_vault' => 'ON_SUCCESS',
                 'usage_type'     => 'MERCHANT',
             ];
-            // If we already have a PayPal customer ID, link to their existing customer record
+            // If we already have a PayPal Customer ID, link to their existing customer record
             if (!empty($paypal_customer_id)) {
                 $vault_attrs['customer'] = ['id' => $paypal_customer_id];
             }
@@ -105,18 +119,39 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
 
         $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($wc_order_id, false, $applied_coupons);
 
+        // Standard instruction for all payment methods (card, paypal, applepay, googlepay).
+        // For Apple Pay and Google Pay the key difference is the absent payment_source block below,
+        // NOT a different processing_instruction — ORDER_COMPLETE_ON_BUYER_APPROVAL is a
+        // pay-by-invoice value and will be rejected for wallet/card payments.
+        $processing_instruction = 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
+
+        $payment_source = $this->build_vault_payment_source($vault_source, $paypal_customer_id);
+
         $order_body = [
-            "intent" => "CAPTURE",
-            "processing_instruction" => "ORDER_COMPLETE_ON_PAYMENT_APPROVAL",
-            "purchase_units" => $items,
-            // Pass the existing paypal_customer_id so PayPal links the vault token
-            // to the customer's existing record (needed for correct vault association)
-            "payment_source" => $this->build_vault_payment_source($vault_source, $paypal_customer_id),
-            "application_context" => [
+            "intent"                 => "CAPTURE",
+            "processing_instruction" => $processing_instruction,
+            "purchase_units"         => $items,
+            "application_context"    => [
                 "return_url" => Growtype_Wc_Payment_Gateway::success_url($wc_order_id),
-                "cancel_url" => $cancel_url
+                "cancel_url" => $cancel_url,
             ],
         ];
+
+        // Attach payment_source when set. Apple Pay uses {apple_pay:{}} and Google Pay uses
+        // {google_pay:{}} — the empty object declares the payment method type to PayPal's backend
+        // so it can route confirmOrder correctly. Card/PayPal include full vault attributes.
+        if (!empty($payment_source)) {
+            $order_body['payment_source'] = $payment_source;
+        }
+
+        // Always log the payment_source type for debugging — never log the full token.
+        error_log(sprintf(
+            '[GWC PayPal] create_order — vault_source=%s | payment_source keys=%s | order body (no sensitive data): intent=%s instruction=%s',
+            $vault_source,
+            implode(',', array_keys($payment_source)),
+            $order_body['intent'],
+            $order_body['processing_instruction']
+        ));
 
         $response = wp_remote_post($create_order_url, [
             'headers' => $headers,
@@ -344,7 +379,16 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
     {
         $parent = wc_get_order($parent_order_id);
         if (!$parent) {
+            error_log(sprintf('[GWC PayPal] charge_intent() failed: parent order ID %d not found.', $parent_order_id));
             throw new \Exception("Invalid parent order ID: {$parent_order_id}");
+        }
+
+        // Subscription orders are paid via PayPal Billing Agreements — they have no
+        // vault token. charge_intent() would fall back to a redirect creating a second
+        // full PayPal checkout, causing a duplicate charge.
+        if (class_exists('Growtype_Wc_Subscription') && Growtype_Wc_Subscription::is_subscription_order($parent_order_id)) {
+            error_log(sprintf('[GWC PayPal] charge_intent() blocked: order %d is a subscription order — skipping to prevent duplicate charge.', $parent_order_id));
+            throw new \Exception("charge_intent() blocked: order {$parent_order_id} is a subscription order. Use the subscription billing flow.");
         }
 
         $upsell = wc_create_order();

@@ -31,7 +31,67 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         add_action('wp_ajax_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
         add_action('wp_ajax_nopriv_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
 
+        // Client token — needed for PayPal SDK to establish a backend session for Apple/Google Pay.
+        add_action('wp_ajax_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
+        add_action('wp_ajax_nopriv_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
+
         add_action('wp_footer', [$this, 'render_paypal_hosted_fields_modal']);
+    }
+
+    /**
+     * Generate a PayPal client token for the JS SDK.
+     * Required for the SDK to authenticate with PayPal's backend (exits "prebuild" state).
+     * Without this, Apple Pay / Google Pay confirmOrder() fails with paypalDebugId=null.
+     *
+     * Cached for 55 minutes (token TTL is 1 hour).
+     * Returns JSON: { client_token: string }
+     */
+    public function ajax_get_client_token()
+    {
+        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.'], 403);
+        }
+
+        $cache_key = 'gwc_paypal_client_token_' . md5($this->gateway->get_client_id());
+        $cached    = get_transient($cache_key);
+        if ($cached) {
+            wp_send_json_success(['client_token' => $cached]);
+            return;
+        }
+
+        try {
+            $access_token = $this->gateway->get_access_token(
+                $this->gateway->get_client_id(),
+                $this->gateway->get_client_secret()
+            );
+            if (empty($access_token)) {
+                throw new \Exception('Could not retrieve access token.');
+            }
+
+            $url      = $this->gateway->get_api_url('/v1/identity/generate-token');
+            $response = wp_remote_post($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ],
+                'body'    => '',
+                'timeout' => 15,
+            ]);
+
+            $body = json_decode(wp_remote_retrieve_body($response), true) ?: [];
+            if (empty($body['client_token'])) {
+                throw new \Exception('PayPal did not return a client_token. Response: ' . wp_remote_retrieve_body($response));
+            }
+
+            $token = trim($body['client_token']); // raw JWT — sanitize_text_field would be fine too but trim is explicit
+            set_transient($cache_key, $token, 55 * MINUTE_IN_SECONDS);
+
+            wp_send_json_success(['client_token' => $token]);
+        } catch (\Exception $e) {
+            error_log('[GWC PayPal] ajax_get_client_token error: ' . $e->getMessage());
+            wp_send_json_error(['message' => 'Could not generate client token.'], 500);
+        }
     }
 
     /**
@@ -51,7 +111,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         $billing_email = sanitize_email($_POST['billing_email'] ?? '');
         // Whitelist vault_source to prevent arbitrary values reaching build_vault_payment_source()
         $vault_source_raw = sanitize_text_field($_POST['vault_source'] ?? 'card');
-        $vault_source     = in_array($vault_source_raw, ['card', 'paypal'], true) ? $vault_source_raw : 'card';
+        $vault_source     = in_array($vault_source_raw, ['card', 'paypal', 'applepay', 'googlepay'], true) ? $vault_source_raw : 'card';
 
         if (!$product_id) {
             wp_send_json_error(['message' => __('Invalid product.', 'growtype-wc')], 400);
@@ -205,24 +265,34 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
             $vault_id       = $capture_result['payment_source']['card']['attributes']['vault']['id'] ?? '';
             $pp_customer_id = $capture_result['payment_source']['card']['attributes']['vault']['customer']['id'] ?? '';
+            $vault_type     = 'card';
 
-            // Also try google_pay and paypal paths in case payment_source type differs
+            // Google Pay embeds a card token under payment_source.google_pay.card
             if (empty($vault_id)) {
                 $vault_id       = $capture_result['payment_source']['google_pay']['card']['attributes']['vault']['id'] ?? '';
                 $pp_customer_id = $capture_result['payment_source']['google_pay']['card']['attributes']['vault']['customer']['id'] ?? '';
+                if (!empty($vault_id)) $vault_type = 'card'; // google_pay still vaults as card
             }
+            // Apple Pay embeds a card token under payment_source.apple_pay.card
+            if (empty($vault_id)) {
+                $vault_id       = $capture_result['payment_source']['apple_pay']['card']['attributes']['vault']['id'] ?? '';
+                $pp_customer_id = $capture_result['payment_source']['apple_pay']['card']['attributes']['vault']['customer']['id'] ?? '';
+                if (!empty($vault_id)) $vault_type = 'card'; // apple_pay still vaults as card
+            }
+            // PayPal account vault
             if (empty($vault_id)) {
                 $vault_id       = $capture_result['payment_source']['paypal']['attributes']['vault']['id'] ?? '';
                 $pp_customer_id = $capture_result['payment_source']['paypal']['attributes']['vault']['customer']['id'] ?? '';
+                if (!empty($vault_id)) $vault_type = 'paypal';
             }
 
-            error_log('[GWC Vault] Hosted Fields capture complete: order=' . $wc_order_id . ' capture_id=' . $capture_id . ' vault=' . (!empty($vault_id) ? 'yes' : 'no'));
+            error_log('[GWC Vault] Hosted Fields capture complete: order=' . $wc_order_id . ' capture_id=' . $capture_id . ' vault=' . (!empty($vault_id) ? 'yes(' . $vault_type . ')' : 'no'));
 
             $order->update_meta_data('_paypal_capture_id', sanitize_text_field($capture_id));
 
             if (!empty($vault_id)) {
                 $order->update_meta_data('paypal_vault_id', sanitize_text_field($vault_id));
-                $order->update_meta_data('paypal_vault_type', 'card');
+                $order->update_meta_data('paypal_vault_type', $vault_type);
             }
             if (!empty($pp_customer_id)) {
                 $order->update_meta_data('paypal_customer_id', sanitize_text_field($pp_customer_id));
@@ -236,8 +306,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             if ($user_id > 0) {
                 if (!empty($vault_id)) {
                     update_user_meta($user_id, 'paypal_vault_id', sanitize_text_field($vault_id));
-                    update_user_meta($user_id, 'paypal_vault_type', 'card');
-                    error_log(sprintf('[GWC Vault] Hosted Fields: stored vault_id=%s type=card for user %d', $vault_id, $user_id));
+                    update_user_meta($user_id, 'paypal_vault_type', $vault_type);
+                    error_log(sprintf('[GWC Vault] Hosted Fields: stored vault_id=%s type=%s for user %d', $vault_id, $vault_type, $user_id));
                 }
                 if (!empty($pp_customer_id)) {
                     update_user_meta($user_id, 'paypal_customer_id', sanitize_text_field($pp_customer_id));
