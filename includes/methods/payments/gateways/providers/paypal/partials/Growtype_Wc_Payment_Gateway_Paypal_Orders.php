@@ -34,20 +34,26 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         return is_array($data) ? $data : [];
     }
 
-    public function build_vault_payment_source(string $vault_source, string $paypal_customer_id = ''): array
+    public function build_vault_payment_source(string $vault_source, string $paypal_customer_id = '', string $return_url = '', string $cancel_url = ''): array
     {
         if ($vault_source === 'applepay') {
-            // PayPal requires payment_source.apple_pay declared at order creation so its backend
-            // knows to route the order through Apple Pay processing. Without this declaration,
-            // confirmOrder() returns HTTP 400 "An internal server error has occurred".
-            // The empty object ({}) tells PayPal the payment method type; the token is attached
-            // by the JS SDK during confirmOrder — no vault attributes needed here.
-            return ['apple_pay' => new \stdClass()];
+            // PayPal requires payment_source.apple_pay with experience_context so its backend
+            // can validate the Apple Pay token against the correct return/cancel endpoints.
+            // Matches the official WooCommerce PayPal Payments plugin pattern (ApplepayModule.php).
+            $ctx = [];
+            if (!empty($return_url)) $ctx['return_url'] = $return_url;
+            if (!empty($cancel_url)) $ctx['cancel_url'] = $cancel_url;
+            return ['apple_pay' => !empty($ctx) ? ['experience_context' => $ctx] : new \stdClass()];
         }
 
         if ($vault_source === 'googlepay') {
-            // Same requirement for Google Pay.
-            return ['google_pay' => new \stdClass()];
+            // Same requirement for Google Pay — experience_context with return/cancel URLs
+            // is required for confirmOrder() to succeed in production.
+            // Matches the official WooCommerce PayPal Payments plugin pattern (GooglepayModule.php).
+            $ctx = [];
+            if (!empty($return_url)) $ctx['return_url'] = $return_url;
+            if (!empty($cancel_url)) $ctx['cancel_url'] = $cancel_url;
+            return ['google_pay' => !empty($ctx) ? ['experience_context' => $ctx] : new \stdClass()];
         }
 
         if ($vault_source === 'paypal') {
@@ -117,25 +123,32 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             ],
         ];
 
+        $return_url = Growtype_Wc_Payment_Gateway::success_url($wc_order_id);
         $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($wc_order_id, false, $applied_coupons);
 
-        // Standard instruction for all payment methods (card, paypal, applepay, googlepay).
-        // For Apple Pay and Google Pay the key difference is the absent payment_source block below,
-        // NOT a different processing_instruction — ORDER_COMPLETE_ON_BUYER_APPROVAL is a
-        // pay-by-invoice value and will be rejected for wallet/card payments.
-        $processing_instruction = 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
+        // ORDER_COMPLETE_ON_PAYMENT_APPROVAL is used for card/paypal vault flows.
+        // For Google Pay and Apple Pay, the official WooCommerce PayPal plugin does NOT
+        // set processing_instruction — the standard confirmOrder flow handles completion.
+        // Using this instruction with wallet payments prevents the confirm-payment-source
+        // link from appearing in the order response, causing APPROVE_GOOGLE_PAY_VALIDATION_ERROR.
+        $is_wallet = in_array($vault_source, ['googlepay', 'applepay'], true);
+        $processing_instruction = $is_wallet ? null : 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
 
-        $payment_source = $this->build_vault_payment_source($vault_source, $paypal_customer_id);
+        $payment_source = $this->build_vault_payment_source($vault_source, $paypal_customer_id, $return_url, $cancel_url);
 
         $order_body = [
-            "intent"                 => "CAPTURE",
-            "processing_instruction" => $processing_instruction,
-            "purchase_units"         => $items,
-            "application_context"    => [
-                "return_url" => Growtype_Wc_Payment_Gateway::success_url($wc_order_id),
+            "intent"          => "CAPTURE",
+            "purchase_units"  => $items,
+            "application_context" => [
+                "return_url" => $return_url,
                 "cancel_url" => $cancel_url,
             ],
         ];
+
+        if ($processing_instruction) {
+            $order_body["processing_instruction"] = $processing_instruction;
+        }
+
 
         // Attach payment_source when set. Apple Pay uses {apple_pay:{}} and Google Pay uses
         // {google_pay:{}} — the empty object declares the payment method type to PayPal's backend
@@ -150,7 +163,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             $vault_source,
             implode(',', array_keys($payment_source)),
             $order_body['intent'],
-            $order_body['processing_instruction']
+            $order_body['processing_instruction'] ?? 'none'
         ));
 
         $response = wp_remote_post($create_order_url, [
