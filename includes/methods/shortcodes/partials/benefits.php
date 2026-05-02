@@ -51,7 +51,7 @@ class Growtype_Wc_Benefits_Shortcode
 
                                         <?php if ($is_video): ?>
                                             <div class="gwc-benefits-slider-slide-img gwc-benefits-slider-slide-video">
-                                                <video autoplay muted loop playsinline>
+                                                <video width="390" height="844" autoplay muted loop playsinline preload="none">
                                                     <source src="<?= $url ?>" type="video/<?= $ext ?>">
                                                 </video>
                                             </div>
