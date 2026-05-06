@@ -743,6 +743,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 gap: 7px;
                 margin-right: 30px;
             }
+
+            @media only screen and (max-width: 640px) {
+                .gwc-hf-trust-badges {
+                    margin-right: 0;
+                }
+            }
         </style>
 
         <script>
