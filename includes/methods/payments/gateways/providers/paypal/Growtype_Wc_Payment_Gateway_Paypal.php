@@ -21,7 +21,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
     /** @var Growtype_Wc_Payment_Gateway_Paypal_Orders */
     public $orders;
     /** @var Growtype_Wc_Payment_Gateway_Paypal_Settings */
-    public $settings;
+    public $paypal_settings;
     /** @var Growtype_Wc_Payment_Gateway_Paypal_Token */
     public $token;
 
@@ -64,7 +64,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         $this->token = new Growtype_Wc_Payment_Gateway_Paypal_Token($this);
 
         include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Settings.php';
-        $this->settings = new Growtype_Wc_Payment_Gateway_Paypal_Settings($this);
+        $this->paypal_settings = new Growtype_Wc_Payment_Gateway_Paypal_Settings($this);
 
         include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Orders.php';
         $this->orders = new Growtype_Wc_Payment_Gateway_Paypal_Orders($this);
@@ -158,7 +158,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
      */
     public function init_form_fields()
     {
-        $this->form_fields = $this->settings->get_form_fields();
+        $this->form_fields = $this->paypal_settings->get_form_fields();
     }
 
     /**
@@ -195,7 +195,7 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
 
     public function payment_fields()
     {
-        $this->settings->render_payment_fields();
+        $this->paypal_settings->render_payment_fields();
     }
 
     public function get_access_token_details($client_id, $client_secret)

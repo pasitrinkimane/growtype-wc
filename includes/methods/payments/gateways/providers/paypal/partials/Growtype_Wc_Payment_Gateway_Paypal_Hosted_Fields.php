@@ -333,6 +333,22 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 throw new \Exception($detail);
             }
 
+            // PayPal can return order status=COMPLETED even when the individual capture
+            // inside is DECLINED (e.g. prepaid card, failed 3DS, fraud block, response_code=9500).
+            // We MUST check the inner capture status — not just the outer order status.
+            $capture_status = $capture_result['purchase_units'][0]['payments']['captures'][0]['status'] ?? '';
+            if (!empty($capture_status) && $capture_status !== 'COMPLETED') {
+                $proc_code = $capture_result['purchase_units'][0]['payments']['captures'][0]['processor_response']['response_code'] ?? '';
+                $detail    = sprintf('Payment declined by card issuer (code: %s). Please try a different payment method.', $proc_code ?: 'unknown');
+                error_log(sprintf(
+                    '[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s',
+                    $wc_order_id,
+                    $capture_status,
+                    $proc_code
+                ));
+                throw new \Exception($detail);
+            }
+
             // Extract the capture transaction ID
             $capture_id = $capture_result['purchase_units'][0]['payments']['captures'][0]['id'] ?? '';
 

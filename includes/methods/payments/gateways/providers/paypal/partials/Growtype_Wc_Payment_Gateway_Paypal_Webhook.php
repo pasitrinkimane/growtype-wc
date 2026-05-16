@@ -65,7 +65,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
                 $this->handle_payment_completed($data);
                 break;
             case 'BILLING.SUBSCRIPTION.ACTIVATED':
-            case 'BILLING.SUBSCRIPTION.CREATED':
+                // NOTE: Do NOT handle BILLING.SUBSCRIPTION.CREATED here.
+                // CREATED fires immediately when the API creates the subscription object —
+                // BEFORE the user approves or pays. Only ACTIVATED fires after the user
+                // approves and the first payment succeeds.
                 $this->handle_subscription_event($data);
                 break;
         }
@@ -80,7 +83,9 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
      */
     protected function verify_webhook_signature(string $raw_body, string $webhook_id): bool
     {
-        $headers = getallheaders();
+        // Normalize header keys to lowercase — LiteSpeed/FastCGI lowercases all
+        // custom HTTP headers in getallheaders() (e.g. PAYPAL-AUTH-ALGO → paypal-auth-algo).
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
 
         $verify_url = $this->gateway->get_api_url('/v1/notifications/verify-webhook-signature');
 
@@ -94,12 +99,22 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
             return false;
         }
 
+        $auth_algo       = $headers['paypal-auth-algo']        ?? '';
+        $cert_url        = $headers['paypal-cert-url']          ?? '';
+        $transmission_id = $headers['paypal-transmission-id']  ?? '';
+        $transmission_sig= $headers['paypal-transmission-sig'] ?? '';
+        $transmission_time=$headers['paypal-transmission-time']?? '';
+
+        if (empty($auth_algo) || empty($transmission_id) || empty($transmission_sig)) {
+            error_log('[GWC PayPal Webhook] ⚠ Missing PayPal signature headers — auth_algo=' . $auth_algo . ' transmission_id=' . $transmission_id);
+        }
+
         $payload = [
-            'auth_algo'         => $headers['PAYPAL-AUTH-ALGO']         ?? $headers['Paypal-Auth-Algo']         ?? '',
-            'cert_url'          => $headers['PAYPAL-CERT-URL']           ?? $headers['Paypal-Cert-Url']           ?? '',
-            'transmission_id'   => $headers['PAYPAL-TRANSMISSION-ID']   ?? $headers['Paypal-Transmission-Id']   ?? '',
-            'transmission_sig'  => $headers['PAYPAL-TRANSMISSION-SIG']  ?? $headers['Paypal-Transmission-Sig']  ?? '',
-            'transmission_time' => $headers['PAYPAL-TRANSMISSION-TIME'] ?? $headers['Paypal-Transmission-Time'] ?? '',
+            'auth_algo'         => $auth_algo,
+            'cert_url'          => $cert_url,
+            'transmission_id'   => $transmission_id,
+            'transmission_sig'  => $transmission_sig,
+            'transmission_time' => $transmission_time,
             'webhook_id'        => $webhook_id,
             'webhook_event'     => json_decode($raw_body, true),
         ];
