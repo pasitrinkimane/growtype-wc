@@ -65,13 +65,24 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             if (!empty($paypal_customer_id)) {
                 $vault_attrs['customer'] = ['id' => $paypal_customer_id];
             }
-            return [
-                'paypal' => [
-                    'attributes' => [
-                        'vault' => $vault_attrs,
-                    ],
+
+            $paypal_source = [
+                'attributes' => [
+                    'vault' => $vault_attrs,
                 ],
             ];
+
+            // experience_context is required for the redirect vault flow so PayPal
+            // knows where to send the buyer after vault approval.
+            // Same pattern used for applepay/googlepay branches above.
+            if (!empty($return_url) || !empty($cancel_url)) {
+                $ctx = [];
+                if (!empty($return_url)) $ctx['return_url'] = $return_url;
+                if (!empty($cancel_url)) $ctx['cancel_url'] = $cancel_url;
+                $paypal_source['experience_context'] = $ctx;
+            }
+
+            return ['paypal' => $paypal_source];
         }
 
         return [
@@ -396,12 +407,19 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             throw new \Exception("Invalid parent order ID: {$parent_order_id}");
         }
 
-        // Subscription orders are paid via PayPal Billing Agreements — they have no
-        // vault token. charge_intent() would fall back to a redirect creating a second
-        // full PayPal checkout, causing a duplicate charge.
+        // Only block subscription orders that have NO vault token.
+        // PayPal Billing Agreement subscriptions (no vault_id) cannot be charged via
+        // charge_intent() — the fallback redirect would create a second full PayPal
+        // checkout, causing a duplicate charge.
+        // Card-vaulted subscription orders DO have a stored vault_id and can safely be
+        // charged for upsell products (e.g. extra credits) without touching the subscription.
         if (class_exists('Growtype_Wc_Subscription') && Growtype_Wc_Subscription::is_subscription_order($parent_order_id)) {
-            error_log(sprintf('[GWC PayPal] charge_intent() blocked: order %d is a subscription order — skipping to prevent duplicate charge.', $parent_order_id));
-            throw new \Exception("charge_intent() blocked: order {$parent_order_id} is a subscription order. Use the subscription billing flow.");
+            $vault_id_check = $this->get_vault_id_for_order($parent);
+            if (empty($vault_id_check)) {
+                error_log(sprintf('[GWC PayPal] charge_intent() blocked: order %d is a PayPal billing agreement subscription (no vault) — skipping to prevent duplicate charge.', $parent_order_id));
+                throw new \Exception("charge_intent() blocked: order {$parent_order_id} is a subscription order. Use the subscription billing flow.");
+            }
+            error_log(sprintf('[GWC PayPal] charge_intent(): order %d is subscription-type but has vault_id — proceeding with vault upsell charge.', $parent_order_id));
         }
 
         $upsell = wc_create_order();
