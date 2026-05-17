@@ -78,6 +78,7 @@ class Growtype_Wc_Public
         wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', ['jquery'], $this->version, true);
         wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', ['jquery'], $this->version, true);
         wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', ['jquery', 'growtype-wc-countdown'], $this->version, true);
+        wp_enqueue_script('growtype-wc-payment-form', plugin_dir_url(__FILE__) . 'scripts/wc-payment-form.js', [], $this->version, true);
     }
 
     /**
@@ -166,13 +167,14 @@ class Growtype_Wc_Public
                     'success_url' => wc_get_checkout_url() . 'order-received/', // Default WC behavior
                 ],
                 'paypal' => [
-                    'enabled'      => $paypal_enabled,
-                    'client_id'    => $paypal_client_id,
-                    'merchant_id'  => $paypal_merchant_id,
-                    'test_mode'    => $paypal_test_mode,
-                    'country_code' => wc_get_base_location()['country'] ?? 'US',
-                    'success_url'  => wc_get_checkout_url() . 'order-received/',
-                    'nonce'        => wp_create_nonce('gwc_paypal_hosted_fields'),
+                    'enabled'             => $paypal_enabled,
+                    'client_id'           => $paypal_client_id,
+                    'merchant_id'         => $paypal_merchant_id,
+                    'test_mode'           => $paypal_test_mode,
+                    'country_code'        => wc_get_base_location()['country'] ?? 'US',
+                    'success_url'         => wc_get_checkout_url() . 'order-received/',
+                    'nonce'               => wp_create_nonce('gwc_paypal_hosted_fields'),
+                    'payment_form_nonce'  => wp_create_nonce('gwc_payment_form_render'),
                 ]
             ]
         );
