@@ -175,6 +175,14 @@ class Growtype_Wc_Public
                     'success_url'         => wc_get_checkout_url() . 'order-received/',
                     'nonce'               => wp_create_nonce('gwc_paypal_hosted_fields'),
                     'payment_form_nonce'  => wp_create_nonce('gwc_payment_form_render'),
+                    'loader_html'         => Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::get_loader_html([
+                        'id'            => '{{SPINNER_ID}}',
+                        'class'         => 'gwc-paypal-express-loader',
+                        'style'         => 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:transparent;z-index:10;pointer-events:none;gap:8px;',
+                        'spinner_style' => 'width:18px;height:18px;border-width:2px;',
+                        'label_style'   => 'color:#666;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;',
+                        'label'         => __('Loading payment options...', 'growtype-child'),
+                    ]),
                 ]
             ]
         );

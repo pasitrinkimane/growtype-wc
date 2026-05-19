@@ -5,6 +5,8 @@
  * Handles express (Smart Buttons) and standard (branded link) button types.
  */
 
+import { GrowtypeWcPaypalProvider } from './growtypeWcPaypalProvider';
+
 function growtypeWcPaypalButtonHandler(container, { method, type, label }) {
     const fallbackUrl = container.dataset.fallback || '';
     const returnUrl = container.dataset.returnUrl || '';
@@ -36,27 +38,21 @@ function growtypeWcPaypalButtonHandler(container, { method, type, label }) {
         mountPoint.id = mountId;
         mountPoint.className = 'growtype-wc-payment-button-providers paypal-express-checkout-container w-100';
         mountPoint.style.cssText = 'position:relative;min-height:50px;';
-        mountPoint.innerHTML = `
-            <div id="${spinnerId}" style="
-                position:absolute;top:0;left:0;width:100%;height:100%;
-                display:flex;align-items:center;justify-content:center;
-                background:transparent;z-index:10;pointer-events:none;
-            ">
-                <div class="spinner-border text-primary" role="status" style="width:1.5rem;height:1.5rem;">
-                    <span class="visually-hidden">Loading payment...</span>
-                </div>
-            </div>
-        `;
-
+        
         container.replaceWith(mountPoint);
 
+        GrowtypeWcPaypalProvider.showSpinner(`#${mountId}`, 'Loading payment options...', false);
+
         const hideSpinner = () => {
-            document.getElementById(spinnerId)?.remove();
+            console.log(mountId, '--------- hideSpinner called --------- ');
+            GrowtypeWcPaypalProvider.hideSpinner(`#${mountId}`);
         };
 
         // Hide spinner when payment method is ready
         document.addEventListener('growtype_wc_payment_express_ready', (e) => {
+            console.log('[PaypalButtonHandler] growtype_wc_payment_express_ready event received:', e.detail);
             if (e.detail.container && e.detail.container.includes(mountId)) {
+                console.log('[PaypalButtonHandler] Matching container found, hiding spinner:', mountId);
                 hideSpinner();
             }
         });

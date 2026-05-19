@@ -463,9 +463,4 @@ class GrowtypeWcStripeProvider {
     }
 }
 
-// Initialize
-function growtypeWcStripeProvider() {
-    new GrowtypeWcStripeProvider();
-}
-
-export { growtypeWcStripeProvider };
+export { GrowtypeWcStripeProvider };

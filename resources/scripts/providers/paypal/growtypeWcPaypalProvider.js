@@ -6,7 +6,6 @@
 class GrowtypeWcPaypalProvider {
     constructor() {
         this.sdkLoaded = false;
-        console.log('[PayPal] GrowtypeWcPaypalProvider: initialized');
         this.init();
     }
 
@@ -74,6 +73,13 @@ class GrowtypeWcPaypalProvider {
             if (requested.includes('applepay') && isSafariApple) components.push('applepay');
             if (requested.includes('googlepay') && !isSafariApple) components.push('googlepay');
 
+            // If a hosted-fields card form is on the page, load card-fields in the SAME
+            // SDK instance to avoid two conflicting PayPal SDK tags (which breaks Zoid).
+            if (document.getElementById('card-form')) {
+                components.push('card-fields');
+                console.log('[PayPal] #card-form detected — adding card-fields to SDK components.');
+            }
+
             let src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&components=${components.join(',')}`;
 
             if (merchantId) {
@@ -98,6 +104,9 @@ class GrowtypeWcPaypalProvider {
             script.onload = () => {
                 this.sdkLoaded = true;
                 console.log('[PayPal] SDK loaded successfully.');
+                // Signal to the hosted-fields boot code that the unified SDK is ready.
+                window.gwcPaypalSdkReady = true;
+                document.dispatchEvent(new CustomEvent('gwc_paypal_sdk_ready', { detail: { paypal: window.paypal } }));
                 resolve(true);
             };
             script.onerror = () => {
@@ -195,8 +204,11 @@ class GrowtypeWcPaypalProvider {
                 }
             }
 
+            // Remove loader spinner inside this container
+            GrowtypeWcPaypalProvider.hideSpinner(detail.container);
+
             // Signal that we're ready
-            console.log('[PayPal] Express checkout mounted, dispatching ready event.');
+            console.log('[PayPal] Express checkout mounted, dispatching ready event with container:', detail.container);
             document.dispatchEvent(new CustomEvent('growtype_wc_payment_express_ready', {
                 detail: { container: detail.container }
             }));
@@ -347,6 +359,7 @@ class GrowtypeWcPaypalProvider {
             const button = paymentsClient.createButton({
                 onClick: async () => {
                     console.log('[PayPal/GooglePay] Button clicked — productId:', productId);
+                    this.showLoader();
                     let orderId = null;
                     try {
                         console.log('[PayPal/GooglePay] Step 1: Creating WC + PayPal order...');
@@ -403,6 +416,7 @@ class GrowtypeWcPaypalProvider {
                             this._redirectToPaypal(detail, orderId);
                         }
                     } catch (clickErr) {
+                        this.hideLoader();
                         // Google Pay sheet dismissed / cancelled by the user — do nothing.
                         // loadPaymentData rejects with statusCode 'CANCELED' when the user
                         // closes the sheet without completing payment.
@@ -497,6 +511,7 @@ class GrowtypeWcPaypalProvider {
             // inside the Apple Pay event callbacks, where async is always allowed.
             apBtn.addEventListener('click', () => {
                 console.log('[PayPal/ApplePay] Button clicked — productId:', detail.productId);
+                this.showLoader();
 
                 // Start with a 'pending' total — we don't have the real amount yet.
                 // onpaymentmethodselected will update it once createOrder resolves.
@@ -534,6 +549,7 @@ class GrowtypeWcPaypalProvider {
                         session.completeMerchantValidation(validationData.merchantSession);
                     } catch (err) {
                         console.error('[PayPal/ApplePay] onvalidatemerchant failed:', err);
+                        this.hideLoader();
                         session.abort();
                     }
                 };
@@ -582,6 +598,7 @@ class GrowtypeWcPaypalProvider {
                         }
                     } catch (err) {
                         console.error('[PayPal/ApplePay] confirmOrder failed:', err?.message, '| debug-id:', err?.paypalDebugId);
+                        this.hideLoader();
                         session.completePayment(ApplePaySession.STATUS_FAILURE);
                         this._redirectToPaypal(detail, orderId);
                     }
@@ -589,6 +606,7 @@ class GrowtypeWcPaypalProvider {
 
                 session.oncancel = () => {
                     console.log('[PayPal/ApplePay] Session cancelled by user.');
+                    this.hideLoader();
                     this._redirectToPaypal(detail, orderId);
                 };
 
@@ -741,20 +759,10 @@ class GrowtypeWcPaypalProvider {
         if (document.getElementById('growtype-wc-payment-loader')) return;
         const loader = document.createElement('div');
         loader.id = 'growtype-wc-payment-loader';
-        loader.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 100000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #fff; font-family: -apple-system, system-ui, sans-serif;
-            transition: opacity 0.3s;
-        `;
+        loader.className = 'gwc-paypal-form-loader gwc-paypal-form-loader--fixed';
         loader.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Processing...</span>
-            </div>
-            <div style="font-family: inherit; font-weight: 600; color: #fff;">Processing payment...</div>
-            </div>
+            <div class="gwc-hf-spinner"></div>
+            <span class="gwc-paypal-form-loader-label">Processing payment...</span>
         `;
         document.body.appendChild(loader);
     }
@@ -766,10 +774,72 @@ class GrowtypeWcPaypalProvider {
             setTimeout(() => loader.remove(), 300);
         }
     }
+
+    static showSpinner(container, label = '', isTransparent = false) {
+        const el = typeof container === 'string' ? document.querySelector(container) : container;
+        if (!el) return;
+
+        // Hide any card form inside this container during spinner phase
+        const cardContainers = el.querySelectorAll('.card_container');
+        cardContainers.forEach(cc => cc.classList.remove('gwc-visible'));
+        if (el.classList.contains('card_container')) {
+            el.classList.remove('gwc-visible');
+        }
+
+        // Prevent duplicate spinner inside this container
+        let loader = el.querySelector('.gwc-paypal-form-loader');
+        if (loader) {
+            loader.style.opacity = '1';
+            loader.style.display = 'flex';
+            return;
+        }
+
+        const spinnerId = el.id ? `${el.id}-loader` : `gwc-loader-${Math.floor(Math.random() * 1000000)}`;
+        const extraClass = isTransparent ? 'gwc-paypal-form-loader--transparent' : '';
+        const loaderHtml = `
+            <div id="${spinnerId}" class="gwc-paypal-form-loader ${extraClass}" style="opacity: 0; transition: opacity 0.3s ease;">
+                <div class="gwc-hf-spinner"></div>
+                <span class="gwc-paypal-form-loader-label">${label}</span>
+            </div>
+        `;
+
+        el.insertAdjacentHTML('afterbegin', loaderHtml);
+
+        // Trigger reflow & fade in
+        const newLoader = document.getElementById(spinnerId);
+        if (newLoader) {
+            newLoader.offsetHeight; // force reflow
+            newLoader.style.opacity = '1';
+        }
+    }
+
+    static hideSpinner(container) {
+        const el = typeof container === 'string' ? document.querySelector(container) : container;
+        if (!el) return;
+
+        let loader = el.querySelector('.gwc-paypal-form-loader');
+        if (!loader && el.classList.contains('gwc-paypal-form-loader')) {
+            loader = el;
+        }
+
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.remove();
+            }, 300);
+        }
+
+        // Make the card form visible (opacity 1) via CSS transition
+        const cardContainers = el.querySelectorAll('.card_container');
+        cardContainers.forEach(cc => cc.classList.add('gwc-visible'));
+        if (el.classList.contains('card_container')) {
+            el.classList.add('gwc-visible');
+        }
+        if (el.parentElement) {
+            const siblingCards = el.parentElement.querySelectorAll('.card_container');
+            siblingCards.forEach(cc => cc.classList.add('gwc-visible'));
+        }
+    }
 }
 
-function growtypeWcPaypalProvider() {
-    new GrowtypeWcPaypalProvider();
-}
-
-export { growtypeWcPaypalProvider };
+export { GrowtypeWcPaypalProvider };

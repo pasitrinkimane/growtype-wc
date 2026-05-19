@@ -45,8 +45,9 @@
 @import "pages/login";
 
 @import "payments/reepay";
-@import "payments/payments-express";
-@import "payments/payment-form";
+@import "payments/paypal/payments-express";
+@import "payments/paypal/loader";
+@import "payments/paypal/card-form";
 
 @import "sections/product-gallery";
 

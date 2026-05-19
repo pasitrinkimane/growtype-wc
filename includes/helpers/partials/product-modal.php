@@ -166,7 +166,7 @@ if (!function_exists('growtype_wc_product_modal')) {
         // ── Render ────────────────────────────────────────────────────────────
         ob_start();
         if ($standalone) : ?>
-<div class="modal modal-half-half fade <?php echo esc_attr($modal_class); ?>"
+<div class="modal fade <?php echo esc_attr($modal_class); ?>"
      id="<?php echo esc_attr($modal_id); ?>"
      tabindex="-1"
      aria-hidden="true"
@@ -187,7 +187,7 @@ if (!function_exists('growtype_wc_product_modal')) {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
                         style="position:absolute; right:20px; top:20px; z-index:10;"></button>
 
-            <div class="modal-body text-center p-4 p-md-5" style="position:relative; z-index:1;">
+            <div class="modal-body text-center" style="position:relative; z-index:1;">
 
                 <?php echo $before_badge; ?>
 

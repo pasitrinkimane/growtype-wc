@@ -23,15 +23,27 @@ if (!function_exists('growtype_wc_checkout_button')) {
         array   $methods    = ['applePay', 'googlePay'],
         ?string $return_url = null
     ): string {
+        if (class_exists('Growtype_Wc_Payment')) {
+            Growtype_Wc_Payment::$should_render_modal = true;
+        }
+
         $methods_str = implode(',', array_map('strtolower', $methods));
+
+        $instant_charge_url = (class_exists('Growtype_Wc_Payment') && Growtype_Wc_Payment::user_can_repeat_purchase())
+            ? Growtype_Wc_Payment::get_repeat_purchase_url($product_id, (string)($return_url ?? ''))
+            : '';
 
         ob_start(); ?>
         <div class="gwc-checkout-btn-wrap">
             <button type="button"
                     class="growtype-wc-checkout-button btn btn-primary btn-lg w-100"
-                    style="font-size:1.1rem; min-height:50px;"
+                    style="font-size:1.1rem; min-height:50px;font-weight:bold;"
                     data-product-id="<?php echo esc_attr($product_id); ?>"
-                    data-methods="<?php echo esc_attr($methods_str); ?>">
+                    data-methods="<?php echo esc_attr($methods_str); ?>"
+                    <?php if (!empty($instant_charge_url)) : ?>
+                        data-instant-charge="1"
+                        data-instant-charge-url="<?php echo esc_url($instant_charge_url); ?>"
+                    <?php endif; ?>>
                 <?php echo esc_html($button_text ?: __('Continue to Payment', 'growtype-wc')); ?>
             </button>
         </div>

@@ -126,18 +126,26 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_get_client_token()
     {
+        error_log('[GWC PayPal] ajax_get_client_token: called. Nonce present: ' . (!empty($_POST['_ajax_nonce']) ? 'yes' : 'NO'));
+
         if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
+            error_log('[GWC PayPal] ajax_get_client_token: nonce check FAILED. Nonce value: ' . sanitize_text_field($_POST['_ajax_nonce'] ?? '(empty)'));
             wp_send_json_error(['message' => 'Security check failed.'], 403);
+            return;
         }
+
+        error_log('[GWC PayPal] ajax_get_client_token: nonce OK. gateway present: ' . ($this->gateway ? 'yes' : 'NO'));
 
         $cache_key = 'gwc_paypal_client_token_' . md5($this->gateway->get_client_id());
         $cached = get_transient($cache_key);
         if ($cached) {
+            error_log('[GWC PayPal] ajax_get_client_token: returning cached client_token.');
             wp_send_json_success(['client_token' => $cached]);
             return;
         }
 
         try {
+            error_log('[GWC PayPal] ajax_get_client_token: fetching access token...');
             $access_token = $this->gateway->get_access_token(
                 $this->gateway->get_client_id(),
                 $this->gateway->get_client_secret()
@@ -145,29 +153,40 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             if (empty($access_token)) {
                 throw new \Exception('Could not retrieve access token.');
             }
+            error_log('[GWC PayPal] ajax_get_client_token: access token OK, fetching client_token...');
 
             $url = $this->gateway->get_api_url('/v1/identity/generate-token');
+            error_log('[GWC PayPal] ajax_get_client_token: POST ' . $url);
             $response = wp_remote_post($url, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $access_token,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
                 ],
-                'body' => '',
+                'body'    => '',
                 'timeout' => 15,
             ]);
 
-            $body = json_decode(wp_remote_retrieve_body($response), true) ?: [];
+            if (is_wp_error($response)) {
+                throw new \Exception('HTTP error: ' . $response->get_error_message());
+            }
+
+            $http_code = (int) wp_remote_retrieve_response_code($response);
+            $raw_body  = wp_remote_retrieve_body($response);
+            error_log('[GWC PayPal] ajax_get_client_token: PayPal HTTP ' . $http_code . ' body=' . substr($raw_body, 0, 400));
+
+            $body = json_decode($raw_body, true) ?: [];
             if (empty($body['client_token'])) {
-                throw new \Exception('PayPal did not return a client_token. Response: ' . wp_remote_retrieve_body($response));
+                throw new \Exception('PayPal did not return a client_token. HTTP ' . $http_code . '. Response: ' . $raw_body);
             }
 
             $token = trim($body['client_token']);
             set_transient($cache_key, $token, 55 * MINUTE_IN_SECONDS);
 
+            error_log('[GWC PayPal] ajax_get_client_token: success, token length=' . strlen($token));
             wp_send_json_success(['client_token' => $token]);
         } catch (\Exception $e) {
-            error_log('[GWC PayPal] ajax_get_client_token error: ' . $e->getMessage());
+            error_log('[GWC PayPal] ajax_get_client_token ERROR: ' . $e->getMessage());
             wp_send_json_error(['message' => 'Could not generate client token.'], 500);
         }
     }
@@ -223,6 +242,9 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
         $order->calculate_totals();
         $order->update_status('pending', __('Awaiting PayPal Hosted Fields payment.', 'growtype-wc'));
+
+        do_action('woocommerce_checkout_create_order', $order, $_POST);
+
         $order->save();
 
         $wc_order_id = $order->get_id();
@@ -437,9 +459,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function render_paypal_hosted_fields_modal()
     {
-        if (!growtype_wc_is_payment_page()) {
-            return;
-        }
 
         if (!$this->gateway || empty($this->gateway->enable_card_payments)) {
             return;
@@ -499,24 +518,17 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body" style="background:#141414;padding:20px 24px">
+                    <div class="modal-body gwc-hf-modal-body">
                         <div id="gwc-paypal-not-eligible" style="display:none;color:#e05c5c;padding:12px;background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);border-radius:8px;margin-bottom:16px;font-size:13px">
                             <?php _e('Advanced card payments are not available for this account. Please use the PayPal button instead.', 'growtype-child'); ?>
                         </div>
 
                         <div id="gwc-paypal-fields-wrap" style="position:relative; min-height: 250px;">
-                            <!-- Form Loader Overlay -->
-                            <div id="gwc-paypal-form-loader" style="position:absolute; top:0; left:0; width:100%; height:100%; background:#141414; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; border-radius:8px;">
-                                <div class="gwc-hf-spinner"></div>
-                                <div style="color:#666; font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:1px;"><?php _e('Loading...', 'growtype-child'); ?></div>
-                            </div>
+                            <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_loader(); ?>
 
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render(); ?>
 
-                            <div class="gwc-hf-footer-badge">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
-                                    <span>Your data is encrypted and never stored on our servers.</span>
-                                </div>
+                            <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_badge(); ?>
                         </div>
                     </div>
                 </div>
@@ -527,14 +539,104 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 var gwcPaypalClientId = <?php echo wp_json_encode($client_id); ?>;
                 var gwcPaypalMerchantId = <?php echo wp_json_encode($merchant_id); ?>;
                 var gwcPaypalSandbox = <?php echo $is_sandbox ? 'true' : 'false'; ?>;
-                var gwcAjaxUrl = <?php echo wp_json_encode($ajax_url); ?>;
-                var gwcNonce = <?php echo wp_json_encode($nonce); ?>;
+                var gwcAjaxUrl  = <?php echo wp_json_encode($ajax_url); ?>;
+                var gwcNonce    = <?php echo wp_json_encode($nonce); ?>;
                 var gwcCurrency = <?php echo wp_json_encode($currency); ?>;
                 var gwcProductId = 0;
                 var gwcWcOrderId = 0;
 
                 // Card Fields instance
                 var cardFields = null;
+                var cardFieldsLoading = false;
+
+                function setSubmitButtonText($btn, text) {
+                    var $label = $btn.find('.gwc-hf-submit-text');
+                    if ($label.length > 0) {
+                        $label.text(text);
+                    } else {
+                        $btn.text(text);
+                    }
+                }
+
+                // Resolve nonce: prefer the one baked into this script block,
+                // fall back to window.growtype_wc_ajax.paypal.nonce (set by ensure_inline_paypal_data)
+                function resolveHfNonce() {
+                    if (gwcNonce) return gwcNonce;
+                    return (window.growtype_wc_ajax
+                        && window.growtype_wc_ajax.paypal
+                        && window.growtype_wc_ajax.paypal.nonce)
+                        ? window.growtype_wc_ajax.paypal.nonce
+                        : '';
+                }
+
+                // ── Handle inline payment form mounting ───────────────────────────
+                document.addEventListener('growtype_wc_payment_request', function (e) {
+                    if (e.detail && e.detail.provider === 'paypal') {
+                        var prodId = parseInt(e.detail.productId, 10);
+                        if (prodId) {
+                            gwcProductId = prodId;
+                            console.log('[GWC HF] growtype_wc_payment_request received for prodId:', prodId);
+                            // Run the check-and-boot routine to capture the new form
+                            checkAndBootInlineCardFields();
+                        }
+                    }
+                });
+
+                function checkAndBootInlineCardFields() {
+                    var formRoot = getActiveFormRoot();
+                    if (formRoot && formRoot !== document) {
+                        var prodId = parseInt($(formRoot).data('product-id'), 10) || gwcProductId;
+                        if (prodId) {
+                            gwcProductId = prodId;
+                            
+                            // Check if the secure card field iframe is already loaded inside this active form
+                            var nameContainer = formRoot.querySelector ? formRoot.querySelector('#card-name-field-container') : null;
+                            var isAlreadyBooted = nameContainer && nameContainer.querySelector('iframe') !== null;
+
+                            console.log('[GWC HF] checkAndBootInlineCardFields scan → prodId=' + prodId + ' | isAlreadyBooted:', isAlreadyBooted, '| cardFieldsLoading:', cardFieldsLoading);
+
+                            if (!isAlreadyBooted && !cardFieldsLoading) {
+                                console.log('[GWC HF] ✅ Uninitialized card form detected (prodId=' + prodId + '), loading PayPal SDK...');
+                                cardFields = null; // Clear previous instance to allow fresh boot
+                                cardFieldsLoading = true;
+                                loadPaypalSdk(function () {
+                                    initCardFields();
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Run immediately to catch pre-existing forms
+                if (document.readyState === 'loading') {
+                    $(document).ready(function () {
+                        checkAndBootInlineCardFields();
+                    });
+                } else {
+                    checkAndBootInlineCardFields();
+                }
+
+                // Bulletproof observer: catch dynamically injected card forms
+                var gwcDomObserver = null;
+                if (window.MutationObserver) {
+                    gwcDomObserver = new MutationObserver(function () {
+                        checkAndBootInlineCardFields();
+                    });
+                    gwcDomObserver.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                } else {
+                    console.warn('[GWC HF] MutationObserver not available in this browser.');
+                }
+
+                // ── Manual debug helper ───────────────────────────────────────────
+                window.gwcHfBoot = function () {
+                    console.log('[GWC HF] Manual gwcHfBoot() called.');
+                    cardFields = null;
+                    cardFieldsLoading = false;
+                    checkAndBootInlineCardFields();
+                };
 
                 // ── Prevent double-clicks on all payment buttons ──────────────────
                 $(document).on('click', '.btn-addtocart', function (e) {
@@ -548,12 +650,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
                 // ── Open modal when the PayPal Card button is clicked ─────────────
                 $(document).on('click', '.btn-show-paypal-card', function (e) {
-                    e.preventDefault();
                     var $btn = $(this);
 
                     // If a vault token is available the button carries data-instant-charge="1"
                     // and its href already points to the charge_intent action — just follow it.
                     if ($btn.data('instant-charge') == '1') {
+                        e.preventDefault();
                         var chargeUrl = $btn.attr('href');
                         if (chargeUrl) {
                             $btn.addClass('processing');
@@ -561,74 +663,174 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         }
                         return;
                     }
-
-                    gwcProductId = parseInt($btn.data('product-id'), 10) || 0;
-
-                    var modalEl = document.getElementById('gwcPaypalHostedFieldsModal');
-                    if (window.bootstrap && window.bootstrap.Modal) {
-                        new bootstrap.Modal(modalEl).show();
-                    } else if ($.fn.modal) {
-                        $(modalEl).modal('show');
-                    }
-
-                    // Initialise Card Fields when modal opens
-                    loadPaypalSdk(function () {
-                        initCardFields();
-                    });
-
-                    $btn.removeClass('processing');
+                    // Otherwise, let the global wc-payment-form.js handler show the gwcPaymentFormModal.
                 });
 
                 // Reset Card Fields when modal is closed so styles re-apply on reopen
                 $(document).on('hidden.bs.modal', '#gwcPaypalHostedFieldsModal', function () {
                     cardFields = null;
-                    $('#card-name-field-container, #card-number-field-container, #card-expiry-field-container, #card-cvv-field-container').empty().height(65);
-                    $('#gwc-hf-errors').hide();
-                    $('#gwc-paypal-form-loader').show(); // Show loader again for next time
-                    $('#card-field-submit-button').prop('disabled', true).text('<?php echo esc_js(__('Pay now with Card', 'growtype-child')); ?>');
+                    cardFieldsLoading = false;
+                    $('#gwcPaypalHostedFieldsModal #card-name-field-container, #gwcPaypalHostedFieldsModal #card-number-field-container, #gwcPaypalHostedFieldsModal #card-expiry-field-container, #gwcPaypalHostedFieldsModal #card-cvv-field-container').empty().height(65);
+                    $('#gwcPaypalHostedFieldsModal #gwc-hf-errors, #gwcPaypalHostedFieldsModal .gwc-hf-errors').hide();
+                    if (window.GrowtypeWcPaypalProvider) {
+                        window.GrowtypeWcPaypalProvider.showSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap', '<?php _e('Loading...', 'growtype-child'); ?>');
+                    } else {
+                        $('#gwcPaypalHostedFieldsModal #gwc-paypal-form-loader, #gwcPaypalHostedFieldsModal .gwc-paypal-form-loader').show();
+                    }
+                    var $modalSubmit = $('#gwcPaypalHostedFieldsModal #card-field-submit-button, #gwcPaypalHostedFieldsModal .gwc-hf-submit');
+                    $modalSubmit.prop('disabled', true);
+                    setSubmitButtonText($modalSubmit, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
                 });
 
                 // ── Load PayPal JS SDK and initialise Card Fields ────────────────
                 function loadPaypalSdk(callback) {
-                    // window.paypal may already exist (loaded by Express/GooglePay) but WITHOUT
-                    // card-fields component — we must load our own namespaced instance.
-                    if (window.paypal_gwc && window.paypal_gwc.CardFields) {
-                        console.log('[GWC HF] paypal_gwc already loaded with CardFields, skipping reload.');
+                    // Strategy: the express buttons provider (growtypeWcPaypalProvider.js) now
+                    // loads card-fields in its SDK when #card-form is present on the same page.
+                    // Reusing that single SDK avoids two conflicting PayPal script tags (Zoid conflict).
+                    //
+                    // HOWEVER: on pages that use only the modal flow (e.g. /plans/), there is no
+                    // .gwc-payment-form mount point, so the express provider never loads and
+                    // gwc_paypal_sdk_ready never fires.  In that case we must load standalone.
+
+                    // Case 1 — unified SDK already loaded (express buttons on same page).
+                    if (window.paypal && window.paypal.CardFields) {
+                        console.log('[GWC HF] window.paypal.CardFields available — using unified SDK.');
                         callback();
                         return;
                     }
-                    console.log('[GWC HF] Loading PayPal SDK (card-fields) into paypal_gwc namespace...');
-                    var s = document.createElement('script');
-                    s.src = 'https://www.paypal.com/sdk/js'
-                        + '?client-id=' + encodeURIComponent(gwcPaypalClientId)
-                        + (gwcPaypalMerchantId ? '&merchant-id=' + encodeURIComponent(gwcPaypalMerchantId) : '')
-                        + '&components=card-fields'
-                        + '&intent=capture'
-                        + '&currency=' + encodeURIComponent(gwcCurrency)
-                        + (gwcPaypalSandbox ? '&debug=true&buyer-country=US' : '');
-                    console.log('[GWC HF] SDK URL:', s.src);
-                    s.setAttribute('data-namespace', 'paypal_gwc');
-                    s.onload = function () {
-                        console.log('[GWC HF] SDK loaded. paypal_gwc.CardFields:', typeof window.paypal_gwc !== 'undefined' ? typeof window.paypal_gwc.CardFields : 'paypal_gwc undefined');
-                        callback();
-                    };
-                    s.onerror = function () {
-                        showError('<?php echo esc_js(__('Failed to load PayPal SDK. Please refresh and try again.', 'growtype-child')); ?>');
-                    };
-                    document.head.appendChild(s);
+
+                    // Case 2 — inline express form is on the page: wait for the unified SDK event.
+                    //          If no express form exists, skip straight to standalone loading to avoid
+                    //          hanging forever (gwc_paypal_sdk_ready will never fire in modal-only pages).
+                    var hasExpressForm = document.querySelector('.gwc-payment-form') !== null;
+                    console.log('[GWC HF] hasExpressForm:', hasExpressForm, '| gwcPaypalSdkReady:', !!window.gwcPaypalSdkReady);
+
+                    if (!window.gwcPaypalSdkReady && hasExpressForm) {
+                        console.log('[GWC HF] Waiting for unified PayPal SDK (gwc_paypal_sdk_ready)...');
+                        document.addEventListener('gwc_paypal_sdk_ready', function onSdkReady() {
+                            document.removeEventListener('gwc_paypal_sdk_ready', onSdkReady);
+                            console.log('[GWC HF] gwc_paypal_sdk_ready fired. window.paypal.CardFields:', typeof (window.paypal || {}).CardFields);
+                            if (window.paypal && window.paypal.CardFields) {
+                                callback();
+                            } else {
+                                loadStandaloneCardFieldsSdk(callback);
+                            }
+                        });
+                        return;
+                    }
+
+                    // Case 3 — modal-only page (no express form) OR express SDK ready without CardFields.
+                    if (!hasExpressForm) {
+                        console.log('[GWC HF] Modal-only page — loading standalone card-fields SDK.');
+                    } else {
+                        console.warn('[GWC HF] gwcPaypalSdkReady=true but window.paypal.CardFields missing — loading standalone SDK.');
+                    }
+                    loadStandaloneCardFieldsSdk(callback);
+                }
+
+                function loadStandaloneCardFieldsSdk(callback) {
+                    console.log('[GWC HF] Fetching PayPal client token for standalone card-fields SDK...');
+                    var hfNonce = resolveHfNonce();
+                    console.log('[GWC HF] gwcAjaxUrl:', gwcAjaxUrl);
+                    console.log('[GWC HF] Using nonce:', hfNonce ? hfNonce.substring(0,8) + '...' : '⚠️ EMPTY — nonce missing!');
+                    console.log('[GWC HF] gwcPaypalClientId:', gwcPaypalClientId ? gwcPaypalClientId.substring(0,12)+'...' : '⚠️ MISSING');
+                    console.log('[GWC HF] gwcCurrency:', gwcCurrency);
+                    $.post(gwcAjaxUrl, {
+                        action: 'gwc_paypal_client_token',
+                        _ajax_nonce: hfNonce
+                    }).done(function (res) {
+                        var clientToken = '';
+                        if (res.success && res.data && res.data.client_token) {
+                            clientToken = res.data.client_token;
+                            console.log('[GWC HF] Successfully retrieved PayPal client token.');
+                        } else {
+                            console.warn('[GWC HF] Could not retrieve client token, loading SDK without it:', res);
+                        }
+
+                        console.log('[GWC HF] Loading standalone PayPal card-fields SDK...');
+                        var s = document.createElement('script');
+                        s.src = 'https://www.paypal.com/sdk/js'
+                            + '?client-id=' + encodeURIComponent(gwcPaypalClientId)
+                            + (gwcPaypalMerchantId ? '&merchant-id=' + encodeURIComponent(gwcPaypalMerchantId) : '')
+                            + '&components=card-fields'
+                            + '&intent=capture'
+                            + '&currency=' + encodeURIComponent(gwcCurrency)
+                            + (gwcPaypalSandbox ? '&debug=true&buyer-country=US' : '');
+                        console.log('[GWC HF] Standalone SDK URL:', s.src);
+                        s.setAttribute('data-namespace', 'paypal_gwc');
+                        if (clientToken) {
+                            s.setAttribute('data-client-token', clientToken);
+                        }
+                        s.onload = function () {
+                            console.log('[GWC HF] Standalone SDK loaded. paypal_gwc.CardFields:', typeof (window.paypal_gwc || {}).CardFields);
+                            callback();
+                        };
+                        s.onerror = function () {
+                            cardFieldsLoading = false;
+                            showError('<?php echo esc_js(__('Failed to load PayPal SDK. Please refresh and try again.', 'growtype-child')); ?>');
+                        };
+                        document.head.appendChild(s);
+                    }).fail(function (xhr, err) {
+                        console.error('[GWC HF] Client token AJAX request failed:', err);
+                        cardFieldsLoading = false;
+                        showError('<?php echo esc_js(__('Failed to load PayPal secure token. Please refresh and try again.', 'growtype-child')); ?>');
+                    });
+                }
+
+                function getActiveFormRoot() {
+                    var $modal = $('#gwcPaypalHostedFieldsModal');
+                    if ($modal.length > 0 && ($modal.hasClass('show') || $modal.is(':visible'))) {
+                        return $modal[0];
+                    }
+                    if (gwcProductId) {
+                        var $activeForm = $('.gwc-payment-form[data-product-id="' + gwcProductId + '"]:visible').last();
+                        if ($activeForm.length > 0) {
+                            return $activeForm[0];
+                        }
+                        $activeForm = $('.gwc-payment-form[data-product-id="' + gwcProductId + '"]').last();
+                        if ($activeForm.length > 0) {
+                            return $activeForm[0];
+                        }
+                    }
+                    var $anyForm = $('.gwc-payment-form:visible').last();
+                    if ($anyForm.length > 0) {
+                        return $anyForm[0];
+                    }
+                    $anyForm = $('.gwc-payment-form').last();
+                    if ($anyForm.length > 0) {
+                        return $anyForm[0];
+                    }
+                    return document;
                 }
 
                 function showError(msg) {
-                    var $err = $('#gwc-hf-errors');
+                    var formRoot = getActiveFormRoot();
+
+                    var $err = $(formRoot).find('#gwc-hf-errors, .gwc-hf-errors');
+                    if ($err.length === 0) $err = $('#gwc-hf-errors');
                     $err.text(msg).show(); // .text() prevents XSS
-                    $('#card-field-submit-button').prop('disabled', false).text('<?php echo esc_js(__('Pay now with Card', 'growtype-child')); ?>');
+
+                    var $btn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
+                    $btn.prop('disabled', false);
+                    setSubmitButtonText($btn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
                 }
 
                 function initCardFields() {
-                    console.log('[GWC HF] initCardFields called. paypal_gwc:', typeof window.paypal_gwc, 'CardFields:', typeof window.paypal_gwc !== 'undefined' ? typeof window.paypal_gwc.CardFields : 'N/A');
+                    // Resolve the PayPal SDK reference: prefer the unified window.paypal
+                    // (express + card-fields), fall back to the standalone paypal_gwc namespace.
+                    var paypalRef = (window.paypal && window.paypal.CardFields) ? window.paypal : window.paypal_gwc;
 
-                    if (!window.paypal_gwc || !window.paypal_gwc.CardFields) {
-                        console.error('[GWC HF] PayPal Card Fields not found in SDK (namespace: paypal_gwc). This usually means the SDK failed to load or the card-fields component was not included.');
+                    console.group('[GWC HF] initCardFields()');
+                    console.log('Using paypal ref:', paypalRef === window.paypal ? 'window.paypal (unified)' : 'window.paypal_gwc (standalone)');
+                    console.log('CardFields type:', typeof (paypalRef || {}).CardFields);
+                    console.log('gwcProductId:', gwcProductId);
+                    console.log('#card-name-field-container in DOM:', !!document.getElementById('card-name-field-container'));
+                    console.log('#card-number-field-container in DOM:', !!document.getElementById('card-number-field-container'));
+                    console.groupEnd();
+
+                    if (!paypalRef || !paypalRef.CardFields) {
+                        console.error('[GWC HF] ❌ PayPal CardFields not available in window.paypal or window.paypal_gwc.');
+                        cardFieldsLoading = false;
                         return;
                     }
 
@@ -638,7 +840,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     }
 
                     console.log('[GWC HF] Creating CardFields instance...');
-                    cardFields = window.paypal_gwc.CardFields({
+                    cardFields = paypalRef.CardFields({
                         createOrder: function () {
                             return createOrderInternal();
                         },
@@ -669,6 +871,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         console.groupEnd();
                         $('#gwc-paypal-not-eligible').show();
                         $('#gwc-paypal-fields-wrap').hide();
+                        cardFieldsLoading = false;
+                        cardFields = null;
                         return;
                     }
 
@@ -676,21 +880,60 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     $('#gwc-paypal-not-eligible').hide();
                     $('#gwc-paypal-fields-wrap').show();
 
+                    // ── Scope container lookups to the ACTIVE inline form ───────────
+                    // The static modal (#gwcPaypalHostedFieldsModal) shares the same
+                    // field IDs (card-name-field-container, etc.).  When both are in
+                    // the DOM, getElementById / querySelector return the MODAL's node
+                    // first — rendering iframes into the hidden modal, not the visible
+                    // inline form.  We scope every lookup to the .gwc-payment-form
+                    // that owns this product so we always hit the right element.
+                    var formRoot = getActiveFormRoot();
+
+                    function scopedEl(id) {
+                        var el = formRoot.querySelector ? formRoot.querySelector('#' + id) : null;
+                        if (!el) el = document.getElementById(id); // fallback (modal path)
+                        return el;
+                    }
+
                     // Render individual fields
-                    console.log('[GWC HF] Rendering card field iframes...');
+                    console.log('[GWC HF] Calling render() on each field...');
+                    var nameContainer   = scopedEl('card-name-field-container');
+                    var numberContainer = scopedEl('card-number-field-container');
+                    var expiryContainer = scopedEl('card-expiry-field-container');
+                    var cvvContainer    = scopedEl('card-cvv-field-container');
+                    console.log('[GWC HF] formRoot:', formRoot === document ? 'document (fallback)' : '.gwc-payment-form[data-product-id=' + gwcProductId + ']');
+                    console.log('[GWC HF] Containers: name=' + !!nameContainer + ' number=' + !!numberContainer + ' expiry=' + !!expiryContainer + ' cvv=' + !!cvvContainer);
+
                     Promise.all([
-                        cardFields.NameField({placeholder: '<?php _e('Cardholder Name', 'growtype-child'); ?>'}).render('#card-name-field-container'),
-                        cardFields.NumberField({placeholder: '•••• •••• •••• ••••'}).render('#card-number-field-container'),
-                        cardFields.ExpiryField({placeholder: 'MM / YY'}).render('#card-expiry-field-container'),
-                        cardFields.CVVField({placeholder: '•••'}).render('#card-cvv-field-container')
+                        cardFields.NameField({placeholder: '<?php _e('Cardholder Name', 'growtype-child'); ?>'}).render(nameContainer),
+                        cardFields.NumberField({placeholder: '•••• •••• •••• ••••'}).render(numberContainer),
+                        cardFields.ExpiryField({placeholder: 'MM / YY'}).render(expiryContainer),
+                        cardFields.CVVField({placeholder: '•••'}).render(cvvContainer)
                     ]).then(function () {
-                        console.log('[GWC HF] All card fields rendered successfully.');
+                        console.log('[GWC HF] ✅ All card fields rendered successfully.');
+                        cardFieldsLoading = false;
                         setTimeout(function () {
-                            $('#gwc-paypal-form-loader').fadeOut(300);
+                            if (window.GrowtypeWcPaypalProvider) {
+                                window.GrowtypeWcPaypalProvider.hideSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap');
+                                window.GrowtypeWcPaypalProvider.hideSpinner('.gwc-payment-form__card');
+                            } else {
+                                $('#gwc-paypal-form-loader, .gwc-paypal-form-loader').fadeOut(300);
+                                $('.gwc-payment-form-mainloader').fadeOut(300);
+                            }
                         }, 1000)
                     }).catch(function (err) {
-                        console.error('[GWC HF] CardFields render error:', err);
-                        $('#gwc-paypal-form-loader').hide();
+                        console.error('[GWC HF] ❌ CardFields render error:', err);
+                        console.error('[GWC HF] render error name:', err && err.name);
+                        console.error('[GWC HF] render error message:', err && err.message);
+                        cardFieldsLoading = false;
+                        cardFields = null;
+                        if (window.GrowtypeWcPaypalProvider) {
+                            window.GrowtypeWcPaypalProvider.hideSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap');
+                            window.GrowtypeWcPaypalProvider.hideSpinner('.gwc-payment-form__card');
+                        } else {
+                            $('#gwc-paypal-form-loader, .gwc-paypal-form-loader').hide();
+                            $('.gwc-payment-form-mainloader').hide();
+                        }
                         showError('<?php echo esc_js(__('Failed to render card fields. Please try again.', 'growtype-child')); ?>');
                     });
 
@@ -750,7 +993,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     });
 
                     // Enable submit button
-                    $('#card-field-submit-button').prop('disabled', false);
+                    $(formRoot).find('#card-field-submit-button, .gwc-hf-submit').prop('disabled', false);
 
                     // Helper for Create Order (shared by Buttons and CardFields)
                     function createOrderInternal() {
@@ -772,7 +1015,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     // Helper for On Approve (shared by Buttons and CardFields)
                     function onApproveInternal(orderID) {
                         // PayPal has approved — show loader while we capture on server
-                        $('#gwc-paypal-form-loader').stop(true, true).show();
+                        if (window.GrowtypeWcPaypalProvider) {
+                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e('Processing...', 'growtype-child'); ?>');
+                        } else {
+                            $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').stop(true, true).show();
+                        }
                         return $.post(gwcAjaxUrl, {
                             action: 'gwc_paypal_hosted_capture_order',
                             _ajax_nonce: gwcNonce,
@@ -785,30 +1032,50 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 throw new Error(res.data.message || 'Payment capture failed');
                             }
                         }).catch(function (err) {
-                            $('#gwc-paypal-form-loader').hide();
-                            $('#card-field-submit-button').prop('disabled', false).text('<?php echo esc_js(__('Pay now with Card', 'growtype-child')); ?>');
+                            if (window.GrowtypeWcPaypalProvider) {
+                                window.GrowtypeWcPaypalProvider.hideSpinner(formRoot);
+                            } else {
+                                $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').hide();
+                            }
+                            var $approvalBtn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
+                            $approvalBtn.prop('disabled', false);
+                            setSubmitButtonText($approvalBtn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
                             showError(err.message || '<?php echo esc_js(__('Payment capture failed. Please try again.', 'growtype-child')); ?>');
                         });
                     }
 
                     // Submit listener for Card Fields
-                    $('#card-field-submit-button').off('click').on('click', function (e) {
+                    var $submitBtn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
+                    $submitBtn.off('click').on('click', function (e) {
                         e.preventDefault();
                         if (!gwcProductId) {
                             showError('<?php echo esc_js(__('Please select a plan before paying.', 'growtype-child')); ?>');
                             return;
                         }
-                        $('#gwc-hf-errors').hide();
-                        $('#card-field-submit-button').prop('disabled', true).text('<?php echo esc_js(__('Processing…', 'growtype-child')); ?>');
-                        $('#gwc-paypal-form-loader').stop(true, true).show(); // Show loader while PayPal processes
+                        var $err = $(formRoot).find('#gwc-hf-errors, .gwc-hf-errors');
+                        if ($err.length === 0) $err = $('#gwc-hf-errors');
+                        $err.hide();
+
+                        $submitBtn.prop('disabled', true);
+                        setSubmitButtonText($submitBtn, '<?php echo esc_js(__('Processing…', 'growtype-child')); ?>');
+                        if (window.GrowtypeWcPaypalProvider) {
+                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e('Processing...', 'growtype-child'); ?>');
+                        } else {
+                            $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').stop(true, true).show();
+                        }
                         cardFields.submit({
                             // No additional data needed for basic submission
                         }).catch(function (err) {
                             console.error('Submission Error:', err);
 
                             // Hide loader and re-enable button so user can correct their details
-                            $('#gwc-paypal-form-loader').hide();
-                            $('#card-field-submit-button').prop('disabled', false).text('<?php echo esc_js(__('Pay now with Card', 'growtype-child')); ?>');
+                            if (window.GrowtypeWcPaypalProvider) {
+                                window.GrowtypeWcPaypalProvider.hideSpinner(formRoot);
+                            } else {
+                                $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').hide();
+                            }
+                            $submitBtn.prop('disabled', false);
+                            setSubmitButtonText($submitBtn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
 
                             var msg = (err && err.message) ? err.message : '';
 

@@ -1,0 +1,330 @@
+// ─── CSS variables / custom properties ────────────────────────────────────────
+
+:root {
+  --gwc-hf-primary: #ff9000;
+  --gwc-hf-bg: #141414;
+  --gwc-hf-header-bg: #0d0d0d;
+  --gwc-hf-border: rgba(255, 255, 255, 0.08);
+  --gwc-hf-text-muted: #888;
+  --gwc-hf-error: #e05c5c;
+  --gwc-hf-success: #4caf50;
+  --gwc-hf-radius: 12px;
+  --gwc-hf-input-radius: 10px;
+}
+
+// ─── Payment Form layout ──────────────────────────────────────────────────────
+
+.gwc-payment-form {
+  width: 100%;
+  position: relative;
+}
+
+.gwc-payment-form-mainloader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  height: 40px;
+  width: 40px;
+  z-index: 1;
+}
+
+.gwc-payment-form__express {
+  width: 100%;
+  min-height: 48px;
+}
+
+.paypal-google-pay-container,
+.paypal-google-pay-container>div,
+.paypal-google-pay-container button {
+  width: 100% !important;
+}
+
+.gwc-payment-form__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  font-size: 0.8rem;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.3;
+  }
+}
+
+.gwc-payment-form__card {
+  width: 100%;
+}
+
+// ─── Hosted Fields card form ──────────────────────────────────────────────────
+
+.card_container {
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+
+  &.gwc-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.gwc-hf-group {
+  margin-bottom: 14px;
+}
+
+.gwc-hf-row {
+  display: flex;
+  gap: 12px;
+
+  .gwc-hf-group {
+    flex: 1;
+  }
+}
+
+.gwc-hf-label {
+  display: block;
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  text-align: left;
+}
+
+.gwc-hf-input,
+.gwc-hf-frame {
+  width: 100%;
+  height: 65px !important;
+  min-height: 65px !important;
+  border-radius: 8px;
+  color: #fff !important;
+  font-size: 15px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.gwc-hf-input {
+  padding: 0 14px;
+}
+
+.gwc-hf-frame {
+  position: relative;
+  overflow: hidden;
+
+  &.gwc-focused {
+    border-color: var(--gwc-hf-primary);
+    box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.15);
+  }
+
+  &.gwc-valid {
+    border-color: var(--gwc-hf-success);
+  }
+
+  &.gwc-invalid {
+    border-color: var(--gwc-hf-error);
+  }
+}
+
+.gwc-hf-input:focus {
+  border-color: var(--gwc-hf-primary);
+  box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.15);
+}
+
+// Force PayPal Zoid wrappers + iframes to fill the 65px container
+.gwc-hf-frame div,
+.gwc-hf-frame iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 65px !important;
+  min-height: 65px !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+// ─── Submit button ────────────────────────────────────────────────────────────
+
+.gwc-hf-submit {
+  margin-top: 10px;
+  width: 100%;
+  padding: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: #ff9000;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.gwc-hf-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: #555;
+  font-size: 12px;
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+
+.gwc-hf-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--gwc-hf-primary);
+  border-radius: 50%;
+  animation: gwc-spin 0.8s linear infinite;
+}
+
+@keyframes gwc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ─── Hosted Fields modal ──────────────────────────────────────────────────────
+
+.gwc-payment-form-modal {
+  .modal-content {
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+}
+
+.gwc-hf-modal-body {
+  background: #141414;
+  padding: 20px 24px;
+
+  @media (max-width: 480px) {
+    padding: 15px;
+  }
+}
+
+.gwc-hf-modal-header {
+  background: var(--gwc-hf-header-bg) !important;
+  border-bottom: 1px solid var(--gwc-hf-border) !important;
+  padding: 16px 24px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  @media (max-width: 480px) {
+    padding: 15px !important;
+  }
+
+  .modal-title {
+    color: #fff !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+}
+
+.gwc-hf-header-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gwc-hf-secure-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #46b450 !important;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gwc-hf-trust-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: 16px;
+
+  @media (max-width: 480px) {
+    margin-right: 0;
+  }
+}
+
+.gwc-hf-trust-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 4px;
+}
+
+.gwc-hf-footer-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  color: #555;
+  font-size: 11px;
+  font-weight: 500;
+
+  svg {
+    color: var(--gwc-hf-success);
+  }
+}
+
+// ─── Misc ─────────────────────────────────────────────────────────────────────
+
+.btn-addtocart.processing {
+  opacity: 0.5 !important;
+  pointer-events: none !important;
+}
+
+.gwc-payment-form-modal {
+  .modal-header .btn-close {
+    color: white !important;
+    right: 20px !important;
+    top: 20px !important;
+    opacity: 0.3;
+
+    @include bp-phone-xl() {
+      right: 15px !important;
+      top: 15px !important;
+    }
+  }
+}

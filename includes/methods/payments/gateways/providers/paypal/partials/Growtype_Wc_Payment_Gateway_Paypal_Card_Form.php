@@ -5,6 +5,7 @@
  *
  * Usage — anywhere in PHP templates or partials:
  *   Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render();
+ *   Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render_loader();
  *
  * The class is context-agnostic: it only outputs the form markup.
  * Wrapping it in a modal, a sidebar, an inline section, etc. is the
@@ -21,7 +22,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Card_Form
      */
     public static function render(array $args = []): void
     {
-        $submit_label = $args['submit_label'] ?? __('Complete Secure Payment', 'growtype-child');
+        $submit_label = isset($args['submit_label']) && !empty($args['submit_label']) ? $args['submit_label'] : self::get_default_submit_label();
         $show_errors  = $args['show_errors']  ?? true;
         ?>
         <div id="card-form" class="card_container">
@@ -63,9 +64,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Card_Form
             <div id="gwc-hf-errors" style="display:none;margin-bottom:5px;padding:10px 14px;background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);border-radius:6px;color:#e05c5c;font-size:13px"></div>
             <?php endif; ?>
 
-            <button id="card-field-submit-button" class="gwc-hf-submit" disabled>
-                <?php echo esc_html($submit_label); ?>
-                <span style="position:relative;top:-2px;">
+            <button id="card-field-submit-button" class="gwc-hf-submit">
+                <span class="gwc-hf-submit-lock" style="position:relative;top:-2px;margin-right:6px;">
                     <svg class="gwc-hf-lock-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                          stroke-linecap="round" stroke-linejoin="round">
@@ -73,9 +73,19 @@ class Growtype_Wc_Payment_Gateway_Paypal_Card_Form
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                 </span>
+                <span class="gwc-hf-submit-text"><?php echo esc_html($submit_label); ?></span>
             </button>
-
         </div>
         <?php
+    }
+
+    /**
+     * Get the default submit button label.
+     *
+     * @return string
+     */
+    public static function get_default_submit_label(): string
+    {
+        return __('Complete Secure Payment', 'growtype-child');
     }
 }

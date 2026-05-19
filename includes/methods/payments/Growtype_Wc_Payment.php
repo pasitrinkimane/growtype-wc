@@ -8,9 +8,12 @@ class Growtype_Wc_Payment
     const REMOVE_SAVED_METHOD_QUERY_ARG = 'growtype_wc_remove_saved_method';
     const REMOVED_REPEAT_PURCHASE_METHODS_META_KEY = 'growtype_wc_removed_repeat_purchase_methods';
 
+    public static $should_render_modal = false;
+
     public function __construct()
     {
         $this->load_methods();
+        $this->load_partials();
 
         add_action('growtype_wc_before_add_to_cart', [$this, 'handle_disabled_payment'], 10, 6);
         add_action('template_redirect', [$this, 'process_upsell_endpoint']);
@@ -34,6 +37,12 @@ class Growtype_Wc_Payment
     {
         include_once __DIR__ . '/gateways/Growtype_Wc_Payment_Gateway.php';
         new Growtype_Wc_Payment_Gateway();
+    }
+
+    protected function load_partials()
+    {
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Form_Modal.php';
+        Growtype_Wc_Payment_Form_Modal::init();
     }
 
     /**
@@ -143,6 +152,63 @@ class Growtype_Wc_Payment
     public static function get_saved_payment_charge_url(int $product_id, string $return_url = '', ?int $user_id = null): string
     {
         return self::get_repeat_purchase_url($product_id, $return_url, $user_id);
+    }
+
+    /**
+     * Determine whether a WooCommerce order was fulfilled via an instant charge
+     * (i.e. a saved payment method was used to charge without going through checkout).
+     *
+     * Checks, in order of reliability:
+     *  1. `parent_order_id` meta — set on every order created by process_upsell_endpoint().
+     *  2. Order notes — fallback for older orders that predate the meta.
+     *
+     * @param WC_Order $order
+     * @return bool
+     */
+    public static function is_instant_charge_order(WC_Order $order): bool
+    {
+        if (!empty($order->get_meta('parent_order_id'))) {
+            return true;
+        }
+
+        $notes = wc_get_order_notes(['order_id' => $order->get_id()]);
+        foreach ($notes as $note) {
+            if (stripos($note->content, 'Instant charge') !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether a WooCommerce order was an upsell (a secondary product charged
+     * via a saved payment method after an initial purchase).
+     *
+     * Checks, in order of reliability:
+     *  1. `_gwc_upsell` meta — explicitly stamped by process_upsell_endpoint() when the
+     *     charge originated from the upsell modal (gwc_upsell=1 in the request).
+     *  2. Upsell catalog membership — retroactive fallback for orders created before the
+     *     meta was introduced.
+     *
+     * @param WC_Order $order
+     * @return bool
+     */
+    public static function is_upsell_order(WC_Order $order): bool
+    {
+        if (class_exists('Growtype_Wc_Upsell_Catalog')) {
+            $catalog_ids = array_map(function ($p) {
+                return $p->get_id();
+            }, Growtype_Wc_Upsell_Catalog::get_products());
+
+            foreach ($order->get_items() as $item) {
+                if (in_array((int)$item->get_product_id(), $catalog_ids, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static function get_repeat_purchase_url(int $product_id, string $return_url = '', ?int $user_id = null): string

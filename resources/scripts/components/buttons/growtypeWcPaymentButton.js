@@ -35,7 +35,6 @@ class GrowtypeWcPaymentButton {
             return;
         }
         GrowtypeWcPaymentButton._registry[provider] = handler;
-        console.log(`[PaymentButton] Provider registered: '${provider}'`);
     }
 
     constructor() {

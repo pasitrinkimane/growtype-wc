@@ -4,6 +4,9 @@
  * Order item
  */
 add_filter('woocommerce_order_item_name', function ($get_name, $item, $is_visible) {
+    if (is_admin()) {
+        return $get_name;
+    }
 
     $access_disabled = get_theme_mod('woocommerce_product_page_access_disabled');
 
