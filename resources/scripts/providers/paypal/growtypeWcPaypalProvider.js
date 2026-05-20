@@ -494,6 +494,11 @@ class GrowtypeWcPaypalProvider {
             apBtn.setAttribute('buttonstyle', 'black');
             apBtn.setAttribute('type', 'buy');
             apBtn.setAttribute('locale', document.documentElement.lang || 'en');
+            // apple-pay-button uses Shadow DOM — apply styles directly on the element
+            apBtn.style.width = '100%';
+            apBtn.style.display = 'block';
+            apBtn.style.setProperty('--apple-pay-button-width-default', '100%');
+            apBtn.style.setProperty('--apple-pay-button-padding', '6px 0');
             apContainer.appendChild(apBtn);
 
             const parentEl = document.querySelector(detail.container);
@@ -644,9 +649,9 @@ class GrowtypeWcPaypalProvider {
                 ? 'https://www.sandbox.paypal.com'
                 : 'https://www.paypal.com';
             const url = `${base}/checkoutnow?token=${encodeURIComponent(orderId)}&fundingSource=card`;
-            console.log('[PayPal] Redirecting to PayPal guest checkout (card):', url);
-            window.location.href = url;
-            return;
+            // console.log('[PayPal] Redirecting to PayPal guest checkout (card):', url);
+            // window.location.href = url;
+            // return;
         }
 
         // Priority 2: WC checkout fallback — no orderId available yet.
@@ -657,7 +662,7 @@ class GrowtypeWcPaypalProvider {
         }
 
         console.warn('[PayPal] No orderId or fallback — reloading current page.');
-        window.location.reload();
+        // window.location.reload();
     }
 
     /**

@@ -34,6 +34,14 @@
 .gwc-payment-form__express {
   width: 100%;
   min-height: 48px;
+
+  apple-pay-button {
+    width: 100%;
+  }
+
+  .apple-pay-btn {
+    min-height: 40px;
+  }
 }
 
 .paypal-google-pay-container,
