@@ -464,16 +464,75 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         if (!empty($vault_id) && !empty($pp_customer)) {
             try {
                 $capture_data = $this->charge_with_vault($vault_id, $pp_customer, $upsell, $vault_type);
-                $capture_id = '';
+
+                // Extract capture — check COMPLETED first, then fall back to any capture.
+                // PayPal can return status=PENDING for some card/risk scenarios.
+                $capture_id     = '';
+                $capture_status = '';
                 foreach ($capture_data['purchase_units'] ?? [] as $pu) {
                     foreach ($pu['payments']['captures'] ?? [] as $c) {
+                        if (empty($c['id'])) {
+                            continue;
+                        }
                         if (($c['status'] ?? '') === 'COMPLETED') {
-                            $capture_id = $c['id'];
-                            break 2; // exit both loops
+                            $capture_id     = $c['id'];
+                            $capture_status = 'COMPLETED';
+                            break 2;
+                        }
+                        // Keep first non-COMPLETED capture as fallback
+                        if (empty($capture_id)) {
+                            $capture_id     = $c['id'];
+                            $capture_status = $c['status'] ?? 'UNKNOWN';
                         }
                     }
                 }
 
+                if (empty($capture_id)) {
+                    // charge_with_vault() returned COMPLETED at order level, meaning money
+                    // was likely taken — but no capture ID exists in purchase_units.
+                    // DO NOT throw here: that would hit the catch below and redirect the
+                    // user to a NEW PayPal payment, causing a double charge.
+                    // Instead: park the order on-hold for manual admin review.
+                    $upsell->update_status('on-hold');
+                    $upsell->add_order_note(sprintf(
+                        'WARNING: PayPal vault charge reported COMPLETED but no capture ID found in response. '
+                        . 'Manual reconciliation required. Order %d. Raw purchase_units: %s',
+                        $upsell->get_id(),
+                        wp_json_encode($capture_data['purchase_units'] ?? [])
+                    ));
+                    error_log(sprintf(
+                        '[GWC Vault] charge_intent: COMPLETED but no capture ID for upsell order %d — parked on-hold. MANUAL REVIEW REQUIRED.',
+                        $upsell->get_id()
+                    ));
+
+                    return [
+                        'pi'       => (object)['status' => 'on_hold'],
+                        'order_id' => $upsell->get_id(),
+                    ];
+                }
+
+                if ($capture_status !== 'COMPLETED') {
+                    // Capture exists but is PENDING — store the ID, mark on-hold.
+                    $upsell->update_meta_data('_transaction_id', $capture_id);
+                    $upsell->update_status('on-hold');
+                    $upsell->add_order_note(sprintf(
+                        'PayPal vault charge pending. Capture ID: %s | Status: %s | Type: %s. '
+                        . 'Order placed on-hold pending capture confirmation.',
+                        $capture_id, $capture_status, $vault_type
+                    ));
+                    $upsell->save();
+                    error_log(sprintf(
+                        '[GWC Vault] charge_intent: capture %s is %s for upsell order %d — parked on-hold.',
+                        $capture_id, $capture_status, $upsell->get_id()
+                    ));
+
+                    return [
+                        'pi'       => (object)['status' => 'pending'],
+                        'order_id' => $upsell->get_id(),
+                    ];
+                }
+
+                // Happy path: capture is COMPLETED with a real ID.
                 $upsell->payment_complete($capture_id);
                 $upsell->add_order_note(sprintf('Instant charge successful via PayPal vault. Capture ID: %s | Type: %s', $capture_id, $vault_type));
 

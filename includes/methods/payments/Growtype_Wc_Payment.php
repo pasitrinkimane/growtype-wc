@@ -829,8 +829,23 @@ class Growtype_Wc_Payment
             $new_order_id = is_array($charge_results) ? ($charge_results['order_id'] ?? 0) : 0;
 
             if (!is_object($pi) || !isset($pi->status) || $pi->status !== 'succeeded') {
+                // on_hold = vault returned COMPLETED but no capture ID (manual review needed).
+                // pending = capture exists but is PENDING confirmation.
+                // Both are non-failure outcomes — the order exists and is parked safely.
+                // Redirect to order page rather than showing an error.
+                $safe_statuses = ['on_hold', 'pending'];
+                $pi_status = is_object($pi) && isset($pi->status) ? $pi->status : 'unknown';
+
+                if (in_array($pi_status, $safe_statuses, true)) {
+                    $this->release_instant_charge_lock($lock_key);
+                    $new_order = $new_order_id ? wc_get_order($new_order_id) : $order;
+                    $redirect_url = !empty($explicit_return_url) ? $explicit_return_url : $gateway->get_return_url($new_order);
+                    wp_safe_redirect($redirect_url);
+                    exit;
+                }
+
                 $this->release_instant_charge_lock($lock_key);
-                $status = is_object($pi) && isset($pi->status) ? $pi->status : 'unknown';
+                $status = $pi_status;
                 throw new \Exception('Payment Intent status: ' . $status);
             }
 
