@@ -155,6 +155,45 @@ class Growtype_Wc_Payment_Gateway_Paypal_Subscriptions
         return $data;
     }
 
+    /**
+     * Return a cached PayPal billing plan ID for the given WC product + coupon set,
+     * creating a new PayPal product + plan only when no valid cached entry exists.
+     *
+     * Cache key: 'gwc_paypal_plan_<product_id>_<md5 of sorted coupon codes>'
+     * Stored in wp_options (autoload=no). Evicted if the API returns an error.
+     */
+    public function get_or_create_plan(string $access_token, int $wc_product_id, array $applied_coupons = []): string
+    {
+        sort($applied_coupons);
+        $coupon_sig  = md5(implode(',', $applied_coupons));
+        $option_key  = "gwc_paypal_plan_{$wc_product_id}_{$coupon_sig}";
+
+        $cached = get_option($option_key, '');
+        if (!empty($cached)) {
+            error_log(sprintf('[GWC PayPal] Reusing cached billing plan %s for product %d (coupons: %s)', $cached, $wc_product_id, $coupon_sig));
+            return $cached;
+        }
+
+        error_log(sprintf('[GWC PayPal] No cached plan for product %d (coupons: %s) — creating new PayPal product + plan.', $wc_product_id, $coupon_sig));
+
+        $paypal_product   = $this->create_product($access_token, $wc_product_id);
+        $subscription_plan = $this->create_billing_plan($access_token, $paypal_product, $wc_product_id, !empty($applied_coupons) ? $applied_coupons : null);
+        $plan_id          = $subscription_plan['id'] ?? '';
+
+        if (empty($plan_id)) {
+            error_log(sprintf('[GWC PayPal] Billing plan creation failed for product %d. Response: %s', $wc_product_id, wp_json_encode($subscription_plan)));
+            return '';
+        }
+
+        // Persist indefinitely — the plan never changes unless the product price changes.
+        // If price changes, delete this option manually or via WP-CLI:
+        //   wp option delete gwc_paypal_plan_<product_id>_<coupon_sig>
+        update_option($option_key, $plan_id, false); // autoload=false
+        error_log(sprintf('[GWC PayPal] Created and cached billing plan %s for product %d (coupons: %s)', $plan_id, $wc_product_id, $coupon_sig));
+
+        return $plan_id;
+    }
+
     public function create_subscription($access_token, $plan_id, $order_id, $applied_coupons = null)
     {
         $subscription_url = $this->gateway->get_api_url('/v1/billing/subscriptions');

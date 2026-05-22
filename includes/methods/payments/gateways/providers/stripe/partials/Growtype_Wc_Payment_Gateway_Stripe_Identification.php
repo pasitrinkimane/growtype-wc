@@ -145,7 +145,7 @@ class Growtype_Wc_Payment_Gateway_Stripe_Identification
             // so it stops appearing as "Unknown" in the analytics failure segments.
             $has_intent = $order->get_meta('_stripe_payment_intent')
                 ?: $order->get_meta('_stripe_source_id')
-                    ?: $order->get_meta('_transaction_id');
+                    ?: $order->get_transaction_id();
 
             if (!empty($has_intent)) {
                 $resolved = 'gwc-stripe';
@@ -257,7 +257,7 @@ class Growtype_Wc_Payment_Gateway_Stripe_Identification
         // Priority 3: any Stripe transaction/intent meta → at least mark as gwc-stripe
         $has_stripe = $order->get_meta('_stripe_payment_intent')
             ?: $order->get_meta('_stripe_source_id')
-                ?: $order->get_meta('_transaction_id')
+                ?: $order->get_transaction_id()
                     ?: '';
 
         if (!empty($has_stripe) && strpos((string)$has_stripe, 'pi_') === 0) {

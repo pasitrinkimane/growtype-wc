@@ -150,7 +150,7 @@ class Growtype_Wc_Admin_Orders_Verification
                 $transaction_id = $order->get_meta('_stripe_intent_id');
             }
             if (empty($transaction_id)) {
-                $transaction_id = $order->get_meta('_transaction_id');
+                $transaction_id = $order->get_transaction_id();
             }
             if (empty($transaction_id)) {
                 $transaction_id = $order->get_meta('transaction_id');

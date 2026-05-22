@@ -98,15 +98,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
                 if (growtype_wc_product_is_subscription($wc_product->get_id())) {
                     error_log('[GWC PayPal] woocommerce_add_to_cart_extend: Processing subscription...');
-                    $paypal_product = $this->gateway->subscriptions->create_product($access_token, $wc_product->get_id());
-                    $subscription_plan = $this->gateway->subscriptions->create_billing_plan($access_token, $paypal_product, $wc_product_id, $applied_coupons);
-                    $subscription_plan_id = $subscription_plan['id'] ?? '';
+                    $subscription_plan_id = $this->gateway->subscriptions->get_or_create_plan($access_token, $wc_product->get_id(), $applied_coupons);
 
                     if (empty($subscription_plan_id)) {
                         error_log('[GWC PayPal] Subscription plan creation failed.');
-                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                            error_log('[GWC PayPal] Subscription plan response: ' . wp_json_encode($subscription_plan));
-                        }
                         throw new \Exception(__('Subscription plan creation failed.', 'growtype-wc'));
                     }
 

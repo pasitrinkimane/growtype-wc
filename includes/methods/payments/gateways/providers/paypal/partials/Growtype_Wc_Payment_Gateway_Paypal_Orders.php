@@ -137,24 +137,35 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         $return_url = Growtype_Wc_Payment_Gateway::success_url($wc_order_id);
         $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url($wc_order_id, false, $applied_coupons);
 
-        // ORDER_COMPLETE_ON_PAYMENT_APPROVAL is used for card/paypal vault flows.
-        // For Google Pay and Apple Pay, the official WooCommerce PayPal plugin does NOT
-        // set processing_instruction — the standard confirmOrder flow handles completion.
-        // Using this instruction with wallet payments prevents the confirm-payment-source
-        // link from appearing in the order response, causing APPROVE_GOOGLE_PAY_VALIDATION_ERROR.
-        $is_wallet = in_array($vault_source, ['googlepay', 'applepay'], true);
-        $processing_instruction = $is_wallet ? null : 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
+        // ORDER_COMPLETE_ON_PAYMENT_APPROVAL is only valid for card hosted-fields flows
+        // where the payment is captured without any browser redirect.
+        // PayPal redirect flows ('paypal' vault source) use the standard approve → capture
+        // sequence: the buyer is redirected to PayPal.com, approves, and is sent back to
+        // return_url, after which the server calls capture_order(). Sending this instruction
+        // alongside redirect URLs is a logical contradiction — PayPal rejects it with
+        // INCOMPATIBLE_PARAMETER_VALUE on both return_url and cancel_url.
+        // Google Pay and Apple Pay use confirmOrder() on the client — same rule applies.
+        $is_redirect_flow = in_array($vault_source, ['paypal', 'googlepay', 'applepay'], true);
+        $processing_instruction = $is_redirect_flow ? null : 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
 
         $payment_source = $this->build_vault_payment_source($vault_source, $paypal_customer_id, $return_url, $cancel_url);
 
         $order_body = [
-            "intent"          => "CAPTURE",
-            "purchase_units"  => $items,
-            "application_context" => [
-                "return_url" => $return_url,
-                "cancel_url" => $cancel_url,
-            ],
+            "intent"         => "CAPTURE",
+            "purchase_units" => $items,
         ];
+
+        // application_context.return_url/cancel_url is only needed for the card hosted-fields
+        // flow (vault_source='card'), where there is no payment_source.*.experience_context.
+        // For paypal/googlepay/applepay, redirect URLs are already set inside
+        // payment_source.*.experience_context — sending them in both places triggers
+        // INCOMPATIBLE_PARAMETER_VALUE on all four URL fields.
+        if ($vault_source === 'card') {
+            $order_body['application_context'] = [
+                'return_url' => $return_url,
+                'cancel_url' => $cancel_url,
+            ];
+        }
 
         if ($processing_instruction) {
             $order_body["processing_instruction"] = $processing_instruction;
@@ -513,7 +524,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
 
                 if ($capture_status !== 'COMPLETED') {
                     // Capture exists but is PENDING — store the ID, mark on-hold.
-                    $upsell->update_meta_data('_transaction_id', $capture_id);
+                    $upsell->set_transaction_id($capture_id);
                     $upsell->update_status('on-hold');
                     $upsell->add_order_note(sprintf(
                         'PayPal vault charge pending. Capture ID: %s | Status: %s | Type: %s. '

@@ -1079,18 +1079,43 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
                             var msg = (err && err.message) ? err.message : '';
 
-                            // Map technical error codes to user-friendly messages
+                            // Map technical error codes / PayPal issue strings to user-friendly messages
                             var errorMap = {
-                                'INVALID_NUMBER': '<?php echo esc_js(__('The card number is invalid. Please check and try again.', 'growtype-child')); ?>',
-                                'INVALID_EXPIRY': '<?php echo esc_js(__('The expiry date is invalid or has passed.', 'growtype-child')); ?>',
-                                'INVALID_CVV': '<?php echo esc_js(__('The security code (CVV) is invalid.', 'growtype-child')); ?>',
-                                'CARD_TYPE_NOT_SUPPORTED': '<?php echo esc_js(__('This card type is not supported.', 'growtype-child')); ?>'
+                                // CardFields validation errors
+                                'INVALID_NUMBER':            '<?php echo esc_js(__('The card number is invalid. Please check and try again.', 'growtype-child')); ?>',
+                                'INVALID_EXPIRY':            '<?php echo esc_js(__('The expiry date is invalid or has passed.', 'growtype-child')); ?>',
+                                'INVALID_CVV':               '<?php echo esc_js(__('The security code (CVV) is invalid.', 'growtype-child')); ?>',
+                                'CARD_TYPE_NOT_SUPPORTED':   '<?php echo esc_js(__('This card type is not supported.', 'growtype-child')); ?>',
+                                // PayPal API issue codes (appear in err.message for sandbox mismatches)
+                                'CREDIT_CARD_NUMBER_MUST_BE_TEST_NUMBER': '<?php echo esc_js(__('Please use a test card number in sandbox mode.', 'growtype-child')); ?>',
+                                'INSTRUMENT_DECLINED':       '<?php echo esc_js(__('Your card was declined. Please try a different payment method.', 'growtype-child')); ?>',
+                                'PAYER_CANNOT_PAY':          '<?php echo esc_js(__('Payment could not be processed. Please try a different method.', 'growtype-child')); ?>',
+                                'CARD_EXPIRED':              '<?php echo esc_js(__('Your card has expired. Please use a different card.', 'growtype-child')); ?>',
+                                'DO_NOT_HONOR':              '<?php echo esc_js(__('Your card issuer declined the payment. Please contact your bank or try a different card.', 'growtype-child')); ?>',
+                                'TRANSACTION_REFUSED':       '<?php echo esc_js(__('The transaction was refused. Please try a different payment method.', 'growtype-child')); ?>',
                             };
 
+                            // Exact match first
                             if (errorMap[msg]) {
                                 msg = errorMap[msg];
-                            } else if (!msg) {
-                                msg = '<?php echo esc_js(__('Card submission failed. Please check your details.', 'growtype-child')); ?>';
+                            } else {
+                                // Partial match — scan err.message for known issue codes
+                                var matched = false;
+                                for (var code in errorMap) {
+                                    if (msg.indexOf(code) !== -1) {
+                                        msg = errorMap[code];
+                                        matched = true;
+                                        break;
+                                    }
+                                }
+                                // Raw PayPal JSON or URL in message — strip it
+                                if (!matched) {
+                                    if (msg.indexOf('{') !== -1 || msg.indexOf('returned status') !== -1 || msg.indexOf('paypal.com') !== -1) {
+                                        msg = '<?php echo esc_js(__('Your payment could not be processed. Please check your card details or try a different payment method.', 'growtype-child')); ?>';
+                                    } else if (!msg) {
+                                        msg = '<?php echo esc_js(__('Card submission failed. Please check your details.', 'growtype-child')); ?>';
+                                    }
+                                }
                             }
 
                             showError(msg);
