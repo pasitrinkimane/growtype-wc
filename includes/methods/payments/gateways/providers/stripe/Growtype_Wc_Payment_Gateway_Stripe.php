@@ -185,7 +185,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                 'redirect' => Growtype_Wc_Payment_Gateway::success_url($order_id, self::PROVIDER_ID),
             );
         } catch (Exception $e) {
-            wc_add_notice(__('Payment failed. Please try again.', 'growtype-wc'), 'error');
+            wc_add_notice(sprintf(__('Payment failed. Please try again or contact our support %s', 'growtype-wc'), get_option('admin_email')), 'error');
             error_log('Stripe Payment Error: ' . $e->getMessage());
             return array ('result' => 'failure');
         }

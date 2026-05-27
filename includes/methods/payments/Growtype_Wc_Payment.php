@@ -5,6 +5,7 @@ class Growtype_Wc_Payment
     const CHARGE_INTENT_ACTION = 'gwc_charge_intent';
     const CHARGE_INTENT_NONCE_ACTION = 'growtype_wc_charge_intent';
     const RETURN_URL_QUERY_ARG = 'growtype_return_after_payment_url';
+    const PAYMENT_SUCCESS_QUERY_ARG = 'gwc_payment_success';
     const REMOVE_SAVED_METHOD_QUERY_ARG = 'growtype_wc_remove_saved_method';
     const REMOVED_REPEAT_PURCHASE_METHODS_META_KEY = 'growtype_wc_removed_repeat_purchase_methods';
 
@@ -882,7 +883,7 @@ class Growtype_Wc_Payment
             $this->refresh_instant_charge_lock($lock_key, 10);
 
             // Append success flag so the landing page can show a confirmation toast
-            $redirect_url = add_query_arg('gwc_upsell_success', '1', $redirect_url);
+            $redirect_url = add_query_arg(self::PAYMENT_SUCCESS_QUERY_ARG, '1', $redirect_url);
 
             // Redirect back to order received (or wherever)
             wp_safe_redirect($redirect_url);

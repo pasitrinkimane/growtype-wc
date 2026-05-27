@@ -182,7 +182,7 @@ class GrowtypeWcPaypalProvider {
                 paypal.Buttons({
                     createOrder: () => {
                         console.log('[PayPal] Buttons: createOrder called, productId:', detail.productId);
-                        return this.createOrder(detail.productId, 'paypal');
+                        return this.createOrder(detail.productId, 'paypal', detail.returnUrl || '');
                     },
                     onApprove: (data) => {
                         console.log('[PayPal] Buttons: onApprove, orderID:', data.orderID);
@@ -363,7 +363,7 @@ class GrowtypeWcPaypalProvider {
                     let orderId = null;
                     try {
                         console.log('[PayPal/GooglePay] Step 1: Creating WC + PayPal order...');
-                        orderId = await this.createOrder(productId, 'googlepay');
+                        orderId = await this.createOrder(productId, 'googlepay', detail.returnUrl || '');
                         console.log('[PayPal/GooglePay] Step 1 done — orderId:', orderId);
 
                         // Use gpConfig.countryCode as the authoritative value — it reflects the
@@ -543,7 +543,7 @@ class GrowtypeWcPaypalProvider {
                     console.log('[PayPal/ApplePay] onvalidatemerchant — validationURL:', event.validationURL);
                     try {
                         console.log('[PayPal/ApplePay] Step 1: Creating PayPal order...');
-                        orderId = await this.createOrder(detail.productId, 'applepay');
+                        orderId = await this.createOrder(detail.productId, 'applepay', detail.returnUrl || '');
                         console.log('[PayPal/ApplePay] Step 1 done — orderId:', orderId, '| amount:', this.orderAmount);
 
                         const validationData = await applepay.validateMerchant({
@@ -675,9 +675,9 @@ class GrowtypeWcPaypalProvider {
         window.location.href = url;
     }
 
-    async createOrder(productId, vaultSource = 'card') {
+    async createOrder(productId, vaultSource = 'card', returnUrl = '') {
         const parsedId = parseInt(productId, 10) || 0;
-        console.log('[PayPal] createOrder — productId:', parsedId, '(raw:', productId, ') | vaultSource:', vaultSource);
+        console.log('[PayPal] createOrder — productId:', parsedId, '(raw:', productId, ') | vaultSource:', vaultSource, '| returnUrl:', returnUrl || '(none)');
 
         if (!parsedId) {
             throw new Error('[PayPal] createOrder: productId is missing or invalid');
@@ -688,15 +688,23 @@ class GrowtypeWcPaypalProvider {
 
         console.log('[PayPal] createOrder — POSTing to:', configAjax.url, '| nonce set:', !!config.nonce);
 
+        const postData = {
+            action: 'gwc_paypal_hosted_create_order',
+            _ajax_nonce: config.nonce,
+            product_id: parsedId,
+            vault_source: vaultSource
+        };
+
+        // Only include return_url when explicitly provided by the triggering widget.
+        // Never fall back to a guessed URL — that causes redirects to the wrong page.
+        if (returnUrl) {
+            postData.return_url = returnUrl;
+        }
+
         const response = await jQuery.ajax({
             url: configAjax.url,
             method: 'POST',
-            data: {
-                action: 'gwc_paypal_hosted_create_order',
-                _ajax_nonce: config.nonce,
-                product_id: parsedId,
-                vault_source: vaultSource
-            }
+            data: postData
         });
 
         console.log('[PayPal] createOrder response:', response);

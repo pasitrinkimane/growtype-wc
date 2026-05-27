@@ -80,6 +80,6 @@ add_action('wp_enqueue_scripts', 'growtype_wc_checkout_scripts');
 function growtype_wc_checkout_scripts()
 {
     if (class_exists('woocommerce') && is_checkout()) {
-        wp_enqueue_script('wc-custom-checkout', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-checkout.js', [], GROWTYPE_WC_VERSION, true);
+        wp_enqueue_script('wc-custom-checkout', GROWTYPE_WC_URL_PUBLIC . 'scripts/wc-checkout.js', [], GROWTYPE_WC_VERSION, true);
     }
 }

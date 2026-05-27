@@ -152,6 +152,7 @@ class Growtype_Wc_Public
                 'in_wishlist_text' => esc_html__('Already in wishlist', 'growtype-wc'),
                 'remove_from_wishlist_text' => esc_html__('Remove from wishlist', 'growtype-wc'),
                 'error_text' => esc_html__('Something went wrong, please contact our support', 'growtype-wc'),
+                'admin_email' => get_option('admin_email'),
                 'no_wishlist_text' => esc_html__('No wishlist found', 'growtype-wc'),
                 'fill_required_fields_text' => esc_html__('Please fill all required fields', 'growtype-wc'),
                 'currency' => get_woocommerce_currency(),

@@ -18,7 +18,7 @@ function growtype_wc_coupon_scripts_styles()
 
 function growtype_wc_enqueue_coupon_scripts()
 {
-    wp_enqueue_script('wc-coupon', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-coupon.js', [], GROWTYPE_WC_VERSION, true);
+    wp_enqueue_script('wc-coupon', GROWTYPE_WC_URL_PUBLIC . 'scripts/wc-coupon.js', [], GROWTYPE_WC_VERSION, true);
 }
 
 /**

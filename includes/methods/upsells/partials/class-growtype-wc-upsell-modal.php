@@ -36,15 +36,6 @@ class Growtype_Wc_Upsell_Modal
                 box-shadow: 0 8px 32px rgba(0,0,0,0.18);
             }
         </style>
-        <div id="gwc-upsell-alert-wrap">
-            <div id="gwc-upsell-alert"
-                 class="alert alert-success alert-dismissible fade"
-                 role="alert"
-                 style="display:none;">
-                <?php echo esc_html__('Payment successful! Your purchase is confirmed.', 'growtype-wc'); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php echo esc_attr__('Close', 'growtype-wc'); ?>"></button>
-            </div>
-        </div>
         <script>
         (function() {
             // Spinner + double-click prevention
@@ -60,11 +51,21 @@ class Growtype_Wc_Upsell_Modal
 
             // Success alert
             var params = new URLSearchParams(window.location.search);
-            if (params.get('gwc_upsell_success') === '1') {
+            var paymentSuccessKey = '<?php echo esc_js(Growtype_Wc_Payment::PAYMENT_SUCCESS_QUERY_ARG); ?>';
+            if (params.get(paymentSuccessKey) === '1') {
                 // Clean the URL without reload
-                params.delete('gwc_upsell_success');
+                params.delete(paymentSuccessKey);
                 var cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
                 window.history.replaceState({}, '', cleanUrl);
+
+                // Dynamically inject the alert HTML so it doesn't exist on normal page loads
+                var wrap = document.createElement('div');
+                wrap.id = 'gwc-upsell-alert-wrap';
+                wrap.innerHTML = '<div id="gwc-upsell-alert" class="alert alert-success alert-dismissible fade" role="alert" style="display:none;">' +
+                                 '<?php echo esc_js(esc_html__("Payment successful! Your purchase is confirmed.", "growtype-wc")); ?>' +
+                                 '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php echo esc_js(esc_attr__("Close", "growtype-wc")); ?>"></button>' +
+                                 '</div>';
+                document.body.appendChild(wrap);
 
                 // Show Bootstrap alert
                 var alertEl = document.getElementById('gwc-upsell-alert');

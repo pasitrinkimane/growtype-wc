@@ -12,7 +12,7 @@ add_action('wp_enqueue_scripts', 'growtype_wc_widgets_scripts', 20);
 function growtype_wc_widgets_scripts()
 {
     if (!is_admin()) {
-        wp_enqueue_script('wc-widgets', GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-widgets.js', [], GROWTYPE_WC_VERSION, true);
+        wp_enqueue_script('wc-widgets', GROWTYPE_WC_URL_PUBLIC . 'scripts/wc-widgets.js', [], GROWTYPE_WC_VERSION, true);
 
         wp_localize_script(
             'wc-widgets',

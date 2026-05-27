@@ -14,7 +14,8 @@ if (!function_exists('growtype_wc_checkout_button')) {
      * @param string      $button_text Label shown on the CTA button.
      * @param int         $product_id  WooCommerce product ID.
      * @param array       $methods     Express wallet methods (passed to payment form on click).
-     * @param string|null $return_url  Post-payment redirect URL (reserved for future use).
+     * @param string|null $return_url  Post-payment redirect URL. Emitted as data-return-url so
+     *                                 wc-payment-form.js can forward it through the payment chain.
      * @return string Rendered HTML.
      */
     function growtype_wc_checkout_button(
@@ -40,6 +41,9 @@ if (!function_exists('growtype_wc_checkout_button')) {
                     style="font-size:1.1rem; min-height:50px;font-weight:bold;"
                     data-product-id="<?php echo esc_attr($product_id); ?>"
                     data-methods="<?php echo esc_attr($methods_str); ?>"
+                    <?php if (!empty($return_url)) : ?>
+                        data-return-url="<?php echo esc_url($return_url); ?>"
+                    <?php endif; ?>
                     <?php if (!empty($instant_charge_url)) : ?>
                         data-instant-charge="1"
                         data-instant-charge-url="<?php echo esc_url($instant_charge_url); ?>"

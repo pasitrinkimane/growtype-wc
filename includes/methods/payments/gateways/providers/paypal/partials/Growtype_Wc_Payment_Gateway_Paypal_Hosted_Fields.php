@@ -14,7 +14,7 @@
  *      → Server creates WC order + PayPal order → returns { orderID, wc_order_id }
  *   4. SDK tokenises card → calls ajax_hosted_capture_order (POST: orderID, wc_order_id)
  *      → Server verifies orderID, captures via PayPal REST API → marks WC order paid
- *   5. Browser redirects to WooCommerce thank-you page
+ *   5. Browser redirects to the originating page (e.g. the chat page) or the WooCommerce thank-you page.
  */
 class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 {
@@ -39,7 +39,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         add_action('wp_ajax_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
         add_action('wp_ajax_nopriv_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
 
-        add_action('wp_footer', [$this, 'render_paypal_hosted_fields_modal']);
+        // Outputs only the JS boot script (no modal HTML) — powers gwcPaymentFormModal and any inline card form.
+        add_action('wp_footer', [$this, 'render_card_fields_footer_script']);
     }
 
     /**
@@ -126,15 +127,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_get_client_token()
     {
-        error_log('[GWC PayPal] ajax_get_client_token: called. Nonce present: ' . (!empty($_POST['_ajax_nonce']) ? 'yes' : 'NO'));
-
         if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
             error_log('[GWC PayPal] ajax_get_client_token: nonce check FAILED. Nonce value: ' . sanitize_text_field($_POST['_ajax_nonce'] ?? '(empty)'));
             wp_send_json_error(['message' => 'Security check failed.'], 403);
             return;
         }
-
-        error_log('[GWC PayPal] ajax_get_client_token: nonce OK. gateway present: ' . ($this->gateway ? 'yes' : 'NO'));
 
         $cache_key = 'gwc_paypal_client_token_' . md5($this->gateway->get_client_id());
         $cached = get_transient($cache_key);
@@ -243,6 +240,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         $order->calculate_totals();
         $order->update_status('pending', __('Awaiting PayPal Hosted Fields payment.', 'growtype-wc'));
 
+        $return_url = $this->resolve_return_url_from_request();
+        if (!empty($return_url)) {
+            $order->update_meta_data('_growtype_return_after_payment_url', esc_url_raw($return_url));
+        }
+
         do_action('woocommerce_checkout_create_order', $order, $_POST);
 
         $order->save();
@@ -251,14 +253,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
         // Create the PayPal order via REST API
         try {
-            $access_token = $this->gateway->get_access_token(
-                $this->gateway->get_client_id(),
-                $this->gateway->get_client_secret()
-            );
-
-            if (empty($access_token)) {
-                throw new \Exception('Could not retrieve PayPal access token.');
-            }
+            $access_token = $this->get_gateway_access_token();
 
             $paypal_order = $this->gateway->create_order($access_token, $wc_order_id, $applied_coupons, $vault_source);
 
@@ -323,7 +318,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         if (get_transient($lock_key)) {
             // Another request is already processing this capture
             if ($order->is_paid()) {
-                wp_send_json_success(['redirect' => Growtype_Wc_Payment_Gateway::success_url($wc_order_id)]);
+                wp_send_json_success(['redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order)]);
             }
             wp_send_json_error(['message' => __('Payment is already being processed. Please wait.', 'growtype-wc')], 409);
         }
@@ -332,19 +327,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
         if ($order->is_paid()) {
             delete_transient($lock_key);
-            wp_send_json_success(['redirect' => Growtype_Wc_Payment_Gateway::success_url($wc_order_id)]);
+            wp_send_json_success(['redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order)]);
         }
 
         try {
-            $access_token = $this->gateway->get_access_token(
-                $this->gateway->get_client_id(),
-                $this->gateway->get_client_secret()
-            );
-
-            if (empty($access_token)) {
-                error_log('[GWC PayPal Capture] FAIL: empty access token returned.');
-                throw new \Exception('Could not retrieve PayPal access token.');
-            }
+            $access_token = $this->get_gateway_access_token();
 
             $capture_result = $this->gateway->capture_order($access_token, $paypal_order_id);
 
@@ -361,7 +348,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             $capture_status = $capture_result['purchase_units'][0]['payments']['captures'][0]['status'] ?? '';
             if (!empty($capture_status) && $capture_status !== 'COMPLETED') {
                 $proc_code = $capture_result['purchase_units'][0]['payments']['captures'][0]['processor_response']['response_code'] ?? '';
-                $detail    = sprintf('Payment declined by card issuer (code: %s). Please try a different payment method.', $proc_code ?: 'unknown');
+                $detail    = sprintf('Payment declined by card issuer (code: %s). Please try again or contact our support %s', $proc_code ?: 'unknown', get_option('admin_email'));
                 error_log(sprintf(
                     '[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s',
                     $wc_order_id,
@@ -443,33 +430,101 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             $order->update_status('failed', $e->getMessage());
             error_log('GWC PayPal Hosted Fields - capture_order error: ' . $e->getMessage());
             delete_transient($lock_key);
-            wp_send_json_error(['message' => __('Payment capture failed. Please try again or contact support.', 'growtype-wc')], 500);
+            wp_send_json_error(['message' => sprintf(__('Payment capture failed. Please try again or contact our support %s', 'growtype-wc'), get_option('admin_email'))], 500);
         }
 
         delete_transient($lock_key);
 
         wp_send_json_success([
-            'redirect' => Growtype_Wc_Payment_Gateway::success_url($wc_order_id),
+            'redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order),
         ]);
     }
 
-    /**
-     * Render the PayPal Hosted Fields modal in the footer.
-     * Card data is entered inside PayPal-hosted iframes and never touches our server.
-     */
-    public function render_paypal_hosted_fields_modal()
-    {
+    // ── Private helpers ───────────────────────────────────────────────────────
 
-        if (!$this->gateway || empty($this->gateway->enable_card_payments)) {
-            return;
+    /**
+     * Fetch a PayPal REST API access token using the configured credentials.
+     *
+     * @throws \Exception if the token cannot be retrieved.
+     */
+    private function get_gateway_access_token(): string
+    {
+        $token = $this->gateway->get_access_token(
+            $this->gateway->get_client_id(),
+            $this->gateway->get_client_secret()
+        );
+
+        if (empty($token)) {
+            throw new \Exception('Could not retrieve PayPal access token.');
         }
 
-        $client_id = $this->gateway->get_client_id();
-        $merchant_id = $this->gateway->get_merchant_id();
-        $is_sandbox = $this->gateway->is_test_mode();
-        $currency = get_woocommerce_currency();
-        $nonce = wp_create_nonce('gwc_paypal_hosted_fields');
-        $ajax_url = admin_url('admin-ajax.php');
+        return $token;
+    }
+
+    /**
+     * Resolve the "return after payment" URL from the current AJAX request.
+     *
+     * Only honours an explicitly POSTed return_url (sent by the triggering widget, e.g. the
+     * chat payment button). We intentionally do NOT fall back to wp_get_referer(): AJAX calls
+     * always have the triggering page as their HTTP Referer, which would cause users to be
+     * redirected back to the page they came from (e.g. /credits/) instead of the WooCommerce
+     * thank-you page.
+     *
+     * @return string Sanitised absolute URL on the same domain, or '' if none provided.
+     */
+    private function resolve_return_url_from_request(): string
+    {
+        // Only honour an explicitly POSTed return_url (set by the triggering widget, e.g. chat).
+        // We intentionally do NOT fall back to wp_get_referer(): for AJAX calls the HTTP Referer
+        // is always the page the user is currently on, so saving it would redirect them right back
+        // to that page (e.g. /credits/) instead of the WooCommerce thank-you page.
+        if (!empty($_POST['return_url'])) {
+            $url = Growtype_Wc_Payment::sanitize_return_url(
+                sanitize_text_field(wp_unslash($_POST['return_url']))
+            );
+            if (!empty($url)) {
+                return $url;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Resolve the redirect URL for a completed order.
+     *
+     * Returns the URL saved as _growtype_return_after_payment_url on the order
+     * (i.e. the page where the user initiated payment — e.g. the chat page).
+     * Falls back to the standard WooCommerce thank-you/order-received URL.
+     *
+     * @param int           $wc_order_id
+     * @param \WC_Order|null $order       Optional already-loaded order to avoid a second DB fetch.
+     * @return string
+     */
+    private function resolve_redirect_url_for_order(int $wc_order_id, ?\WC_Order $order = null): string
+    {
+        $order = $order ?: wc_get_order($wc_order_id);
+        if ($order) {
+            $saved = (string)$order->get_meta('_growtype_return_after_payment_url');
+            if (!empty($saved)) {
+                $sanitised = Growtype_Wc_Payment::sanitize_return_url($saved);
+                if (!empty($sanitised)) {
+                    // Append success flag so the landing page shows the confirmation toast,
+                    // matching the instant-charge flow behaviour.
+                    return add_query_arg(Growtype_Wc_Payment::PAYMENT_SUCCESS_QUERY_ARG, '1', $sanitised);
+                }
+            }
+        }
+
+        return Growtype_Wc_Payment_Gateway::success_url($wc_order_id);
+    }
+
+    /**
+     * Render only the modal HTML structure for #gwcPaypalHostedFieldsModal.
+     * Extracted so it can be called independently from the JS boot script.
+     */
+    public static function render_modal_html(): void
+    {
         ?>
         <!-- PayPal Hosted Fields Modal -->
         <div class="modal fade" id="gwcPaypalHostedFieldsModal" tabindex="-1" aria-hidden="true">
@@ -534,6 +589,53 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 </div>
             </div>
         </div>
+        <?php
+
+        // Inject the PayPal Card Fields boot script so the modal works
+        // both when rendered in wp_footer AND when fetched via AJAX.
+        if (class_exists('Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields')) {
+            $gateway = null;
+            if (function_exists('WC') && WC()->payment_gateways) {
+                $gateways = WC()->payment_gateways->payment_gateways();
+                $gateway = $gateways['gwc-paypal'] ?? null;
+            }
+
+            if ($gateway && !empty($gateway->enable_card_payments)) {
+                Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields::render_card_fields_script(
+                    $gateway->get_client_id(),
+                    $gateway->get_merchant_id(),
+                    $gateway->is_test_mode(),
+                    get_woocommerce_currency(),
+                    wp_create_nonce('gwc_paypal_hosted_fields'),
+                    admin_url('admin-ajax.php')
+                );
+            }
+        }
+    }
+
+    /**
+     * Render the PayPal Card Fields JS boot script.
+     *
+     * Static so it can be called from any context (wp_footer, inline AJAX modal response, etc.)
+     * without coupling to the legacy #gwcPaypalHostedFieldsModal markup.
+     *
+     * @param string $client_id
+     * @param string $merchant_id
+     * @param bool   $is_sandbox
+     * @param string $currency
+     * @param string $nonce
+     * @param string $ajax_url
+     */
+    public static function render_card_fields_script(
+        string $client_id,
+        string $merchant_id,
+        bool   $is_sandbox,
+        string $currency,
+        string $nonce,
+        string $ajax_url
+    ): void
+    {
+        ?>
         <script>
             (function ($) {
                 var gwcPaypalClientId = <?php echo wp_json_encode($client_id); ?>;
@@ -544,6 +646,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 var gwcCurrency = <?php echo wp_json_encode($currency); ?>;
                 var gwcProductId = 0;
                 var gwcWcOrderId = 0;
+                var gwcReturnUrl = ''; // Explicit return URL set by the triggering widget (e.g. chat). Empty = no custom redirect.
 
                 // Card Fields instance
                 var cardFields = null;
@@ -575,8 +678,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         var prodId = parseInt(e.detail.productId, 10);
                         if (prodId) {
                             gwcProductId = prodId;
-                            console.log('[GWC HF] growtype_wc_payment_request received for prodId:', prodId);
-                            // Run the check-and-boot routine to capture the new form
+                            // Accept an explicit return URL from the triggering widget
+                            gwcReturnUrl = (e.detail.returnUrl && typeof e.detail.returnUrl === 'string')
+                                ? e.detail.returnUrl
+                                : '';
+                            console.log('[GWC HF] growtype_wc_payment_request received for prodId:', prodId, '| returnUrl:', gwcReturnUrl || '(none)');
                             checkAndBootInlineCardFields();
                         }
                     }
@@ -588,6 +694,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         var prodId = parseInt($(formRoot).data('product-id'), 10) || gwcProductId;
                         if (prodId) {
                             gwcProductId = prodId;
+                            // Capture explicit return URL from the form element (set by chat widget).
+                            // Only override if not already set by the payment_request event.
+                            if (!gwcReturnUrl) {
+                                gwcReturnUrl = $(formRoot).data('return-url') || '';
+                            }
                             
                             // Check if the secure card field iframe is already loaded inside this active form
                             var nameContainer = formRoot.querySelector ? formRoot.querySelector('#card-name-field-container') : null;
@@ -997,13 +1108,20 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
                     // Helper for Create Order (shared by Buttons and CardFields)
                     function createOrderInternal() {
-                        return $.post(gwcAjaxUrl, {
+                        var postData = {
                             action: 'gwc_paypal_hosted_create_order',
                             _ajax_nonce: gwcNonce,
                             product_id: gwcProductId,
                             currency: gwcCurrency,
                             vault_source: 'card'
-                        }).then(function (res) {
+                        };
+                        // Only send return_url when explicitly set by the triggering widget.
+                        // Never fall back to window.location.href — that would redirect
+                        // the user back to whatever page they happen to be on (e.g. /credits/).
+                        if (gwcReturnUrl) {
+                            postData.return_url = gwcReturnUrl;
+                        }
+                        return $.post(gwcAjaxUrl, postData).then(function (res) {
                             if (res.success && res.data.orderID) {
                                 gwcWcOrderId = res.data.wc_order_id;
                                 return res.data.orderID;
@@ -1040,7 +1158,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             var $approvalBtn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
                             $approvalBtn.prop('disabled', false);
                             setSubmitButtonText($approvalBtn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
-                            showError(err.message || '<?php echo esc_js(__('Payment capture failed. Please try again.', 'growtype-child')); ?>');
+                            showError(err.message || '<?php echo esc_js(sprintf(__('Payment capture failed. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>');
                         });
                     }
 
@@ -1088,11 +1206,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 'CARD_TYPE_NOT_SUPPORTED':   '<?php echo esc_js(__('This card type is not supported.', 'growtype-child')); ?>',
                                 // PayPal API issue codes (appear in err.message for sandbox mismatches)
                                 'CREDIT_CARD_NUMBER_MUST_BE_TEST_NUMBER': '<?php echo esc_js(__('Please use a test card number in sandbox mode.', 'growtype-child')); ?>',
-                                'INSTRUMENT_DECLINED':       '<?php echo esc_js(__('Your card was declined. Please try a different payment method.', 'growtype-child')); ?>',
-                                'PAYER_CANNOT_PAY':          '<?php echo esc_js(__('Payment could not be processed. Please try a different method.', 'growtype-child')); ?>',
-                                'CARD_EXPIRED':              '<?php echo esc_js(__('Your card has expired. Please use a different card.', 'growtype-child')); ?>',
-                                'DO_NOT_HONOR':              '<?php echo esc_js(__('Your card issuer declined the payment. Please contact your bank or try a different card.', 'growtype-child')); ?>',
-                                'TRANSACTION_REFUSED':       '<?php echo esc_js(__('The transaction was refused. Please try a different payment method.', 'growtype-child')); ?>',
+                                'INSTRUMENT_DECLINED':       '<?php echo esc_js(sprintf(__('Your card was declined. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
+                                'PAYER_CANNOT_PAY':          '<?php echo esc_js(sprintf(__('Payment could not be processed. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
+                                'CARD_EXPIRED':              '<?php echo esc_js(sprintf(__('Your card has expired. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
+                                'DO_NOT_HONOR':              '<?php echo esc_js(sprintf(__('Your card issuer declined the payment. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
+                                'TRANSACTION_REFUSED':       '<?php echo esc_js(sprintf(__('The transaction was refused. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
                             };
 
                             // Exact match first
@@ -1111,7 +1229,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 // Raw PayPal JSON or URL in message — strip it
                                 if (!matched) {
                                     if (msg.indexOf('{') !== -1 || msg.indexOf('returned status') !== -1 || msg.indexOf('paypal.com') !== -1) {
-                                        msg = '<?php echo esc_js(__('Your payment could not be processed. Please check your card details or try a different payment method.', 'growtype-child')); ?>';
+                                        msg = '<?php echo esc_js(sprintf(__('Your payment could not be processed. Please check your card details, try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>';
                                     } else if (!msg) {
                                         msg = '<?php echo esc_js(__('Card submission failed. Please check your details.', 'growtype-child')); ?>';
                                     }
@@ -1126,6 +1244,48 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             })(jQuery);
         </script>
         <?php
+    }
+
+    /**
+     * Render the PayPal Hosted Fields script in the wp_footer.
+     * Card data is entered inside PayPal-hosted iframes and never touches our server.
+     */
+    public function render_paypal_hosted_fields_modal(): void
+    {
+        if (!$this->gateway || empty($this->gateway->enable_card_payments)) {
+            return;
+        }
+
+        $client_id   = $this->gateway->get_client_id();
+        $merchant_id = $this->gateway->get_merchant_id();
+        $is_sandbox  = $this->gateway->is_test_mode();
+        $currency    = get_woocommerce_currency();
+        $nonce       = wp_create_nonce('gwc_paypal_hosted_fields');
+        $ajax_url    = admin_url('admin-ajax.php');
+
+        self::render_card_fields_script($client_id, $merchant_id, $is_sandbox, $currency, $nonce, $ajax_url);
+    }
+
+    /**
+     * Render the PayPal Card Fields JS boot script in wp_footer.
+     *
+     * Outputs ONLY the <script> block — no modal HTML.
+     * Powers gwcPaymentFormModal (and any inline .gwc-payment-form) via MutationObserver.
+     */
+    public function render_card_fields_footer_script(): void
+    {
+        if (!$this->gateway || empty($this->gateway->enable_card_payments)) {
+            return;
+        }
+
+        self::render_card_fields_script(
+            $this->gateway->get_client_id(),
+            $this->gateway->get_merchant_id(),
+            $this->gateway->is_test_mode(),
+            get_woocommerce_currency(),
+            wp_create_nonce('gwc_paypal_hosted_fields'),
+            admin_url('admin-ajax.php')
+        );
     }
 }
 

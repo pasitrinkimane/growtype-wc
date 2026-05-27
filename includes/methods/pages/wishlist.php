@@ -23,7 +23,7 @@ function wc_wishlist_scripts()
 
     wp_enqueue_script(
         'growtype-wc-wishlist',
-        GROWTYPE_WC_URL_PUBLIC . '/scripts/wc-wishlist.js',
+        GROWTYPE_WC_URL_PUBLIC . 'scripts/wc-wishlist.js',
         [],
         GROWTYPE_WC_VERSION,
         true

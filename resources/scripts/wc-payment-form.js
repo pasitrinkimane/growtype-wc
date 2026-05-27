@@ -207,6 +207,7 @@
 
             var productId = el.getAttribute('data-product-id') || '0';
             var methods = el.getAttribute('data-methods') || 'applepay,googlepay,paypal';
+            var returnUrl = el.getAttribute('data-return-url') || '';
             var containerId = MOUNT_CLASS + '-' + productId + '-' + Math.random().toString(36).slice(2, 7);
 
             // Promote the placeholder to an express container
@@ -223,6 +224,7 @@
                         container: '#' + containerId,
                         productId: parseInt(productId, 10),
                         method: methods,
+                        returnUrl: returnUrl,
                     }
                 }));
             });
@@ -256,6 +258,7 @@
 
         var productId = btn.getAttribute('data-product-id');
         var methods = btn.getAttribute('data-methods') || 'applepay,googlepay';
+        var returnUrl = btn.getAttribute('data-return-url') || '';
         
         var modalBody = btn.closest('.modal-body');
 
@@ -365,6 +368,7 @@
                                 container: '#' + res.data.container_id,
                                 productId: parseInt(res.data.product_id, 10),
                                 method: res.data.methods,
+                                returnUrl: returnUrl,
                             }
                         }));
                     })

@@ -89,7 +89,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             'card' => [
                 'attributes' => [
                     'verification' => [
-                        'method' => 'SCA_ALWAYS',
+                        'method' => 'SCA_WHEN_REQUIRED',
                     ],
                     'vault' => [
                         'store_in_vault' => 'ON_SUCCESS',
