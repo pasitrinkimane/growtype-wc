@@ -1,4 +1,6 @@
-.woocommerce-error, .woocommerce-info, .woocommerce-message {
+.woocommerce-error,
+.woocommerce-info,
+.woocommerce-message {
   box-shadow: 0px 2px 10px 0px #f0f0f0;
   background: white;
   font-size: $font-size-body;
@@ -33,6 +35,7 @@
     font-size: 18px;
     color: var(--text-color);
     cursor: pointer;
+
     @include bp-phone-xl() {
       right: 15px;
       top: 15px;
@@ -68,5 +71,12 @@
   .woocommerce-info {
     display: inline-block;
     width: 100%;
+  }
+}
+
+// Hide "Browse products" link on the orders page when the shop uses a single-product selling model.
+.shop-selling-type-single {
+  .woocommerce-info .wc-forward {
+    display: none;
   }
 }

@@ -55,7 +55,9 @@ function growtype_wc_is_dashboard_page()
 
 /**
  * @return bool
- * Selling type when online one product is sold
+ * True when the store catalogue contains exactly one product (no plan selection or variants).
+ * Used to simplify the UI — e.g. hide "Browse products" links, skip product-selection steps,
+ * and go straight to checkout for that single product.
  */
 function growtype_wc_selling_type_single_product(): bool
 {
@@ -64,11 +66,23 @@ function growtype_wc_selling_type_single_product(): bool
 
 /**
  * @return bool
- * Selling type when online one product unit is sold
+ * True when the shop sells a single product but restricts purchase to one unit at a time
+ * (e.g. a subscription where the user can only hold one active at once).
+ * Differs from single_product: single_product = one product in the catalogue;
+ * single_item = catalogue may have variants but only one unit can be bought per transaction.
  */
 function growtype_wc_selling_type_single_item(): bool
 {
     return get_theme_mod('shop_selling_type_select', 'shop_selling_type_multiple') === 'shop_selling_type_single_item';
+}
+
+/**
+ * @return bool
+ * True for any single-selling-type model (single product or single item).
+ */
+function growtype_wc_selling_type_is_single(): bool
+{
+    return growtype_wc_selling_type_single_product() || growtype_wc_selling_type_single_item();
 }
 
 /**

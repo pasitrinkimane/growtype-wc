@@ -87,7 +87,7 @@ function growtype_wc_extend_body_classes($classes)
         }
     }
 
-    if (get_theme_mod('woocommerce_cart_enabled', true)) {
+    if (get_theme_mod('woocommerce_cart_enabled', false)) {
         $classes[] = 'cart-enabled';
     }
 

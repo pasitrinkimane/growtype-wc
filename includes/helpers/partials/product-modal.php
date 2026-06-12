@@ -111,7 +111,7 @@ if (!function_exists('growtype_wc_product_modal')) {
         $before_button        = (string) ($params['before_button']      ?? '');
         $after_button         = (string) ($params['after_button']       ?? '');
         $footer_html          = (string) ($params['footer_html']        ?? '');
-        $show_payment_icons   = (bool) ($params['show_payment_icons']   ?? true);
+        $show_payment_icons   = (bool) ($params['show_payment_icons']   ?? false);
 
         // ── Smart defaults from WC product ────────────────────────────────────
         $wc_product = ($product_id > 0 && function_exists('wc_get_product'))
