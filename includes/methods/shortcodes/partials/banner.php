@@ -354,6 +354,9 @@ class Growtype_Wc_Banner_Shortcode
                     $(document).ready(function () {
                         let wcBanner = jQuery('#<?php echo $params['id']; ?>');
                         if (wcBanner.length !== 0) {
+                            // Guard: growtype-wc.js may be deferred and not yet run.
+                            window.growtype_wc = window.growtype_wc || {};
+                            window.growtype_wc.countdown = window.growtype_wc.countdown || {};
                             window.growtype_wc.countdown['over'] = '<?php echo esc_html__('Last Chance', 'growtype-wc'); ?>';
 
                             jQuery('#<?php echo $params['id']; ?> .gwc-time-countdown').each(function (index, element) {

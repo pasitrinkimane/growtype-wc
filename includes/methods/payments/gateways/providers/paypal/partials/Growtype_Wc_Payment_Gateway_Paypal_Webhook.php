@@ -39,25 +39,43 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
             return;
         }
 
+        $event_type = $data['event_type'];
+
+        // ── Acknowledge unhandled events immediately ───────────────────────────
+        // Return 200 for event types we don't act on so PayPal stops retrying them.
+        // BILLING.SUBSCRIPTION.CREATED fires before user approves/pays — intentionally
+        // not processed here (only BILLING.SUBSCRIPTION.ACTIVATED is actionable).
+        // Without this gate, unhandled events fall through to signature verification,
+        // which returns 400 on failure, causing PayPal to retry every 2 hours forever.
+        $handled_events = [
+            'PAYMENT.CAPTURE.COMPLETED',
+            'PAYMENT.SALE.COMPLETED',
+            'BILLING.SUBSCRIPTION.ACTIVATED',
+        ];
+
+        if (!in_array($event_type, $handled_events, true)) {
+            error_log('[GWC PayPal Webhook] Unhandled event acknowledged (no action needed): ' . $event_type);
+            status_header(200);
+            exit;
+        }
+
         // ── Signature verification ─────────────────────────────────────────────
-        // Verify the webhook came from PayPal using the REST API verification endpoint.
-        // This prevents attackers from faking events to complete unpaid orders.
+        // Only verify signature for events that trigger order completion.
+        // This prevents attackers from faking payment/activation events.
         $webhook_id = $this->gateway->get_option('webhook_id');
-        
+
         if (!empty($webhook_id) && !$this->verify_webhook_signature($body, $webhook_id)) {
-            error_log('[GWC PayPal Webhook] ⚠ Signature verification FAILED — rejecting event ' . ($data['event_type'] ?? 'unknown'));
+            error_log('[GWC PayPal Webhook] ⚠ Signature verification FAILED — rejecting event ' . $event_type);
             status_header(400);
             exit;
         }
-        
+
         if (empty($webhook_id)) {
             error_log('[GWC PayPal Webhook] WARNING: webhook_id not configured — skipping signature verification. Set it in WooCommerce → PayPal settings.');
         }
         // ── End verification ───────────────────────────────────────────────────
 
-        $event_type = $data['event_type'];
-
-        error_log('Growtype WC: PayPal Webhook reached. Event details: ' . json_encode($data));
+        error_log('[GWC PayPal Webhook] Processing event: ' . $event_type . ' | ' . json_encode($data));
 
         switch ($event_type) {
             case 'PAYMENT.CAPTURE.COMPLETED':
