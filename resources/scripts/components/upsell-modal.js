@@ -12,7 +12,6 @@ class GrowtypeWcUpsellModal {
         this.programmaticHide = false;
         this.autoShow = modalElement.dataset.autoShow !== 'false';
         this.autoShowDelay = parseInt(modalElement.dataset.autoShowDelay, 10) || 0;
-        this.bootstrapModal = this.resolveBootstrapModal();
 
         if (!this.queue.length) {
             this.modalElement.remove();
@@ -38,14 +37,6 @@ class GrowtypeWcUpsellModal {
             console.error('GrowtypeWcUpsellModal: Failed to parse queue', error);
             return [];
         }
-    }
-
-    resolveBootstrapModal() {
-        if (window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-            return window.bootstrap.Modal.getOrCreateInstance(this.modalElement);
-        }
-
-        return null;
     }
 
     cacheElements() {
@@ -218,35 +209,11 @@ class GrowtypeWcUpsellModal {
     }
 
     show() {
-        if (this.bootstrapModal) {
-            this.bootstrapModal.show();
-            return;
-        }
-
-        if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-            window.jQuery(this.modalElement).modal('show');
-            return;
-        }
-
-        this.modalElement.classList.add('show');
-        this.modalElement.style.display = 'block';
-        this.modalElement.removeAttribute('aria-hidden');
+        window.growtypeModal?.show(this.modalElement);
     }
 
     hide() {
-        if (this.bootstrapModal) {
-            this.bootstrapModal.hide();
-            return;
-        }
-
-        if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-            window.jQuery(this.modalElement).modal('hide');
-            return;
-        }
-
-        this.modalElement.classList.remove('show');
-        this.modalElement.style.display = 'none';
-        this.modalElement.setAttribute('aria-hidden', 'true');
+        window.growtypeModal?.hide(this.modalElement);
     }
 
     dismissCurrent() {
