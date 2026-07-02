@@ -60,30 +60,30 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
 
     protected function load_partials()
     {
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Token.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Token.php';
         $this->token = new Growtype_Wc_Payment_Gateway_Paypal_Token($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Settings.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Settings.php';
         $this->paypal_settings = new Growtype_Wc_Payment_Gateway_Paypal_Settings($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Orders.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Orders.php';
         $this->orders = new Growtype_Wc_Payment_Gateway_Paypal_Orders($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Subscriptions.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Subscriptions.php';
         $this->subscriptions = new Growtype_Wc_Payment_Gateway_Paypal_Subscriptions($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Webhook.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Webhook.php';
         new Growtype_Wc_Payment_Gateway_Paypal_Webhook($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Card_Form.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Card_Form.php';
         
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Payment_Form.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Payment_Form.php';
         Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::init();
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields.php';
         new Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields($this);
 
-        include_once 'partials/Growtype_Wc_Payment_Gateway_Paypal_Redirects.php';
+        include_once __DIR__ . '/partials/Growtype_Wc_Payment_Gateway_Paypal_Redirects.php';
         new Growtype_Wc_Payment_Gateway_Paypal_Redirects($this);
     }
 

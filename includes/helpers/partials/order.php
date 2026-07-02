@@ -11,12 +11,12 @@ function growtype_wc_get_user_orders($user_id = null, $args = [])
 
     // Default query parameters
     $default_args = [
-        'customer_id' => $user_id,
-        'limit' => -1, // get all
-        'orderby' => 'date',
-        'order' => 'DESC',
-        'status' => array_keys(wc_get_order_statuses()),
-        'return' => 'objects', // or 'ids' for IDs only
+        "customer_id" => $user_id,
+        "limit" => -1, // get all
+        "orderby" => "date",
+        "order" => "DESC",
+        "status" => array_keys(wc_get_order_statuses()),
+        "return" => "objects", // or 'ids' for IDs only
     ];
 
     // Allow custom overrides
@@ -30,7 +30,9 @@ function growtype_wc_get_user_orders($user_id = null, $args = [])
  */
 function growtype_wc_get_user_first_order()
 {
-    $order = isset(growtype_wc_get_user_orders()[0]) ? growtype_wc_get_user_orders()[0] : false;
+    $order = isset(growtype_wc_get_user_orders()[0])
+        ? growtype_wc_get_user_orders()[0]
+        : false;
 
     return $order;
 }
@@ -43,7 +45,7 @@ function growtype_wc_get_user_first_order()
 function growtype_wc_order_update_subscriptions($order_id, $params = [])
 {
     $existing_subscriptions = growtype_wc_get_subscriptions([
-        'order_id' => $order_id,
+        "order_id" => $order_id,
     ]);
 
     if (!empty($existing_subscriptions)) {
@@ -57,8 +59,6 @@ function growtype_wc_order_update_subscriptions($order_id, $params = [])
     return $existing_subscriptions;
 }
 
-
-
 function growtype_wc_get_order_checkout_url($order_id)
 {
     $order = wc_get_order($order_id);
@@ -69,13 +69,20 @@ function growtype_wc_get_order_checkout_url($order_id)
 
     $checkout_url = wc_get_checkout_url();
 
-    $payment_provider_checkout_url = $order->get_meta('payment_provider_checkout_url');
+    $payment_provider_checkout_url = $order->get_meta(
+        "payment_provider_checkout_url",
+    );
 
     if (!empty($payment_provider_checkout_url)) {
         $checkout_url = $payment_provider_checkout_url;
     }
 
-    $checkout_url = apply_filters('growtype_wc_get_order_checkout_url', $checkout_url, $order_id, $payment_provider_checkout_url);
+    $checkout_url = apply_filters(
+        "growtype_wc_get_order_checkout_url",
+        $checkout_url,
+        $order_id,
+        $payment_provider_checkout_url,
+    );
 
     return $checkout_url;
 }

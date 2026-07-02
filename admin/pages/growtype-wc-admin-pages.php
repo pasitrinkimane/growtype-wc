@@ -38,5 +38,11 @@ class Growtype_Wc_Admin_Pages
          */
         include_once GROWTYPE_WC_PATH . 'admin/pages/payments/Growtype_Wc_Payment_Settings.php';
         new Growtype_Wc_Payment_Settings();
+
+        /**
+         * Products
+         */
+        require GROWTYPE_WC_PATH . '/admin/pages/products/growtype-wc-admin-products.php';
+        new Growtype_Wc_Admin_Products();
     }
 }

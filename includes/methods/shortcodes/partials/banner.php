@@ -395,6 +395,13 @@ class Growtype_Wc_Banner_Shortcode
             }, 100);
         }
 
+        if (!empty($rendered_banner)) {
+            add_filter('body_class', static function (array $classes): array {
+                $classes[] = 'has-growtype-wc-banner';
+                return $classes;
+            });
+        }
+
         return $rendered_banner;
     }
 }

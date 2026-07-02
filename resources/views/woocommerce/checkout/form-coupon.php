@@ -20,8 +20,11 @@ defined('ABSPATH') || exit;
 if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
     return;
 }
-
 ?>
+
+<script>document.body.classList.add('has-wc-coupon-form');</script>
+
+<div class="woocommerce-form-coupon-toggle-wrapper">   
 <div class="woocommerce-form-coupon-toggle">
     <?php wc_print_notice(apply_filters('woocommerce_checkout_coupon_message', esc_html__('Have a coupon?', 'growtype-wc') . ' <a href="#" class="showcoupon">' . esc_html__('Click here to enter your code', 'growtype-wc') . '</a>'), 'notice'); ?>
 </div>
@@ -29,3 +32,4 @@ if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
 <?php
 echo growtype_wc_include_view('woocommerce.checkout.form-coupon-form')
 ?>
+</div>

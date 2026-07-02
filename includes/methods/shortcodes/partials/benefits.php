@@ -39,7 +39,7 @@ class Growtype_Wc_Benefits_Shortcode
                 ?>
                 <div class="gwc-benefits-slider growtype-theme-slider" data-gslick='{"infinite": true, "slidesToShow": 1, "slidesToScroll": 1, "arrows": false, "dots": true, "fade": true, "autoplay": false, "autoplaySpeed": 2000}'>
                     <?php foreach ($benefits as $benefit) { ?>
-                        <div class="gwc-benefits-slider-slide">
+                        <div class="gwc-benefits-slider-slide"<?php if (!empty($benefit['tags'])) echo ' data-tags="' . esc_attr(implode(' ', $benefit['tags'])) . '"'; ?>>
                             <div class="gwc-benefits-slider-slide-images">
                                 <?php if (!empty($benefit['images'])): ?>
                                     <?php foreach ($benefit['images'] as $image): ?>
@@ -80,7 +80,7 @@ class Growtype_Wc_Benefits_Shortcode
                 ?>
                 <ul class="gwc-benefits list-check">
                     <?php foreach ($benefits as $benefit) { ?>
-                        <li><?php echo $benefit['title'] ?></li>
+                        <li<?php if (!empty($benefit['tags'])) echo ' data-tags="' . esc_attr(implode(' ', $benefit['tags'])) . '"'; ?>><?php echo $benefit['title'] ?></li>
                     <?php } ?>
                 </ul>
                 <?php

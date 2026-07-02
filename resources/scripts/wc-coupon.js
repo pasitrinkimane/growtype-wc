@@ -1,4 +1,4 @@
-import {message} from "./components/message";
+import { message } from "./components/message";
 
 (function ($) {
     "use strict";
@@ -46,6 +46,12 @@ import {message} from "./components/message";
         } else {
             updateUrlParameter('growtype_wc_coupon_form_visible=1');
         }
+    });
+
+    $(document.body).on('click', '.woocommerce-form-coupon-toggle .btn-close', function (e) {
+        e.preventDefault();
+        $(this).closest('.woocommerce-form-coupon-toggle-wrapper').hide();
+        $('body').removeClass('has-wc-coupon-form');
     });
 
     function applyCoupon() {
@@ -154,7 +160,7 @@ import {message} from "./components/message";
             error: function () {
                 $(document.body).trigger('apply_coupon_failed', [
                     coupon_code,
-                    {error: 'Ajax error occurred'}
+                    { error: 'Ajax error occurred' }
                 ]);
             }
         });

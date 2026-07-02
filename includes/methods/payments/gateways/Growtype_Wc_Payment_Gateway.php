@@ -4,32 +4,51 @@ class Growtype_Wc_Payment_Gateway
 {
     public function __construct()
     {
-        add_action('init', function () {
-            if (class_exists('woocommerce')) {
+        add_action("init", function () {
+            if (class_exists("woocommerce")) {
                 $this->load_gateways();
             }
         });
 
-        add_filter('woocommerce_payment_gateways', [$this, 'growtype_wc_payment_gateways']);
-        add_action('woocommerce_review_order_before_payment', [$this, 'woocommerce_review_order_before_payment_callback']);
-        add_action('woocommerce_checkout_order_processed', [$this, 'woocommerce_checkout_order_processed_callback'], 0, 3);
+        add_filter("woocommerce_payment_gateways", [
+            $this,
+            "growtype_wc_payment_gateways",
+        ]);
+        add_action("woocommerce_review_order_before_payment", [
+            $this,
+            "woocommerce_review_order_before_payment_callback",
+        ]);
+        add_action(
+            "woocommerce_checkout_order_processed",
+            [$this, "woocommerce_checkout_order_processed_callback"],
+            0,
+            3,
+        );
     }
 
     /**
      *
      */
-    function woocommerce_checkout_order_processed_callback($order_id, $posted_data, $order)
-    {
-        error_log(sprintf('woocommerce_checkout_order_processed. Order id: %d', $order_id));
+    function woocommerce_checkout_order_processed_callback(
+        $order_id,
+        $posted_data,
+        $order,
+    ) {
+        error_log(
+            sprintf(
+                "woocommerce_checkout_order_processed. Order id: %d",
+                $order_id,
+            ),
+        );
 
         if (!$order->is_paid()) {
-            error_log('order not paid');
+            error_log("order not paid");
         }
     }
 
     function woocommerce_review_order_before_payment_callback()
     {
-        $current = WC()->session->get('chosen_payment_method');
+        $current = WC()->session->get("chosen_payment_method");
         $gateways = WC()->payment_gateways()->payment_gateways();
         if ($current && isset($gateways[$current])) {
             $gateway = $gateways[$current];
@@ -39,26 +58,29 @@ class Growtype_Wc_Payment_Gateway
 
     function growtype_wc_payment_gateways($gateways)
     {
-        $gateways[] = 'Growtype_Wc_Payment_Gateway_Free';
-        $gateways[] = 'Growtype_Wc_Payment_Gateway_Paypal';
-        $gateways[] = 'Growtype_Wc_Payment_Gateway_Cc';
-        $gateways[] = 'Growtype_Wc_Payment_Gateway_Stripe';
-        $gateways[] = 'Growtype_Wc_Payment_Gateway_Coinbase';
+        $gateways[] = "Growtype_Wc_Payment_Gateway_Free";
+        $gateways[] = "Growtype_Wc_Payment_Gateway_Paypal";
+        $gateways[] = "Growtype_Wc_Payment_Gateway_Cc";
+        $gateways[] = "Growtype_Wc_Payment_Gateway_Stripe";
+        $gateways[] = "Growtype_Wc_Payment_Gateway_Coinbase";
 
         return $gateways;
     }
 
     public function load_gateways()
     {
-        include_once 'providers/free/Growtype_Wc_Payment_Gateway_Free.php';
-        include_once 'providers/paypal/Growtype_Wc_Payment_Gateway_Paypal.php';
-        include_once 'providers/cc/Growtype_Wc_Payment_Gateway_Cc.php';
-        include_once 'providers/stripe/Growtype_Wc_Payment_Gateway_Stripe.php';
-        include_once 'providers/coinbase/Growtype_Wc_Payment_Gateway_Coinbase.php';
+        include_once "providers/free/Growtype_Wc_Payment_Gateway_Free.php";
+        include_once "providers/paypal/Growtype_Wc_Payment_Gateway_Paypal.php";
+        include_once "providers/cc/Growtype_Wc_Payment_Gateway_Cc.php";
+        include_once "providers/stripe/Growtype_Wc_Payment_Gateway_Stripe.php";
+        include_once "providers/coinbase/Growtype_Wc_Payment_Gateway_Coinbase.php";
     }
 
-    public static function success_url($order_id, $payment_provider = null, $include_session_id = false)
-    {
+    public static function success_url(
+        $order_id,
+        $payment_provider = null,
+        $include_session_id = false,
+    ) {
         $order = wc_get_order($order_id);
 
         if (!$order) {
@@ -66,59 +88,87 @@ class Growtype_Wc_Payment_Gateway
         }
 
         $query_data = [
-            'key' => $order->get_order_key(),
+            "key" => $order->get_order_key(),
         ];
 
         // Get the correct payment gateway object from the order
         $payment_method = $order->get_payment_method();
-        $payment_gateway = WC()->payment_gateways()->payment_gateways()[$payment_method] ?? null;
+        $payment_gateway =
+            WC()->payment_gateways()->payment_gateways()[$payment_method] ??
+            null;
 
         if (!$payment_gateway) {
             return $order->get_checkout_order_received_url(); // fallback URL
         }
 
-        $url = add_query_arg($query_data, $payment_gateway->get_return_url($order));
+        $url = add_query_arg(
+            $query_data,
+            $payment_gateway->get_return_url($order),
+        );
 
-        if ($payment_provider === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID && $include_session_id && !$order->is_paid()) {
-            $url = add_query_arg('checkout_session_id', '{CHECKOUT_SESSION_ID}', $url);
-            $url = str_replace(['%7B', '%7D'], ['{', '}'], $url);
+        if (
+            $payment_provider ===
+                Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID &&
+            $include_session_id &&
+            !$order->is_paid()
+        ) {
+            $url = add_query_arg(
+                "checkout_session_id",
+                "{CHECKOUT_SESSION_ID}",
+                $url,
+            );
+            $url = str_replace(["%7B", "%7D"], ["{", "}"], $url);
         }
 
         return $url;
     }
 
-    public static function cancel_url($order_id = null, $redirect_to_thankyou_page = false, $applied_coupons = null)
-    {
+    public static function cancel_url(
+        $order_id = null,
+        $redirect_to_thankyou_page = false,
+        $applied_coupons = null,
+    ) {
         // 1) If we have an order and want to go to thank you...
         if ($order_id && $redirect_to_thankyou_page) {
             if ($order = wc_get_order($order_id)) {
                 // build /checkout/order-received/{id}/?key=…
                 $thankyou = wc_get_endpoint_url(
-                    'order-received',
+                    "order-received",
                     $order_id,
-                    wc_get_page_permalink('checkout')
+                    wc_get_page_permalink("checkout"),
                 );
-                return esc_url_raw(add_query_arg('key', $order->get_order_key(), $thankyou));
+                return esc_url_raw(
+                    add_query_arg("key", $order->get_order_key(), $thankyou),
+                );
             }
         }
 
-        $explicit_return_url = '';
+        $explicit_return_url = "";
 
         if ($order_id) {
             $order = wc_get_order($order_id);
 
             if ($order) {
-                $explicit_return_url = (string)$order->get_meta('_growtype_return_after_payment_url');
+                $explicit_return_url = (string) $order->get_meta(
+                    "_growtype_return_after_payment_url",
+                );
             }
         }
 
-        if (empty($explicit_return_url) && isset($_GET['growtype_return_after_payment_url'])) {
-            $explicit_return_url = rawurldecode(wp_unslash($_GET['growtype_return_after_payment_url']));
+        if (
+            empty($explicit_return_url) &&
+            isset($_GET["growtype_return_after_payment_url"])
+        ) {
+            $explicit_return_url = rawurldecode(
+                wp_unslash($_GET["growtype_return_after_payment_url"]),
+            );
         }
 
         if (!empty($explicit_return_url)) {
-            if (class_exists('Growtype_Wc_Payment')) {
-                $explicit_return_url = Growtype_Wc_Payment::sanitize_return_url($explicit_return_url);
+            if (class_exists("Growtype_Wc_Payment")) {
+                $explicit_return_url = Growtype_Wc_Payment::sanitize_return_url(
+                    $explicit_return_url,
+                );
             } else {
                 $explicit_return_url = esc_url_raw($explicit_return_url);
             }
@@ -127,7 +177,11 @@ class Growtype_Wc_Payment_Gateway
                 if (!empty($applied_coupons)) {
                     $applied_coupon = reset($applied_coupons);
                     $coupon = new WC_Coupon($applied_coupon);
-                    $explicit_return_url = add_query_arg('growtype_wc_coupon', $coupon->get_code(), $explicit_return_url);
+                    $explicit_return_url = add_query_arg(
+                        "growtype_wc_coupon",
+                        $coupon->get_code(),
+                        $explicit_return_url,
+                    );
                 }
 
                 return esc_url_raw($explicit_return_url);
@@ -136,47 +190,60 @@ class Growtype_Wc_Payment_Gateway
 
         // 2) Otherwise, return “current page” minus checkout/query args.
         //    Start with the fully-qualified current URL:
-        $current_url = (is_ssl() ? 'https://' : 'http://')
-            . $_SERVER['HTTP_HOST']
-            . $_SERVER['REQUEST_URI'];
+        $current_url =
+            (is_ssl() ? "https://" : "http://") .
+            $_SERVER["HTTP_HOST"] .
+            $_SERVER["REQUEST_URI"];
 
         // 3) Strip out all checkout-related query params at once:
         $allowed = remove_query_arg(
             [
-                'action',
-                'add-to-cart',
-                'payment_method',
-                'checkout_session_id',
-                'token',
-                'ba_token',
-                'order_id',
-                'product_id',
-                'subscription_id',
+                "action",
+                "add-to-cart",
+                "payment_method",
+                "checkout_session_id",
+                "token",
+                "ba_token",
+                "order_id",
+                "product_id",
+                "subscription_id",
             ],
-            $current_url
+            $current_url,
         );
 
         if (!empty($applied_coupons)) {
             $applied_coupon = reset($applied_coupons);
             $coupon = new WC_Coupon($applied_coupon);
-            $allowed = add_query_arg('growtype_wc_coupon', $coupon->get_code(), $allowed);
+            $allowed = add_query_arg(
+                "growtype_wc_coupon",
+                $coupon->get_code(),
+                $allowed,
+            );
         }
 
         return esc_url_raw($allowed);
     }
 
-    public static function update_user_email_if_not_exists($wp_user_id, $new_email)
-    {
-        $wp_user = get_user_by('id', $wp_user_id);
+    public static function update_user_email_if_not_exists(
+        $wp_user_id,
+        $new_email,
+    ) {
+        $wp_user = get_user_by("id", $wp_user_id);
 
         if ($wp_user && empty($wp_user->user_email) && !empty($new_email)) {
             $status = wp_update_user([
-                'ID' => $wp_user_id,
-                'user_email' => $new_email,
+                "ID" => $wp_user_id,
+                "user_email" => $new_email,
             ]);
 
             if (is_wp_error($status)) {
-                error_log(sprintf('Growtype Wc - Failed to update user email: %s. Message: %s', $new_email, print_r($status->get_error_message(), true)));
+                error_log(
+                    sprintf(
+                        "Growtype Wc - Failed to update user email: %s. Message: %s",
+                        $new_email,
+                        print_r($status->get_error_message(), true),
+                    ),
+                );
 
                 return false;
             }
@@ -187,11 +254,17 @@ class Growtype_Wc_Payment_Gateway
         return false;
     }
 
-    public static function update_order_email_if_not_exists($order_id, $new_email)
-    {
+    public static function update_order_email_if_not_exists(
+        $order_id,
+        $new_email,
+    ) {
         $order = wc_get_order($order_id);
 
-        if ($order && empty($order->get_billing_email()) && !empty($new_email)) {
+        if (
+            $order &&
+            empty($order->get_billing_email()) &&
+            !empty($new_email)
+        ) {
             $order->set_billing_email($new_email);
             $order->save();
 
@@ -199,5 +272,65 @@ class Growtype_Wc_Payment_Gateway
         }
 
         return false;
+    }
+
+    /**
+     * Resolve the current user's email.
+     *
+     * 1. Logged-in WP user email.
+     * 2. Fallback: gqtoken in URL → look up email from quiz results.
+     */
+    public static function resolve_user_email(): string
+    {
+        // 1. Logged-in user
+        $current_user = wp_get_current_user();
+
+        if ($current_user->exists() && !empty($current_user->user_email)) {
+            return $current_user->user_email;
+        }
+
+        // 2. gqtoken in URL → quiz results
+        $gqtoken = sanitize_text_field($_GET["gqtoken"] ?? "");
+        if (!empty($gqtoken)) {
+            $result = Growtype_Quiz_Result::get_by_hash($gqtoken);
+
+            // 2a. Try extra_details.email (set by gfemail page)
+            if (!empty($result["extra_details"])) {
+                $extra = json_decode($result["extra_details"], true);
+                $email = $extra["email"] ?? "";
+                if (!empty($email) && is_email($email)) {
+                    return $email;
+                }
+            }
+
+            // 2b. Try common email keys in quiz answers
+            $answers = Growtype_Quiz_Result::get_answers($result ?? []);
+            $email_keys = ["email", "newsletter_email", "user_email"];
+            foreach ($email_keys as $key) {
+                $val = $answers[$key] ?? null;
+                if (is_array($val)) {
+                    $val = $val[0] ?? null;
+                }
+                if (!empty($val) && is_email($val)) {
+                    return $val;
+                }
+            }
+
+            // 2c. Try nested answers (e.g. collected from a previous step)
+            foreach ($answers as $answer) {
+                if (
+                    is_array($answer) &&
+                    isset($answer["value"]) &&
+                    is_email($answer["value"])
+                ) {
+                    return $answer["value"];
+                }
+                if (is_string($answer) && is_email($answer)) {
+                    return $answer;
+                }
+            }
+        }
+
+        return "";
     }
 }

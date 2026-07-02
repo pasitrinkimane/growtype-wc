@@ -157,6 +157,8 @@ if (!function_exists('growtype_wc_product_modal')) {
         $badge_bg         = (string) ($params['badge_bg']         ?? $accent_color);
         $badge_text_color = (string) ($params['badge_text_color'] ?? $accent_text_color);
 
+        $show_bg_image    = !empty($character_image_url) && apply_filters('growtype_wc_product_modal_show_bg_image', true, $product_id, $params);
+
         // ── Build data-* attribute string ─────────────────────────────────────
         $modal_data_str = '';
         foreach ($modal_data as $key => $val) {
@@ -177,7 +179,7 @@ if (!function_exists('growtype_wc_product_modal')) {
              style="background:<?php echo esc_attr($bg_color); ?>; border:<?php echo esc_attr($border_width); ?> solid <?php echo esc_attr($accent_color); ?>; border-radius:<?php echo esc_attr($border_radius); ?>; overflow:hidden; color:#fff; position:relative;">
 <?php endif; ?>
 
-            <?php if (!empty($character_image_url)) : ?>
+            <?php if ($show_bg_image) : ?>
             <div class="gwc-modal__bg-image"
                  style="display:block!important; position:absolute; inset:0; opacity:<?php echo esc_attr($image_opacity); ?>; background-image:url('<?php echo esc_url($character_image_url); ?>'); background-size:cover; background-position:center; z-index:0; pointer-events:none;">
                 <div style="background:linear-gradient(0deg, <?php echo esc_attr($bg_color); ?> 0%, transparent 100%); height:100%; width:100%;"></div>

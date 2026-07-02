@@ -2,9 +2,7 @@
 
 class Growtype_Wc_Upsell_Catalog
 {
-    public static function init()
-    {
-    }
+    public static function init() {}
 
     public static function get_products(): array
     {
@@ -15,24 +13,31 @@ class Growtype_Wc_Upsell_Catalog
         }
 
         $queried_products = wc_get_products([
-            'limit' => -1,
-            'orderby' => 'meta_value_num',
-            'order' => 'ASC',
-            'meta_key' => '_growtype_wc_upsell_position',
-            'meta_query' => [
+            "limit" => -1,
+            "status" => "publish",
+            "orderby" => "meta_value_num",
+            "order" => "ASC",
+            "meta_key" => "_growtype_wc_upsell_position",
+            "meta_query" => [
                 [
-                    'key' => '_growtype_wc_upsell',
-                    'value' => 'yes',
-                    'compare' => '=',
+                    "key" => "_growtype_wc_upsell",
+                    "value" => "yes",
+                    "compare" => "=",
                 ],
             ],
         ]);
 
-        $products = array_values(array_filter($queried_products, function ($product) {
-            $value = get_post_meta($product->get_id(), Growtype_Wc_Upsell::META_KEY, true);
+        $products = array_values(
+            array_filter($queried_products, function ($product) {
+                $value = get_post_meta(
+                    $product->get_id(),
+                    Growtype_Wc_Upsell::META_KEY,
+                    true,
+                );
 
-            return is_string($value) && trim(strtolower($value)) === 'yes';
-        }));
+                return is_string($value) && trim(strtolower($value)) === "yes";
+            }),
+        );
 
         return $products;
     }
@@ -63,14 +68,17 @@ class Growtype_Wc_Upsell_Catalog
     {
         return array_map(function ($product) {
             return [
-                'slug' => $product->get_slug(),
+                "slug" => $product->get_slug(),
             ];
         }, self::get_products());
     }
 
     public static function get($slug = null)
     {
-        $upsells = apply_filters('growtype_wc_get_upsells', self::get_upsell_definitions());
+        $upsells = apply_filters(
+            "growtype_wc_get_upsells",
+            self::get_upsell_definitions(),
+        );
 
         if (empty($upsells)) {
             return $slug ? null : [];
@@ -78,7 +86,7 @@ class Growtype_Wc_Upsell_Catalog
 
         if ($slug) {
             foreach ($upsells as $upsell) {
-                if (($upsell['slug'] ?? '') === $slug) {
+                if (($upsell["slug"] ?? "") === $slug) {
                     return $upsell;
                 }
             }

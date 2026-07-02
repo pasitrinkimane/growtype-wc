@@ -25,22 +25,46 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
     {
         $this->gateway = $gateway;
 
-        add_action('wp_ajax_gwc_paypal_hosted_create_order', [$this, 'ajax_hosted_create_order']);
-        add_action('wp_ajax_nopriv_gwc_paypal_hosted_create_order', [$this, 'ajax_hosted_create_order']);
+        add_action("wp_ajax_gwc_paypal_hosted_create_order", [
+            $this,
+            "ajax_hosted_create_order",
+        ]);
+        add_action("wp_ajax_nopriv_gwc_paypal_hosted_create_order", [
+            $this,
+            "ajax_hosted_create_order",
+        ]);
 
-        add_action('wp_ajax_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
-        add_action('wp_ajax_nopriv_gwc_paypal_hosted_capture_order', [$this, 'ajax_hosted_capture_order']);
+        add_action("wp_ajax_gwc_paypal_hosted_capture_order", [
+            $this,
+            "ajax_hosted_capture_order",
+        ]);
+        add_action("wp_ajax_nopriv_gwc_paypal_hosted_capture_order", [
+            $this,
+            "ajax_hosted_capture_order",
+        ]);
 
         // Client token — needed for PayPal Hosted Fields (card form).
-        add_action('wp_ajax_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
-        add_action('wp_ajax_nopriv_gwc_paypal_client_token', [$this, 'ajax_get_client_token']);
+        add_action("wp_ajax_gwc_paypal_client_token", [
+            $this,
+            "ajax_get_client_token",
+        ]);
+        add_action("wp_ajax_nopriv_gwc_paypal_client_token", [
+            $this,
+            "ajax_get_client_token",
+        ]);
 
         // User id_token — needed for Google Pay / Apple Pay confirmOrder() (data-user-id-token).
-        add_action('wp_ajax_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
-        add_action('wp_ajax_nopriv_gwc_paypal_user_id_token', [$this, 'ajax_get_user_id_token']);
+        add_action("wp_ajax_gwc_paypal_user_id_token", [
+            $this,
+            "ajax_get_user_id_token",
+        ]);
+        add_action("wp_ajax_nopriv_gwc_paypal_user_id_token", [
+            $this,
+            "ajax_get_user_id_token",
+        ]);
 
         // Outputs only the JS boot script (no modal HTML) — powers gwcPaymentFormModal and any inline card form.
-        add_action('wp_footer', [$this, 'render_card_fields_footer_script']);
+        add_action("wp_footer", [$this, "render_card_fields_footer_script"]);
     }
 
     /**
@@ -56,67 +80,98 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_get_user_id_token()
     {
-        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
-            wp_send_json_error(['message' => 'Security check failed.'], 403);
+        if (
+            !check_ajax_referer(
+                "gwc_paypal_hosted_fields",
+                "_ajax_nonce",
+                false,
+            )
+        ) {
+            wp_send_json_error(["message" => "Security check failed."], 403);
         }
 
         $client_id = $this->gateway->get_client_id();
         $client_secret = $this->gateway->get_client_secret();
-        $cache_key = 'gwc_paypal_user_id_token_' . md5($client_id . get_current_user_id());
+        $cache_key =
+            "gwc_paypal_user_id_token_" .
+            md5($client_id . get_current_user_id());
         $cached = get_transient($cache_key);
         if ($cached) {
-            wp_send_json_success(['id_token' => $cached]);
+            wp_send_json_success(["id_token" => $cached]);
             return;
         }
 
         try {
-            $base_url = $this->gateway->get_api_url('/v1/oauth2/token');
-            $url = add_query_arg([
-                'grant_type' => 'client_credentials',
-                'response_type' => 'id_token',
-            ], $base_url);
+            $base_url = $this->gateway->get_api_url("/v1/oauth2/token");
+            $url = add_query_arg(
+                [
+                    "grant_type" => "client_credentials",
+                    "response_type" => "id_token",
+                ],
+                $base_url,
+            );
 
             // If the logged-in user has a PayPal Customer ID, pass it so PayPal
             // links the id_token to their vault record (matches official plugin).
             $user_id = get_current_user_id();
-            $pp_cust_id = $user_id > 0 ? (string)get_user_meta($user_id, 'paypal_customer_id', true) : '';
+            $pp_cust_id =
+                $user_id > 0
+                    ? (string) get_user_meta(
+                        $user_id,
+                        "paypal_customer_id",
+                        true,
+                    )
+                    : "";
             if (!empty($pp_cust_id)) {
-                $url = add_query_arg(['target_customer_id' => $pp_cust_id], $url);
+                $url = add_query_arg(
+                    ["target_customer_id" => $pp_cust_id],
+                    $url,
+                );
             }
 
-            $credentials = base64_encode($client_id . ':' . $client_secret);
+            $credentials = base64_encode($client_id . ":" . $client_secret);
 
             $response = wp_remote_post($url, [
-                'headers' => [
-                    'Authorization' => 'Basic ' . $credentials,
-                    'Content-Type' => 'application/x-www-form-urlencoded',
+                "headers" => [
+                    "Authorization" => "Basic " . $credentials,
+                    "Content-Type" => "application/x-www-form-urlencoded",
                 ],
-                'body' => '',
-                'timeout' => 15,
+                "body" => "",
+                "timeout" => 15,
             ]);
 
             if (is_wp_error($response)) {
-                throw new \Exception('HTTP error: ' . $response->get_error_message());
+                throw new \Exception(
+                    "HTTP error: " . $response->get_error_message(),
+                );
             }
 
             $body = json_decode(wp_remote_retrieve_body($response), true) ?: [];
-            $code = (int)wp_remote_retrieve_response_code($response);
+            $code = (int) wp_remote_retrieve_response_code($response);
 
-            if ($code !== 200 || empty($body['id_token'])) {
-                throw new \Exception(sprintf(
-                    'PayPal id_token request failed (HTTP %d): %s',
-                    $code,
-                    wp_remote_retrieve_body($response)
-                ));
+            if ($code !== 200 || empty($body["id_token"])) {
+                throw new \Exception(
+                    sprintf(
+                        "PayPal id_token request failed (HTTP %d): %s",
+                        $code,
+                        wp_remote_retrieve_body($response),
+                    ),
+                );
             }
 
-            $id_token = trim($body['id_token']);
+            $id_token = trim($body["id_token"]);
             set_transient($cache_key, $id_token, 4 * MINUTE_IN_SECONDS);
 
-            wp_send_json_success(['id_token' => $id_token]);
+            wp_send_json_success(["id_token" => $id_token]);
         } catch (\Exception $e) {
-            error_log('[GWC PayPal] ajax_get_user_id_token error: ' . $e->getMessage());
-            wp_send_json_error(['message' => 'Could not generate id_token.'], 500);
+            error_log(
+                "[GWC PayPal] ajax_get_user_id_token error: " .
+                    $e->getMessage(),
+            );
+            wp_send_json_error(
+                ["message" => "Could not generate id_token."],
+                500,
+            );
         }
     }
 
@@ -127,64 +182,100 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_get_client_token()
     {
-        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
-            error_log('[GWC PayPal] ajax_get_client_token: nonce check FAILED. Nonce value: ' . sanitize_text_field($_POST['_ajax_nonce'] ?? '(empty)'));
-            wp_send_json_error(['message' => 'Security check failed.'], 403);
+        if (
+            !check_ajax_referer(
+                "gwc_paypal_hosted_fields",
+                "_ajax_nonce",
+                false,
+            )
+        ) {
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: nonce check FAILED. Nonce value: " .
+                    sanitize_text_field($_POST["_ajax_nonce"] ?? "(empty)"),
+            );
+            wp_send_json_error(["message" => "Security check failed."], 403);
             return;
         }
 
-        $cache_key = 'gwc_paypal_client_token_' . md5($this->gateway->get_client_id());
+        $cache_key =
+            "gwc_paypal_client_token_" . md5($this->gateway->get_client_id());
         $cached = get_transient($cache_key);
         if ($cached) {
-            error_log('[GWC PayPal] ajax_get_client_token: returning cached client_token.');
-            wp_send_json_success(['client_token' => $cached]);
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: returning cached client_token.",
+            );
+            wp_send_json_success(["client_token" => $cached]);
             return;
         }
 
         try {
-            error_log('[GWC PayPal] ajax_get_client_token: fetching access token...');
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: fetching access token...",
+            );
             $access_token = $this->gateway->get_access_token(
                 $this->gateway->get_client_id(),
-                $this->gateway->get_client_secret()
+                $this->gateway->get_client_secret(),
             );
             if (empty($access_token)) {
-                throw new \Exception('Could not retrieve access token.');
+                throw new \Exception("Could not retrieve access token.");
             }
-            error_log('[GWC PayPal] ajax_get_client_token: access token OK, fetching client_token...');
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: access token OK, fetching client_token...",
+            );
 
-            $url = $this->gateway->get_api_url('/v1/identity/generate-token');
-            error_log('[GWC PayPal] ajax_get_client_token: POST ' . $url);
+            $url = $this->gateway->get_api_url("/v1/identity/generate-token");
+            error_log("[GWC PayPal] ajax_get_client_token: POST " . $url);
             $response = wp_remote_post($url, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $access_token,
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json',
+                "headers" => [
+                    "Authorization" => "Bearer " . $access_token,
+                    "Content-Type" => "application/json",
+                    "Accept" => "application/json",
                 ],
-                'body'    => '',
-                'timeout' => 15,
+                "body" => "",
+                "timeout" => 15,
             ]);
 
             if (is_wp_error($response)) {
-                throw new \Exception('HTTP error: ' . $response->get_error_message());
+                throw new \Exception(
+                    "HTTP error: " . $response->get_error_message(),
+                );
             }
 
             $http_code = (int) wp_remote_retrieve_response_code($response);
-            $raw_body  = wp_remote_retrieve_body($response);
-            error_log('[GWC PayPal] ajax_get_client_token: PayPal HTTP ' . $http_code . ' body=' . substr($raw_body, 0, 400));
+            $raw_body = wp_remote_retrieve_body($response);
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: PayPal HTTP " .
+                    $http_code .
+                    " body=" .
+                    substr($raw_body, 0, 400),
+            );
 
             $body = json_decode($raw_body, true) ?: [];
-            if (empty($body['client_token'])) {
-                throw new \Exception('PayPal did not return a client_token. HTTP ' . $http_code . '. Response: ' . $raw_body);
+            if (empty($body["client_token"])) {
+                throw new \Exception(
+                    "PayPal did not return a client_token. HTTP " .
+                        $http_code .
+                        ". Response: " .
+                        $raw_body,
+                );
             }
 
-            $token = trim($body['client_token']);
+            $token = trim($body["client_token"]);
             set_transient($cache_key, $token, 55 * MINUTE_IN_SECONDS);
 
-            error_log('[GWC PayPal] ajax_get_client_token: success, token length=' . strlen($token));
-            wp_send_json_success(['client_token' => $token]);
+            error_log(
+                "[GWC PayPal] ajax_get_client_token: success, token length=" .
+                    strlen($token),
+            );
+            wp_send_json_success(["client_token" => $token]);
         } catch (\Exception $e) {
-            error_log('[GWC PayPal] ajax_get_client_token ERROR: ' . $e->getMessage());
-            wp_send_json_error(['message' => 'Could not generate client token.'], 500);
+            error_log(
+                "[GWC PayPal] ajax_get_client_token ERROR: " . $e->getMessage(),
+            );
+            wp_send_json_error(
+                ["message" => "Could not generate client token."],
+                500,
+            );
         }
     }
 
@@ -197,34 +288,63 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_hosted_create_order()
     {
-        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
-            wp_send_json_error(['message' => __('Security check failed.', 'growtype-wc')], 403);
+        if (
+            !check_ajax_referer(
+                "gwc_paypal_hosted_fields",
+                "_ajax_nonce",
+                false,
+            )
+        ) {
+            wp_send_json_error(
+                ["message" => __("Security check failed.", "growtype-wc")],
+                403,
+            );
         }
 
-        $product_id = absint($_POST['product_id'] ?? 0);
-        $billing_email = sanitize_email($_POST['billing_email'] ?? '');
+        $product_id = absint($_POST["product_id"] ?? 0);
+        $billing_email = sanitize_email($_POST["billing_email"] ?? "");
         // Whitelist vault_source to prevent arbitrary values reaching build_vault_payment_source()
-        $vault_source_raw = sanitize_text_field($_POST['vault_source'] ?? 'card');
-        $vault_source = in_array($vault_source_raw, ['card', 'paypal', 'applepay', 'googlepay'], true) ? $vault_source_raw : 'card';
+        $vault_source_raw = sanitize_text_field(
+            $_POST["vault_source"] ?? "card",
+        );
+        $vault_source = in_array(
+            $vault_source_raw,
+            ["card", "paypal", "applepay", "googlepay"],
+            true,
+        )
+            ? $vault_source_raw
+            : "card";
 
         if (!$product_id) {
-            wp_send_json_error(['message' => __('Invalid product.', 'growtype-wc')], 400);
+            wp_send_json_error(
+                ["message" => __("Invalid product.", "growtype-wc")],
+                400,
+            );
         }
 
         $product = wc_get_product($product_id);
         if (!$product) {
-            wp_send_json_error(['message' => __('Product not found.', 'growtype-wc')], 400);
+            wp_send_json_error(
+                ["message" => __("Product not found.", "growtype-wc")],
+                400,
+            );
         }
 
         // Build the WooCommerce order
         $order = wc_create_order();
         $order->add_product($product, 1);
         $order->set_payment_method($this->gateway->id);
-        $order->set_payment_method_title($this->gateway->get_hosted_fields_title());
+        $order->set_payment_method_title(
+            $this->gateway->get_hosted_fields_title(),
+        );
 
         if (is_user_logged_in()) {
             $order->set_customer_id(get_current_user_id());
-            $billing_email = wp_get_current_user()->user_email;
+            $billing_email =
+                wp_get_current_user()->user_email ?:
+                Growtype_Wc_Payment_Gateway::resolve_user_email();
+        } else {
+            $billing_email = Growtype_Wc_Payment_Gateway::resolve_user_email();
         }
 
         if (!empty($billing_email)) {
@@ -238,14 +358,20 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         }
 
         $order->calculate_totals();
-        $order->update_status('pending', __('Awaiting PayPal Hosted Fields payment.', 'growtype-wc'));
+        $order->update_status(
+            "pending",
+            __("Awaiting PayPal Hosted Fields payment.", "growtype-wc"),
+        );
 
         $return_url = $this->resolve_return_url_from_request();
         if (!empty($return_url)) {
-            $order->update_meta_data('_growtype_return_after_payment_url', esc_url_raw($return_url));
+            $order->update_meta_data(
+                "_growtype_return_after_payment_url",
+                esc_url_raw($return_url),
+            );
         }
 
-        do_action('woocommerce_checkout_create_order', $order, $_POST);
+        do_action("woocommerce_checkout_create_order", $order, $_POST);
 
         $order->save();
 
@@ -255,27 +381,50 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         try {
             $access_token = $this->get_gateway_access_token();
 
-            $paypal_order = $this->gateway->create_order($access_token, $wc_order_id, $applied_coupons, $vault_source);
+            $paypal_order = $this->gateway->create_order(
+                $access_token,
+                $wc_order_id,
+                $applied_coupons,
+                $vault_source,
+            );
 
-            if (empty($paypal_order['id'])) {
-                $detail = $paypal_order['details'][0]['description'] ?? 'No details returned.';
-                throw new \Exception('PayPal order creation failed: ' . $detail);
+            if (empty($paypal_order["id"])) {
+                $detail =
+                    $paypal_order["details"][0]["description"] ??
+                    "No details returned.";
+                throw new \Exception(
+                    "PayPal order creation failed: " . $detail,
+                );
             }
         } catch (\Exception $e) {
-            $order->update_status('failed', $e->getMessage());
-            error_log('GWC PayPal Hosted Fields - create_order error: ' . $e->getMessage());
-            wp_send_json_error(['message' => __('Could not connect to PayPal. Please try again.', 'growtype-wc')], 500);
+            $order->update_status("failed", $e->getMessage());
+            error_log(
+                "GWC PayPal Hosted Fields - create_order error: " .
+                    $e->getMessage(),
+            );
+            wp_send_json_error(
+                [
+                    "message" => __(
+                        "Could not connect to PayPal. Please try again.",
+                        "growtype-wc",
+                    ),
+                ],
+                500,
+            );
         }
 
         // Persist the PayPal order ID for later verification (prevents orderID substitution)
-        $order->update_meta_data('_paypal_hosted_order_id', sanitize_text_field($paypal_order['id']));
+        $order->update_meta_data(
+            "_paypal_hosted_order_id",
+            sanitize_text_field($paypal_order["id"]),
+        );
         $order->save();
 
         wp_send_json_success([
-            'orderID' => $paypal_order['id'],
-            'wc_order_id' => $wc_order_id,
-            'amount' => number_format((float)$order->get_total(), 2, '.', ''),
-            'currency_code' => get_woocommerce_currency(),
+            "orderID" => $paypal_order["id"],
+            "wc_order_id" => $wc_order_id,
+            "amount" => number_format((float) $order->get_total(), 2, ".", ""),
+            "currency_code" => get_woocommerce_currency(),
         ]);
     }
 
@@ -288,138 +437,272 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      */
     public function ajax_hosted_capture_order()
     {
-        if (!check_ajax_referer('gwc_paypal_hosted_fields', '_ajax_nonce', false)) {
-            wp_send_json_error(['message' => __('Security check failed.', 'growtype-wc')], 403);
+        if (
+            !check_ajax_referer(
+                "gwc_paypal_hosted_fields",
+                "_ajax_nonce",
+                false,
+            )
+        ) {
+            wp_send_json_error(
+                ["message" => __("Security check failed.", "growtype-wc")],
+                403,
+            );
         }
 
-        $paypal_order_id = sanitize_text_field($_POST['paypal_order_id'] ?? '');
-        $wc_order_id = absint($_POST['wc_order_id'] ?? 0);
+        $paypal_order_id = sanitize_text_field($_POST["paypal_order_id"] ?? "");
+        $wc_order_id = absint($_POST["wc_order_id"] ?? 0);
 
         if (!$paypal_order_id || !$wc_order_id) {
-            wp_send_json_error(['message' => __('Missing parameters.', 'growtype-wc')], 400);
+            wp_send_json_error(
+                ["message" => __("Missing parameters.", "growtype-wc")],
+                400,
+            );
         }
 
-        error_log(sprintf('[GWC PayPal Capture] ajax_hosted_capture_order: wc_order_id=%d paypal_order_id=%s', $wc_order_id, $paypal_order_id));
+        error_log(
+            sprintf(
+                "[GWC PayPal Capture] ajax_hosted_capture_order: wc_order_id=%d paypal_order_id=%s",
+                $wc_order_id,
+                $paypal_order_id,
+            ),
+        );
 
         $order = wc_get_order($wc_order_id);
         if (!$order) {
-            wp_send_json_error(['message' => __('Order not found.', 'growtype-wc')], 404);
+            wp_send_json_error(
+                ["message" => __("Order not found.", "growtype-wc")],
+                404,
+            );
         }
 
         // Security: verify the PayPal order ID matches what we stored — prevents orderID substitution attacks
-        $stored_paypal_id = $order->get_meta('_paypal_hosted_order_id');
+        $stored_paypal_id = $order->get_meta("_paypal_hosted_order_id");
         if ($stored_paypal_id !== $paypal_order_id) {
-            error_log("GWC PayPal Hosted Fields - orderID mismatch for WC order {$wc_order_id}. Stored: {$stored_paypal_id}, received: {$paypal_order_id}");
-            wp_send_json_error(['message' => __('Payment verification failed.', 'growtype-wc')], 403);
+            error_log(
+                "GWC PayPal Hosted Fields - orderID mismatch for WC order {$wc_order_id}. Stored: {$stored_paypal_id}, received: {$paypal_order_id}",
+            );
+            wp_send_json_error(
+                [
+                    "message" => __(
+                        "Payment verification failed.",
+                        "growtype-wc",
+                    ),
+                ],
+                403,
+            );
         }
 
         // Prevent double-capture — use a transient lock to handle concurrent requests
-        $lock_key = 'gwc_paypal_capture_lock_' . $wc_order_id;
+        $lock_key = "gwc_paypal_capture_lock_" . $wc_order_id;
         if (get_transient($lock_key)) {
             // Another request is already processing this capture
             if ($order->is_paid()) {
-                wp_send_json_success(['redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order)]);
+                wp_send_json_success([
+                    "redirect" => $this->resolve_redirect_url_for_order(
+                        $wc_order_id,
+                        $order,
+                    ),
+                ]);
             }
-            wp_send_json_error(['message' => __('Payment is already being processed. Please wait.', 'growtype-wc')], 409);
+            wp_send_json_error(
+                [
+                    "message" => __(
+                        "Payment is already being processed. Please wait.",
+                        "growtype-wc",
+                    ),
+                ],
+                409,
+            );
         }
 
         set_transient($lock_key, 1, 30); // 30-second lock
 
         if ($order->is_paid()) {
             delete_transient($lock_key);
-            wp_send_json_success(['redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order)]);
+            wp_send_json_success([
+                "redirect" => $this->resolve_redirect_url_for_order(
+                    $wc_order_id,
+                    $order,
+                ),
+            ]);
         }
 
         try {
             $access_token = $this->get_gateway_access_token();
 
-            $capture_result = $this->gateway->capture_order($access_token, $paypal_order_id);
+            $capture_result = $this->gateway->capture_order(
+                $access_token,
+                $paypal_order_id,
+            );
 
-            $status = $capture_result['status'] ?? '';
+            $status = $capture_result["status"] ?? "";
 
-            if ($status !== 'COMPLETED') {
-                $detail = $capture_result['details'][0]['description'] ?? $capture_result['message'] ?? 'Capture failed.';
+            if ($status !== "COMPLETED") {
+                $detail =
+                    $capture_result["details"][0]["description"] ??
+                    ($capture_result["message"] ?? "Capture failed.");
                 throw new \Exception($detail);
             }
 
             // PayPal can return order status=COMPLETED even when the individual capture
             // inside is DECLINED (e.g. prepaid card, failed 3DS, fraud block, response_code=9500).
             // We MUST check the inner capture status — not just the outer order status.
-            $capture_status = $capture_result['purchase_units'][0]['payments']['captures'][0]['status'] ?? '';
-            if (!empty($capture_status) && $capture_status !== 'COMPLETED') {
-                $proc_code = $capture_result['purchase_units'][0]['payments']['captures'][0]['processor_response']['response_code'] ?? '';
-                $detail    = sprintf('Payment declined by card issuer (code: %s). Please try again or contact our support %s', $proc_code ?: 'unknown', get_option('admin_email'));
-                error_log(sprintf(
-                    '[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s',
-                    $wc_order_id,
-                    $capture_status,
-                    $proc_code
-                ));
+            $capture_status =
+                $capture_result["purchase_units"][0]["payments"]["captures"][0][
+                    "status"
+                ] ?? "";
+            if (!empty($capture_status) && $capture_status !== "COMPLETED") {
+                $proc_code =
+                    $capture_result["purchase_units"][0]["payments"][
+                        "captures"
+                    ][0]["processor_response"]["response_code"] ?? "";
+                $detail = sprintf(
+                    "Payment declined by card issuer (code: %s). Please try again or contact our support %s",
+                    $proc_code ?: "unknown",
+                    get_option("admin_email"),
+                );
+                error_log(
+                    sprintf(
+                        "[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s",
+                        $wc_order_id,
+                        $capture_status,
+                        $proc_code,
+                    ),
+                );
                 throw new \Exception($detail);
             }
 
             // Extract the capture transaction ID
-            $capture_id = $capture_result['purchase_units'][0]['payments']['captures'][0]['id'] ?? '';
+            $capture_id =
+                $capture_result["purchase_units"][0]["payments"]["captures"][0][
+                    "id"
+                ] ?? "";
 
             // Debug-only: log payment_source type (never log full response — may contain card/vault data)
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('[GWC Vault] payment_source types: ' . implode(', ', array_keys($capture_result['payment_source'] ?? [])));
+            if (defined("WP_DEBUG") && WP_DEBUG) {
+                error_log(
+                    "[GWC Vault] payment_source types: " .
+                        implode(
+                            ", ",
+                            array_keys($capture_result["payment_source"] ?? []),
+                        ),
+                );
             }
 
-            $vault_id = $capture_result['payment_source']['card']['attributes']['vault']['id'] ?? '';
-            $pp_customer_id = $capture_result['payment_source']['card']['attributes']['vault']['customer']['id'] ?? '';
-            $vault_type = 'card';
+            $vault_id =
+                $capture_result["payment_source"]["card"]["attributes"][
+                    "vault"
+                ]["id"] ?? "";
+            $pp_customer_id =
+                $capture_result["payment_source"]["card"]["attributes"][
+                    "vault"
+                ]["customer"]["id"] ?? "";
+            $vault_type = "card";
 
             // Google Pay embeds a card token under payment_source.google_pay.card
             if (empty($vault_id)) {
-                $vault_id = $capture_result['payment_source']['google_pay']['card']['attributes']['vault']['id'] ?? '';
-                $pp_customer_id = $capture_result['payment_source']['google_pay']['card']['attributes']['vault']['customer']['id'] ?? '';
+                $vault_id =
+                    $capture_result["payment_source"]["google_pay"]["card"][
+                        "attributes"
+                    ]["vault"]["id"] ?? "";
+                $pp_customer_id =
+                    $capture_result["payment_source"]["google_pay"]["card"][
+                        "attributes"
+                    ]["vault"]["customer"]["id"] ?? "";
                 if (!empty($vault_id)) {
-                    $vault_type = 'card';
+                    $vault_type = "card";
                 } // google_pay still vaults as card
             }
             // Apple Pay embeds a card token under payment_source.apple_pay.card
             if (empty($vault_id)) {
-                $vault_id = $capture_result['payment_source']['apple_pay']['card']['attributes']['vault']['id'] ?? '';
-                $pp_customer_id = $capture_result['payment_source']['apple_pay']['card']['attributes']['vault']['customer']['id'] ?? '';
+                $vault_id =
+                    $capture_result["payment_source"]["apple_pay"]["card"][
+                        "attributes"
+                    ]["vault"]["id"] ?? "";
+                $pp_customer_id =
+                    $capture_result["payment_source"]["apple_pay"]["card"][
+                        "attributes"
+                    ]["vault"]["customer"]["id"] ?? "";
                 if (!empty($vault_id)) {
-                    $vault_type = 'card';
+                    $vault_type = "card";
                 } // apple_pay still vaults as card
             }
             // PayPal account vault
             if (empty($vault_id)) {
-                $vault_id = $capture_result['payment_source']['paypal']['attributes']['vault']['id'] ?? '';
-                $pp_customer_id = $capture_result['payment_source']['paypal']['attributes']['vault']['customer']['id'] ?? '';
+                $vault_id =
+                    $capture_result["payment_source"]["paypal"]["attributes"][
+                        "vault"
+                    ]["id"] ?? "";
+                $pp_customer_id =
+                    $capture_result["payment_source"]["paypal"]["attributes"][
+                        "vault"
+                    ]["customer"]["id"] ?? "";
                 if (!empty($vault_id)) {
-                    $vault_type = 'paypal';
+                    $vault_type = "paypal";
                 }
             }
 
-            error_log('[GWC Vault] Hosted Fields capture complete: order=' . $wc_order_id . ' capture_id=' . $capture_id . ' vault=' . (!empty($vault_id) ? 'yes(' . $vault_type . ')' : 'no'));
+            error_log(
+                "[GWC Vault] Hosted Fields capture complete: order=" .
+                    $wc_order_id .
+                    " capture_id=" .
+                    $capture_id .
+                    " vault=" .
+                    (!empty($vault_id) ? "yes(" . $vault_type . ")" : "no"),
+            );
 
-            $order->update_meta_data('_paypal_capture_id', sanitize_text_field($capture_id));
+            $order->update_meta_data(
+                "_paypal_capture_id",
+                sanitize_text_field($capture_id),
+            );
 
             if (!empty($vault_id)) {
-                $order->update_meta_data('paypal_vault_id', sanitize_text_field($vault_id));
-                $order->update_meta_data('paypal_vault_type', $vault_type);
+                $order->update_meta_data(
+                    "paypal_vault_id",
+                    sanitize_text_field($vault_id),
+                );
+                $order->update_meta_data("paypal_vault_type", $vault_type);
             }
             if (!empty($pp_customer_id)) {
-                $order->update_meta_data('paypal_customer_id', sanitize_text_field($pp_customer_id));
+                $order->update_meta_data(
+                    "paypal_customer_id",
+                    sanitize_text_field($pp_customer_id),
+                );
             }
 
             $order->save();
             $order->payment_complete($capture_id);
 
             // Persist vault info on user meta so it's available for any future order
-            $user_id = (int)$order->get_customer_id();
+            $user_id = (int) $order->get_customer_id();
             if ($user_id > 0) {
                 if (!empty($vault_id)) {
-                    update_user_meta($user_id, 'paypal_vault_id', sanitize_text_field($vault_id));
-                    update_user_meta($user_id, 'paypal_vault_type', $vault_type);
-                    error_log(sprintf('[GWC Vault] Hosted Fields: stored vault_id=%s type=%s for user %d', $vault_id, $vault_type, $user_id));
+                    update_user_meta(
+                        $user_id,
+                        "paypal_vault_id",
+                        sanitize_text_field($vault_id),
+                    );
+                    update_user_meta(
+                        $user_id,
+                        "paypal_vault_type",
+                        $vault_type,
+                    );
+                    error_log(
+                        sprintf(
+                            "[GWC Vault] Hosted Fields: stored vault_id=%s type=%s for user %d",
+                            $vault_id,
+                            $vault_type,
+                            $user_id,
+                        ),
+                    );
                 }
                 if (!empty($pp_customer_id)) {
-                    update_user_meta($user_id, 'paypal_customer_id', sanitize_text_field($pp_customer_id));
+                    update_user_meta(
+                        $user_id,
+                        "paypal_customer_id",
+                        sanitize_text_field($pp_customer_id),
+                    );
                 }
             }
 
@@ -427,16 +710,33 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 WC()->cart->empty_cart();
             }
         } catch (\Exception $e) {
-            $order->update_status('failed', $e->getMessage());
-            error_log('GWC PayPal Hosted Fields - capture_order error: ' . $e->getMessage());
+            $order->update_status("failed", $e->getMessage());
+            error_log(
+                "GWC PayPal Hosted Fields - capture_order error: " .
+                    $e->getMessage(),
+            );
             delete_transient($lock_key);
-            wp_send_json_error(['message' => sprintf(__('Payment capture failed. Please try again or contact our support %s', 'growtype-wc'), get_option('admin_email'))], 500);
+            wp_send_json_error(
+                [
+                    "message" => sprintf(
+                        __(
+                            "Payment capture failed. Please try again or contact our support %s",
+                            "growtype-wc",
+                        ),
+                        get_option("admin_email"),
+                    ),
+                ],
+                500,
+            );
         }
 
         delete_transient($lock_key);
 
         wp_send_json_success([
-            'redirect' => $this->resolve_redirect_url_for_order($wc_order_id, $order),
+            "redirect" => $this->resolve_redirect_url_for_order(
+                $wc_order_id,
+                $order,
+            ),
         ]);
     }
 
@@ -451,11 +751,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
     {
         $token = $this->gateway->get_access_token(
             $this->gateway->get_client_id(),
-            $this->gateway->get_client_secret()
+            $this->gateway->get_client_secret(),
         );
 
         if (empty($token)) {
-            throw new \Exception('Could not retrieve PayPal access token.');
+            throw new \Exception("Could not retrieve PayPal access token.");
         }
 
         return $token;
@@ -478,16 +778,16 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
         // We intentionally do NOT fall back to wp_get_referer(): for AJAX calls the HTTP Referer
         // is always the page the user is currently on, so saving it would redirect them right back
         // to that page (e.g. /credits/) instead of the WooCommerce thank-you page.
-        if (!empty($_POST['return_url'])) {
+        if (!empty($_POST["return_url"])) {
             $url = Growtype_Wc_Payment::sanitize_return_url(
-                sanitize_text_field(wp_unslash($_POST['return_url']))
+                sanitize_text_field(wp_unslash($_POST["return_url"])),
             );
             if (!empty($url)) {
                 return $url;
             }
         }
 
-        return '';
+        return "";
     }
 
     /**
@@ -501,17 +801,25 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
      * @param \WC_Order|null $order       Optional already-loaded order to avoid a second DB fetch.
      * @return string
      */
-    private function resolve_redirect_url_for_order(int $wc_order_id, ?\WC_Order $order = null): string
-    {
+    private function resolve_redirect_url_for_order(
+        int $wc_order_id,
+        ?\WC_Order $order = null,
+    ): string {
         $order = $order ?: wc_get_order($wc_order_id);
         if ($order) {
-            $saved = (string)$order->get_meta('_growtype_return_after_payment_url');
+            $saved = (string) $order->get_meta(
+                "_growtype_return_after_payment_url",
+            );
             if (!empty($saved)) {
                 $sanitised = Growtype_Wc_Payment::sanitize_return_url($saved);
                 if (!empty($sanitised)) {
                     // Append success flag so the landing page shows the confirmation toast,
                     // matching the instant-charge flow behaviour.
-                    return add_query_arg(Growtype_Wc_Payment::PAYMENT_SUCCESS_QUERY_ARG, '1', $sanitised);
+                    return add_query_arg(
+                        Growtype_Wc_Payment::PAYMENT_SUCCESS_QUERY_ARG,
+                        "1",
+                        $sanitised,
+                    );
                 }
             }
         }
@@ -575,7 +883,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     </div>
                     <div class="modal-body gwc-hf-modal-body">
                         <div id="gwc-paypal-not-eligible" style="display:none;color:#e05c5c;padding:12px;background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);border-radius:8px;margin-bottom:16px;font-size:13px">
-                            <?php _e('Advanced card payments are not available for this account. Please use the PayPal button instead.', 'growtype-child'); ?>
+                            <?php _e(
+                                "Advanced card payments are not available for this account. Please use the PayPal button instead.",
+                                "growtype-child",
+                            ); ?>
                         </div>
 
                         <div id="gwc-paypal-fields-wrap" style="position:relative; min-height: 250px;">
@@ -589,15 +900,13 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 </div>
             </div>
         </div>
-        <?php
-
-        // Inject the PayPal Card Fields boot script so the modal works
+        <?php // Inject the PayPal Card Fields boot script so the modal works
         // both when rendered in wp_footer AND when fetched via AJAX.
-        if (class_exists('Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields')) {
+        if (class_exists("Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields")) {
             $gateway = null;
-            if (function_exists('WC') && WC()->payment_gateways) {
+            if (function_exists("WC") && WC()->payment_gateways) {
                 $gateways = WC()->payment_gateways->payment_gateways();
-                $gateway = $gateways['gwc-paypal'] ?? null;
+                $gateway = $gateways["gwc-paypal"] ?? null;
             }
 
             if ($gateway && !empty($gateway->enable_card_payments)) {
@@ -606,8 +915,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     $gateway->get_merchant_id(),
                     $gateway->is_test_mode(),
                     get_woocommerce_currency(),
-                    wp_create_nonce('gwc_paypal_hosted_fields'),
-                    admin_url('admin-ajax.php')
+                    wp_create_nonce("gwc_paypal_hosted_fields"),
+                    admin_url("admin-ajax.php"),
                 );
             }
         }
@@ -629,18 +938,23 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
     public static function render_card_fields_script(
         string $client_id,
         string $merchant_id,
-        bool   $is_sandbox,
+        bool $is_sandbox,
         string $currency,
         string $nonce,
-        string $ajax_url
-    ): void
-    {
+        string $ajax_url,
+    ): void {
         ?>
         <script>
             (function ($) {
-                var gwcPaypalClientId = <?php echo wp_json_encode($client_id); ?>;
-                var gwcPaypalMerchantId = <?php echo wp_json_encode($merchant_id); ?>;
-                var gwcPaypalSandbox = <?php echo $is_sandbox ? 'true' : 'false'; ?>;
+                var gwcPaypalClientId = <?php echo wp_json_encode(
+                    $client_id,
+                ); ?>;
+                var gwcPaypalMerchantId = <?php echo wp_json_encode(
+                    $merchant_id,
+                ); ?>;
+                var gwcPaypalSandbox = <?php echo $is_sandbox
+                    ? "true"
+                    : "false"; ?>;
                 var gwcAjaxUrl  = <?php echo wp_json_encode($ajax_url); ?>;
                 var gwcNonce    = <?php echo wp_json_encode($nonce); ?>;
                 var gwcCurrency = <?php echo wp_json_encode($currency); ?>;
@@ -699,7 +1013,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             if (!gwcReturnUrl) {
                                 gwcReturnUrl = $(formRoot).data('return-url') || '';
                             }
-                            
+
                             // Check if the secure card field iframe is already loaded inside this active form
                             var nameContainer = formRoot.querySelector ? formRoot.querySelector('#card-name-field-container') : null;
                             var isAlreadyBooted = nameContainer && nameContainer.querySelector('iframe') !== null;
@@ -784,13 +1098,18 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     $('#gwcPaypalHostedFieldsModal #card-name-field-container, #gwcPaypalHostedFieldsModal #card-number-field-container, #gwcPaypalHostedFieldsModal #card-expiry-field-container, #gwcPaypalHostedFieldsModal #card-cvv-field-container').empty().height(65);
                     $('#gwcPaypalHostedFieldsModal #gwc-hf-errors, #gwcPaypalHostedFieldsModal .gwc-hf-errors').hide();
                     if (window.GrowtypeWcPaypalProvider) {
-                        window.GrowtypeWcPaypalProvider.showSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap', '<?php _e('Loading...', 'growtype-child'); ?>');
+                        window.GrowtypeWcPaypalProvider.showSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap', '<?php _e(
+                            "Loading...",
+                            "growtype-child",
+                        ); ?>');
                     } else {
                         $('#gwcPaypalHostedFieldsModal #gwc-paypal-form-loader, #gwcPaypalHostedFieldsModal .gwc-paypal-form-loader').show();
                     }
                     var $modalSubmit = $('#gwcPaypalHostedFieldsModal #card-field-submit-button, #gwcPaypalHostedFieldsModal .gwc-hf-submit');
                     $modalSubmit.prop('disabled', true);
-                    setSubmitButtonText($modalSubmit, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
+                    setSubmitButtonText($modalSubmit, '<?php echo esc_js(
+                        Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label(),
+                    ); ?>');
                 });
 
                 // ── Load PayPal JS SDK and initialise Card Fields ────────────────
@@ -878,13 +1197,23 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         };
                         s.onerror = function () {
                             cardFieldsLoading = false;
-                            showError('<?php echo esc_js(__('Failed to load PayPal SDK. Please refresh and try again.', 'growtype-child')); ?>');
+                            showError('<?php echo esc_js(
+                                __(
+                                    "Failed to load PayPal SDK. Please refresh and try again.",
+                                    "growtype-child",
+                                ),
+                            ); ?>');
                         };
                         document.head.appendChild(s);
                     }).fail(function (xhr, err) {
                         console.error('[GWC HF] Client token AJAX request failed:', err);
                         cardFieldsLoading = false;
-                        showError('<?php echo esc_js(__('Failed to load PayPal secure token. Please refresh and try again.', 'growtype-child')); ?>');
+                        showError('<?php echo esc_js(
+                            __(
+                                "Failed to load PayPal secure token. Please refresh and try again.",
+                                "growtype-child",
+                            ),
+                        ); ?>');
                     });
                 }
 
@@ -923,7 +1252,9 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
                     var $btn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
                     $btn.prop('disabled', false);
-                    setSubmitButtonText($btn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
+                    setSubmitButtonText($btn, '<?php echo esc_js(
+                        Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label(),
+                    ); ?>');
                 }
 
                 function initCardFields() {
@@ -1016,7 +1347,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     console.log('[GWC HF] Containers: name=' + !!nameContainer + ' number=' + !!numberContainer + ' expiry=' + !!expiryContainer + ' cvv=' + !!cvvContainer);
 
                     Promise.all([
-                        cardFields.NameField({placeholder: '<?php _e('Cardholder Name', 'growtype-child'); ?>'}).render(nameContainer),
+                        cardFields.NameField({placeholder: '<?php _e(
+                            "Cardholder Name",
+                            "growtype-child",
+                        ); ?>'}).render(nameContainer),
                         cardFields.NumberField({placeholder: '•••• •••• •••• ••••'}).render(numberContainer),
                         cardFields.ExpiryField({placeholder: 'MM / YY'}).render(expiryContainer),
                         cardFields.CVVField({placeholder: '•••'}).render(cvvContainer)
@@ -1045,7 +1379,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             $('#gwc-paypal-form-loader, .gwc-paypal-form-loader').hide();
                             $('.gwc-payment-form-mainloader').hide();
                         }
-                        showError('<?php echo esc_js(__('Failed to render card fields. Please try again.', 'growtype-child')); ?>');
+                        showError('<?php echo esc_js(
+                            __(
+                                "Failed to render card fields. Please try again.",
+                                "growtype-child",
+                            ),
+                        ); ?>');
                     });
 
                     // Force 65px height on PayPal's internal structure (Zoid wrappers and iframes)
@@ -1134,7 +1473,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     function onApproveInternal(orderID) {
                         // PayPal has approved — show loader while we capture on server
                         if (window.GrowtypeWcPaypalProvider) {
-                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e('Processing...', 'growtype-child'); ?>');
+                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e(
+                                "Processing...",
+                                "growtype-child",
+                            ); ?>');
                         } else {
                             $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').stop(true, true).show();
                         }
@@ -1157,8 +1499,18 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             }
                             var $approvalBtn = $(formRoot).find('#card-field-submit-button, .gwc-hf-submit');
                             $approvalBtn.prop('disabled', false);
-                            setSubmitButtonText($approvalBtn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
-                            showError(err.message || '<?php echo esc_js(sprintf(__('Payment capture failed. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>');
+                            setSubmitButtonText($approvalBtn, '<?php echo esc_js(
+                                Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label(),
+                            ); ?>');
+                            showError(err.message || '<?php echo esc_js(
+                                sprintf(
+                                    __(
+                                        "Payment capture failed. Please try again or contact our support %s",
+                                        "growtype-child",
+                                    ),
+                                    get_option("admin_email"),
+                                ),
+                            ); ?>');
                         });
                     }
 
@@ -1167,7 +1519,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     $submitBtn.off('click').on('click', function (e) {
                         e.preventDefault();
                         if (!gwcProductId) {
-                            showError('<?php echo esc_js(__('Please select a plan before paying.', 'growtype-child')); ?>');
+                            showError('<?php echo esc_js(
+                                __(
+                                    "Please select a plan before paying.",
+                                    "growtype-child",
+                                ),
+                            ); ?>');
                             return;
                         }
                         var $err = $(formRoot).find('#gwc-hf-errors, .gwc-hf-errors');
@@ -1175,9 +1532,14 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         $err.hide();
 
                         $submitBtn.prop('disabled', true);
-                        setSubmitButtonText($submitBtn, '<?php echo esc_js(__('Processing…', 'growtype-child')); ?>');
+                        setSubmitButtonText($submitBtn, '<?php echo esc_js(
+                            __("Processing…", "growtype-child"),
+                        ); ?>');
                         if (window.GrowtypeWcPaypalProvider) {
-                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e('Processing...', 'growtype-child'); ?>');
+                            window.GrowtypeWcPaypalProvider.showSpinner(formRoot, '<?php _e(
+                                "Processing...",
+                                "growtype-child",
+                            ); ?>');
                         } else {
                             $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').stop(true, true).show();
                         }
@@ -1193,24 +1555,91 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 $(formRoot).find('#gwc-paypal-form-loader, .gwc-paypal-form-loader').hide();
                             }
                             $submitBtn.prop('disabled', false);
-                            setSubmitButtonText($submitBtn, '<?php echo esc_js(Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label()); ?>');
+                            setSubmitButtonText($submitBtn, '<?php echo esc_js(
+                                Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label(),
+                            ); ?>');
 
                             var msg = (err && err.message) ? err.message : '';
 
                             // Map technical error codes / PayPal issue strings to user-friendly messages
                             var errorMap = {
                                 // CardFields validation errors
-                                'INVALID_NUMBER':            '<?php echo esc_js(__('The card number is invalid. Please check and try again.', 'growtype-child')); ?>',
-                                'INVALID_EXPIRY':            '<?php echo esc_js(__('The expiry date is invalid or has passed.', 'growtype-child')); ?>',
-                                'INVALID_CVV':               '<?php echo esc_js(__('The security code (CVV) is invalid.', 'growtype-child')); ?>',
-                                'CARD_TYPE_NOT_SUPPORTED':   '<?php echo esc_js(__('This card type is not supported.', 'growtype-child')); ?>',
+                                'INVALID_NUMBER':            '<?php echo esc_js(
+                                    __(
+                                        "The card number is invalid. Please check and try again.",
+                                        "growtype-child",
+                                    ),
+                                ); ?>',
+                                'INVALID_EXPIRY':            '<?php echo esc_js(
+                                    __(
+                                        "The expiry date is invalid or has passed.",
+                                        "growtype-child",
+                                    ),
+                                ); ?>',
+                                'INVALID_CVV':               '<?php echo esc_js(
+                                    __(
+                                        "The security code (CVV) is invalid.",
+                                        "growtype-child",
+                                    ),
+                                ); ?>',
+                                'CARD_TYPE_NOT_SUPPORTED':   '<?php echo esc_js(
+                                    __(
+                                        "This card type is not supported.",
+                                        "growtype-child",
+                                    ),
+                                ); ?>',
                                 // PayPal API issue codes (appear in err.message for sandbox mismatches)
-                                'CREDIT_CARD_NUMBER_MUST_BE_TEST_NUMBER': '<?php echo esc_js(__('Please use a test card number in sandbox mode.', 'growtype-child')); ?>',
-                                'INSTRUMENT_DECLINED':       '<?php echo esc_js(sprintf(__('Your card was declined. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
-                                'PAYER_CANNOT_PAY':          '<?php echo esc_js(sprintf(__('Payment could not be processed. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
-                                'CARD_EXPIRED':              '<?php echo esc_js(sprintf(__('Your card has expired. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
-                                'DO_NOT_HONOR':              '<?php echo esc_js(sprintf(__('Your card issuer declined the payment. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
-                                'TRANSACTION_REFUSED':       '<?php echo esc_js(sprintf(__('The transaction was refused. Please try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>',
+                                'CREDIT_CARD_NUMBER_MUST_BE_TEST_NUMBER': '<?php echo esc_js(
+                                    __(
+                                        "Please use a test card number in sandbox mode.",
+                                        "growtype-child",
+                                    ),
+                                ); ?>',
+                                'INSTRUMENT_DECLINED':       '<?php echo esc_js(
+                                    sprintf(
+                                        __(
+                                            "Your card was declined. Please try again or contact our support %s",
+                                            "growtype-child",
+                                        ),
+                                        get_option("admin_email"),
+                                    ),
+                                ); ?>',
+                                'PAYER_CANNOT_PAY':          '<?php echo esc_js(
+                                    sprintf(
+                                        __(
+                                            "Payment could not be processed. Please try again or contact our support %s",
+                                            "growtype-child",
+                                        ),
+                                        get_option("admin_email"),
+                                    ),
+                                ); ?>',
+                                'CARD_EXPIRED':              '<?php echo esc_js(
+                                    sprintf(
+                                        __(
+                                            "Your card has expired. Please try again or contact our support %s",
+                                            "growtype-child",
+                                        ),
+                                        get_option("admin_email"),
+                                    ),
+                                ); ?>',
+                                'DO_NOT_HONOR':              '<?php echo esc_js(
+                                    sprintf(
+                                        __(
+                                            "Your card issuer declined the payment. Please try again or contact our support %s",
+                                            "growtype-child",
+                                        ),
+                                        get_option("admin_email"),
+                                    ),
+                                ); ?>',
+                                'TRANSACTION_REFUSED':       '<?php echo esc_js(
+                                    sprintf(
+                                        __(
+                                            "The transaction was refused. Please try again or contact our support %s",
+                                            "growtype-child",
+                                        ),
+                                        get_option("admin_email"),
+                                    ),
+                                ); ?>',
                             };
 
                             // Exact match first
@@ -1229,9 +1658,22 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                                 // Raw PayPal JSON or URL in message — strip it
                                 if (!matched) {
                                     if (msg.indexOf('{') !== -1 || msg.indexOf('returned status') !== -1 || msg.indexOf('paypal.com') !== -1) {
-                                        msg = '<?php echo esc_js(sprintf(__('Your payment could not be processed. Please check your card details, try again or contact our support %s', 'growtype-child'), get_option('admin_email'))); ?>';
+                                        msg = '<?php echo esc_js(
+                                            sprintf(
+                                                __(
+                                                    "Your payment could not be processed. Please check your card details, try again or contact our support %s",
+                                                    "growtype-child",
+                                                ),
+                                                get_option("admin_email"),
+                                            ),
+                                        ); ?>';
                                     } else if (!msg) {
-                                        msg = '<?php echo esc_js(__('Card submission failed. Please check your details.', 'growtype-child')); ?>';
+                                        msg = '<?php echo esc_js(
+                                            __(
+                                                "Card submission failed. Please check your details.",
+                                                "growtype-child",
+                                            ),
+                                        ); ?>';
                                     }
                                 }
                             }
@@ -1256,14 +1698,21 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             return;
         }
 
-        $client_id   = $this->gateway->get_client_id();
+        $client_id = $this->gateway->get_client_id();
         $merchant_id = $this->gateway->get_merchant_id();
-        $is_sandbox  = $this->gateway->is_test_mode();
-        $currency    = get_woocommerce_currency();
-        $nonce       = wp_create_nonce('gwc_paypal_hosted_fields');
-        $ajax_url    = admin_url('admin-ajax.php');
+        $is_sandbox = $this->gateway->is_test_mode();
+        $currency = get_woocommerce_currency();
+        $nonce = wp_create_nonce("gwc_paypal_hosted_fields");
+        $ajax_url = admin_url("admin-ajax.php");
 
-        self::render_card_fields_script($client_id, $merchant_id, $is_sandbox, $currency, $nonce, $ajax_url);
+        self::render_card_fields_script(
+            $client_id,
+            $merchant_id,
+            $is_sandbox,
+            $currency,
+            $nonce,
+            $ajax_url,
+        );
     }
 
     /**
@@ -1283,9 +1732,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             $this->gateway->get_merchant_id(),
             $this->gateway->is_test_mode(),
             get_woocommerce_currency(),
-            wp_create_nonce('gwc_paypal_hosted_fields'),
-            admin_url('admin-ajax.php')
+            wp_create_nonce("gwc_paypal_hosted_fields"),
+            admin_url("admin-ajax.php"),
         );
     }
 }
-
