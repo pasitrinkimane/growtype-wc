@@ -32,6 +32,8 @@ class Growtype_Wc_Payment
         add_action('wp_ajax_nopriv_growtype_wc_finalize_order', [$this, 'ajax_finalize_order']);
 
         add_action('wp_footer', [$this, 'render_upsell_error_alert']);
+
+        add_filter('growtype_analytics_get_user_email', [$this, 'growtype_analytics_get_user_email_fallback'], 20, 1);
     }
 
     protected function load_methods()
@@ -1067,6 +1069,26 @@ class Growtype_Wc_Payment
             $order->set_customer_id(get_current_user_id());
         }
 
+        if (empty($order->get_billing_email())) {
+            $resolved_email = apply_filters(
+                'growtype_wc_order_create_resolve_email',
+                '',
+                $order,
+                $product_id
+            );
+
+            if (empty($resolved_email) &&
+                class_exists('Growtype_Wc_Payment_Gateway') &&
+                method_exists('Growtype_Wc_Payment_Gateway', 'resolve_user_email')
+            ) {
+                $resolved_email = Growtype_Wc_Payment_Gateway::resolve_user_email();
+            }
+
+            if (!empty($resolved_email) && is_email($resolved_email)) {
+                $order->set_billing_email($resolved_email);
+            }
+        }
+
         $order->calculate_totals();
         $order->save();
 
@@ -1319,5 +1341,24 @@ class Growtype_Wc_Payment
         } catch (\Exception $e) {
             wp_send_json_error(['message' => $e->getMessage()]);
         }
+    }
+
+    public function growtype_analytics_get_user_email_fallback($email)
+    {
+        if (!empty($email)) {
+            return $email;
+        }
+
+        if (
+            class_exists('Growtype_Wc_Payment_Gateway') &&
+            method_exists('Growtype_Wc_Payment_Gateway', 'resolve_user_email')
+        ) {
+            $resolved_email = Growtype_Wc_Payment_Gateway::resolve_user_email();
+            if (!empty($resolved_email)) {
+                return $resolved_email;
+            }
+        }
+
+        return $email;
     }
 }

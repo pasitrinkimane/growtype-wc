@@ -40,15 +40,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
             $_GET["payment_method"] ===
                 Growtype_Wc_Payment_Gateway_Paypal::PAYMENT_METHOD_KEY;
 
-        error_log(
-            sprintf(
-                "[GWC PayPal] woocommerce_add_to_cart_extend: product=%d setting_enabled=%s method_match=%s",
-                $wc_product_id,
-                $setting_enabled ? "yes" : "no",
-                $method_match ? "yes" : "no",
-            ),
-        );
-
         do_action(
             "growtype_wc_before_add_to_cart",
             $cart_item_key,
@@ -60,9 +51,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
         );
 
         if ($setting_enabled && $method_match) {
-            error_log(
-                "[GWC PayPal] woocommerce_add_to_cart_extend: Starting redirect flow...",
-            );
             $wc_product = wc_get_product($wc_product_id);
             if (!$wc_product) {
                 error_log(
@@ -116,10 +104,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
             }
 
             $order_id = $order->get_id();
-            error_log(
-                "[GWC PayPal] woocommerce_add_to_cart_extend: Created WC order " .
-                    $order_id,
-            );
 
             $order->add_product($wc_product, $quantity);
             $order->set_payment_method($this->gateway->id);

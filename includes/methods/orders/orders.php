@@ -10,6 +10,14 @@ class Growtype_Wc_Order
             10,
             3,
         );
+
+        add_action(
+            "woocommerce_checkout_create_order",
+            [$this, "growtype_wc_woocommerce_checkout_create_order"],
+            20,
+            2,
+        );
+
         add_action(
             "woocommerce_payment_complete",
             [$this, "growtype_wc_woocommerce_payment_complete"],
@@ -77,6 +85,8 @@ class Growtype_Wc_Order
      */
     function growtype_wc_woocommerce_new_order($order_id, $order)
     {
+        $this->ensure_order_billing_email($order, true);
+
         /**
          * Add extra meta data
          */
@@ -87,6 +97,14 @@ class Growtype_Wc_Order
                 " " .
                 $order->get_billing_first_name(),
         );
+    }
+
+    /**
+     * Ensure billing email exists as early as possible during checkout order creation.
+     */
+    function growtype_wc_woocommerce_checkout_create_order($order, $data)
+    {
+        $this->ensure_order_billing_email($order, false);
     }
 
     /**
@@ -181,6 +199,46 @@ class Growtype_Wc_Order
             if ($current_user) {
                 $current_user->remove_role("lead");
                 $current_user->add_role("customer");
+            }
+        }
+    }
+
+    /**
+     * Fill missing billing email using checkout payload, resolver fallback, or logged-in user.
+     */
+    private function ensure_order_billing_email($order, $save_order = false)
+    {
+        if (!$order || !is_a($order, "WC_Order")) {
+            return;
+        }
+
+        if (!empty($order->get_billing_email())) {
+            return;
+        }
+
+        $email = "";
+
+        if (!empty($_POST["billing_email"])) {
+            $email = sanitize_email(wp_unslash($_POST["billing_email"]));
+        }
+
+        if (
+            empty($email) &&
+            class_exists("Growtype_Wc_Payment_Gateway") &&
+            method_exists("Growtype_Wc_Payment_Gateway", "resolve_user_email")
+        ) {
+            $email = Growtype_Wc_Payment_Gateway::resolve_user_email();
+        }
+
+        if (empty($email) && is_user_logged_in()) {
+            $wp_user = wp_get_current_user();
+            $email = $wp_user->user_email ?? "";
+        }
+
+        if (!empty($email) && is_email($email)) {
+            $order->set_billing_email($email);
+            if ($save_order) {
+                $order->save();
             }
         }
     }

@@ -47,7 +47,9 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             10,
             3,
         );
+
         add_filter("template_redirect", [$this, "payment_redirect"]);
+
         add_action(
             "woocommerce_add_to_cart",
             [$this, "woocommerce_add_to_cart_extend"],
@@ -824,6 +826,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                     1,
                     $this->id,
                 );
+
                 $product = wc_get_product($product_id); // Re-fetch product object if needed for logic below
 
                 $order_id = $order->get_id();
