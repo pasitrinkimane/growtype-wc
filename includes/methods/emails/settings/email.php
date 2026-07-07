@@ -22,7 +22,7 @@ function growtype_wc_woocommerce_email_settings($settings)
         'desc' => __('Remove payment method line from final order emails', 'growtype-wc'),
         'id' => 'growtype_wc_disable_payment_method_in_emails',
         'type' => 'checkbox',
-        'default' => 'no',
+        'default' => 'yes',
     );
 
     $settings[] = array (
