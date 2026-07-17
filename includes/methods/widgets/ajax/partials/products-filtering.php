@@ -120,6 +120,11 @@ function growtype_wc_get_orderby_params($orderby)
                 $order = 'DESC';
                 $orderby = 'meta_value_num title';
                 break;
+            case 'post__in':
+                $meta_key = '';
+                $order = 'ASC';
+                $orderby = 'post__in';
+                break;
         }
     }
 

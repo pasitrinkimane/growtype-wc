@@ -30,70 +30,60 @@ class Growtype_Wc_Happy_Customers
     {
         $gender = strtolower($params['gender'] ?? 'mix');
         $amount = intval($params['amount'] ?? 4);
-        $label = esc_html($params['label'] ?? 'Over 54k+ happy users');
+        $label = wp_kses($params['label'] ?? 'Over 54k+ happy users', ['b' => [], 'strong' => [], 'span' => ['style' => [], 'class' => []]]);
         $shuffle = strtolower($params['shuffle'] ?? 'false') === 'true';
 
-        $avatars = [
-            'male' => [
-                'https://randomuser.me/api/portraits/men/10.jpg',
-                'https://randomuser.me/api/portraits/men/11.jpg',
-                'https://randomuser.me/api/portraits/men/12.jpg',
-                'https://randomuser.me/api/portraits/men/13.jpg',
-                'https://randomuser.me/api/portraits/men/14.jpg',
-                'https://randomuser.me/api/portraits/men/15.jpg',
-                'https://randomuser.me/api/portraits/men/16.jpg',
-                'https://randomuser.me/api/portraits/men/17.jpg',
-                'https://randomuser.me/api/portraits/men/18.jpg',
-                'https://randomuser.me/api/portraits/men/19.jpg',
-                'https://randomuser.me/api/portraits/men/20.jpg',
-            ],
-            'female' => [
-                'https://randomuser.me/api/portraits/women/10.jpg',
-                'https://randomuser.me/api/portraits/women/11.jpg',
-                'https://randomuser.me/api/portraits/women/12.jpg',
-                'https://randomuser.me/api/portraits/women/13.jpg',
-                'https://randomuser.me/api/portraits/women/14.jpg',
-                'https://randomuser.me/api/portraits/women/15.jpg',
-                'https://randomuser.me/api/portraits/women/16.jpg',
-                'https://randomuser.me/api/portraits/women/17.jpg',
-                'https://randomuser.me/api/portraits/women/18.jpg',
-                'https://randomuser.me/api/portraits/women/19.jpg',
-                'https://randomuser.me/api/portraits/women/20.jpg',
-            ],
-        ];
-
-        // Build avatar pool based on gender
-        if ($gender === 'mix') {
-            $half = max(1, floor($amount / 2));
-            $rest = $amount - $half;
-
-            $maleAvatars = array_slice($avatars['male'], 0, $half);
-            $femaleAvatars = array_slice($avatars['female'], 0, $rest);
-
-            $pool = array_merge($maleAvatars, $femaleAvatars);
-        } elseif (isset($avatars[$gender])) {
-            $pool = $avatars[$gender];
-        } else {
-            $pool = $avatars['male'];
+        static $styles_output = false;
+        $styles = '';
+        if (!$styles_output) {
+            $styles_output = true;
+            $styles = '
+<style>
+.gt-happy-customers {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1a1a1a;
+    border-radius: 9999px;
+    padding: 6px 16px 6px 2px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    width: fit-content;
+}
+.gt-happy-customers-avatars {
+    display: flex;
+}
+.gt-happy-customers-avatars img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #1a1a1a;
+}
+.gt-happy-customers-avatars img + img {
+    margin-left: -12px;
+}
+.gt-happy-customers-label {
+    font-size: 14px;
+}
+</style>';
         }
 
-        if ($shuffle) {
-            shuffle($pool);
-        }
-
-        // Limit the number of avatars shown
-        $avatarList = array_slice($pool, 0, max(1, $amount));
+        $avatarList = growtype_wc_get_user_portraits([
+            'gender' => $gender,
+            'count' => $amount,
+            'shuffle' => $shuffle,
+        ]);
 
         $images = '';
-        foreach ($avatarList as $index => $avatar) {
-            $margin = $index === 0 ? '0' : '-12px';
-            $images .= '<img src="' . esc_url($avatar) . '" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #1a1a1a; margin-left: ' . $margin . ';" />';
+        foreach ($avatarList as $avatar) {
+            $images .= '<img src="' . esc_url($avatar) . '" />';
         }
 
-        return '
-    <div style="display: flex; align-items: center; gap: 10px; background: #1a1a1a; border-radius: 9999px; padding: 6px 16px; padding-left: 2px; color: #ffffff; font-size: 16px; font-weight: 500; width: fit-content;">
-        <div style="display: flex;">' . $images . '</div>
-        <span style="font-size: 14px;">' . $label . '</span>
+        return $styles . '
+    <div class="gt-happy-customers">
+        <div class="gt-happy-customers-avatars">' . $images . '</div>
+        <span class="gt-happy-customers-label">' . $label . '</span>
     </div>
     ';
     }

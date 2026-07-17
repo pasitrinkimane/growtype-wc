@@ -1,28 +1,55 @@
 <?php
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/coupon.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/coupon.php";
 new Growtype_Wc_Coupon_Shortcode();
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/wishlist.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/wishlist.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/product.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/product.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/features.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/features.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/payment-methods.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/payment-methods.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/countdown.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/countdown.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/justpurchased.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/justpurchased.php";
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/notice.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/notice.php";
 new Growtype_Wc_Notice();
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/happy-customers.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/happy-customers.php";
 new Growtype_Wc_Happy_Customers();
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/banner.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/banner.php";
 new Growtype_Wc_Banner_Shortcode();
 
-require_once GROWTYPE_WC_PATH . 'includes/methods/shortcodes/partials/benefits.php';
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/benefits.php";
 new Growtype_Wc_Benefits_Shortcode();
+
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/top-rated.php";
+new Growtype_Wc_Top_Rated();
+
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/gift-banner.php";
+new Growtype_Wc_Gift_Banner();
+
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/rating-badges.php";
+new Growtype_Wc_Rating_Badges();
+
+require_once GROWTYPE_WC_PATH .
+    "includes/methods/shortcodes/partials/testimonials.php";
+new Growtype_Wc_Testimonials();

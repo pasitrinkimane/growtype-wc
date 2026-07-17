@@ -262,10 +262,39 @@ class Growtype_Wc_Upsell_Modal
                         style="font-size: 1.05rem; min-height: 50px;">' . esc_html($button_text) . '</a>';
         }
 
+        $primary_method = $stripe_enabled ? 'gwc-stripe' : 'gwc-paypal';
+        if (class_exists('Growtype_Wc_Payment_Settings')) {
+            $primary_method = Growtype_Wc_Payment_Settings::get_primary_method_id();
+        } else {
+            $primary_method_setting = get_option('growtype_wc_primary_payment_method', 'auto');
+
+            if ($primary_method_setting === 'gwc-paypal' || $primary_method_setting === 'gwc-stripe') {
+                $primary_method = $primary_method_setting;
+            }
+        }
+
+        if ($primary_method === 'gwc-stripe' && !$stripe_enabled) {
+            $primary_method = $paypal_enabled ? 'gwc-paypal' : '';
+        }
+
+        if ($primary_method === 'gwc-paypal' && !$paypal_enabled) {
+            $primary_method = $stripe_enabled ? 'gwc-stripe' : '';
+        }
+
+        $primary_method = apply_filters(
+            'growtype_wc_upsell_modal_primary_payment_method',
+            $primary_method,
+            $product,
+            $return_url
+        );
+
+        $primary_method = sanitize_key((string)$primary_method);
+        $provider = $primary_method === 'gwc-stripe' ? 'stripe' : 'paypal';
+
         // ── Build express checkout element (Google Pay / Apple Pay) ───────────
         $fallback_url = add_query_arg([
             'add-to-cart'    => $product_id,
-            'payment_method' => $stripe_enabled ? 'gwc-stripe' : 'gwc-paypal',
+            'payment_method' => $primary_method,
         ], wc_get_checkout_url());
 
         if (!empty($return_url)) {
@@ -275,22 +304,9 @@ class Growtype_Wc_Upsell_Modal
         }
 
         $fallback_url = apply_filters('growtype_wc_upsell_modal_fallback_url', $fallback_url, $product, $return_url);
-        $provider = $stripe_enabled ? 'stripe' : 'paypal';
         $methods  = 'applePay,googlePay';
 
-        $express_html = '<div class="growtype-wc-payment-button btn btn-primary btn-lg w-100 mx-auto"
-                    style="font-size: 1.05rem; min-height: 50px;"
-                    data-provider="' . esc_attr($provider) . '"
-                    data-product-id="' . esc_attr($product_id) . '"
-                    data-provider-extra-class=""
-                    data-method="' . esc_attr($methods) . '"
-                    data-type="express"
-                    data-label="' . esc_attr($button_text) . '"
-                    data-return-url="' . esc_url($return_url) . '"
-                    data-fallback="' . esc_url($fallback_url) . '">
-                </div>';
-
-        // ── Instant charge only — skip express if saved payment exists ────────
+        // ── Instant charge — use saved payment if available ────────────────────
         if (!empty($saved_payment_url)) {
             return '<div class="gwc-upsell-payment-instant">
                         <a href="' . esc_url($saved_payment_url) . '"
@@ -303,7 +319,28 @@ class Growtype_Wc_Upsell_Modal
                     </div>';
         }
 
-        return $express_html;
+        // ── No saved payment — show checkout button that opens the payment form ─
+        $form_meta = function_exists('growtype_wc_checkout_button_payment_form_meta')
+            ? growtype_wc_checkout_button_payment_form_meta($provider, $primary_method, $product_id, explode(',', $methods))
+            : [
+                'action' => $provider === 'stripe' ? 'gwc_stripe_payment_form' : 'gwc_payment_form',
+                'nonce' => wp_create_nonce($provider === 'stripe' ? 'growtype_wc_ajax_nonce' : 'gwc_payment_form_render'),
+            ];
+
+        return '<button type="button"
+                        class="growtype-wc-checkout-button btn btn-primary btn-lg w-100"
+                        style="font-size:1.1rem; min-height:50px;font-weight:bold;"
+                        data-product-id="' . esc_attr($product_id) . '"
+                        data-methods="' . esc_attr($methods) . '"
+                        data-primary-payment-method="' . esc_attr($primary_method) . '"
+                        data-provider="' . esc_attr($provider) . '"
+                        data-fallback="' . esc_url($fallback_url) . '"
+                        data-payment-form-mode="form"
+                        data-express-show-form="yes"
+                        data-payment-form-action="' . esc_attr($form_meta['action']) . '"
+                        data-payment-form-nonce="' . esc_attr($form_meta['nonce']) . '">
+                    ' . esc_html($button_text) . '
+                </button>';
     }
 
     /**

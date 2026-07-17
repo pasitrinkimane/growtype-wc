@@ -6,6 +6,14 @@
  */
 
 function growtypeWcStripeButtonHandler(container, { method, type, label }) {
+    const cleanLabel = (() => {
+        if (!label) return '';
+
+        const temp = document.createElement('div');
+        temp.innerHTML = String(label);
+        return (temp.textContent || temp.innerText || '').trim();
+    })();
+
     let fallbackUrl = container.dataset.fallback || container.getAttribute('data-fallback');
     const returnUrl = container.dataset.returnUrl || container.getAttribute('data-return-url') || '';
 
@@ -42,7 +50,7 @@ function growtypeWcStripeButtonHandler(container, { method, type, label }) {
         el.dataset.fallback = fallbackUrl;
         el.setAttribute('data-fallback', fallbackUrl);
     }
-    if (label) el.textContent = label;
+    if (cleanLabel) el.textContent = cleanLabel;
     el.style.cssText = container.style.cssText || '';
 
     if (type === 'express') {
@@ -108,7 +116,7 @@ function growtypeWcStripeButtonHandler(container, { method, type, label }) {
 
     // Standard card button
     el.classList.add('btn-card');
-    el.textContent = label || 'Pay with Card';
+    el.textContent = cleanLabel || 'Pay with Card';
     container.replaceWith(el);
 }
 

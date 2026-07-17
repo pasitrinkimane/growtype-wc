@@ -22,8 +22,9 @@ class Growtype_Wc_Payment_Settings
 
     public function __construct()
     {
-        // Output fields on the main Checkout/Payments tab (no section active)
-        add_action('woocommerce_settings_checkout', [$this, 'output']);
+        // Output fields + save button before WooCommerce's React payments mount.
+        add_action('woocommerce_settings_checkout', [$this, 'output'], 5);
+        add_action('woocommerce_settings_checkout', [$this, 'output_save_button'], 6);
 
         // Save fields when the form is submitted on that page
         add_action('woocommerce_settings_save_checkout', [$this, 'save']);
@@ -48,6 +49,29 @@ class Growtype_Wc_Payment_Settings
         }
 
         WC_Admin_Settings::output_fields($this->get_fields());
+    }
+
+    /**
+     * Output an explicit save button for the main Payments page.
+     *
+     * WooCommerce Payments now renders much of its UI via React and may not
+     * include a classic submit button for custom legacy fields.
+     */
+    public function output_save_button(): void
+    {
+        $section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
+
+        if ($section !== '') {
+            return;
+        }
+
+        echo '<p class="submit">';
+        echo '<button name="save" class="button-primary woocommerce-save-button components-button is-primary" type="submit" value="' . esc_attr__('Save changes', 'woocommerce') . '">';
+        echo esc_html__('Save changes', 'woocommerce');
+        echo '</button>';
+        echo '</p>';
+
+        echo '<hr>';
     }
 
     public function save(): void

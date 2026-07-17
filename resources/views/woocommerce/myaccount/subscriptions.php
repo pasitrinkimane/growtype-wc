@@ -4,7 +4,7 @@ defined('ABSPATH') || exit;
 do_action('woocommerce_before_account_subscriptions');
 
 if (!empty($subscriptions)) { ?>
-    <div class="board-box subs">
+    <div class="card board-box subs">
         <?php foreach ($subscriptions as $subscription) { ?>
             <div class="row subs-single">
                 <?php include __DIR__ . '/partials/subscription-single-details.php' ?>

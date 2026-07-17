@@ -78,6 +78,25 @@ class Growtype_Wc_Order
         }
 
         $order->save();
+
+        // Attach user to any subscriptions linked to this order
+        if (function_exists('growtype_wc_order_update_subscriptions')) {
+            growtype_wc_order_update_subscriptions($order_id, [
+                '_user_id' => $user_id,
+            ]);
+        }
+
+        // Add chat credits from order products (if not already credited)
+        if (class_exists('Growtype_Chat_Credits') && !$order->get_meta('_growtype_chat_credits_added')) {
+            // Set flag first to prevent double-credit from concurrent requests
+            $order->update_meta_data('_growtype_chat_credits_added', 1);
+            $order->save();
+
+            $credits_amount = Growtype_Chat_Credits::get_from_order($order_id, $user_id);
+            if ($credits_amount > 0 && function_exists('growtype_chat_credits_increase')) {
+                growtype_chat_credits_increase($credits_amount, $user_id);
+            }
+        }
     }
 
     /**

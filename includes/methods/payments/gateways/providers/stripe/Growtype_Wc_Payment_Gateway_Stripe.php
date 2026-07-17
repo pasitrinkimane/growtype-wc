@@ -56,7 +56,6 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             20,
             6,
         );
-
         $this->load_partials();
     }
 
@@ -69,6 +68,10 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         include_once __DIR__ .
             "/partials/Growtype_Wc_Payment_Gateway_Stripe_Identification.php";
         new Growtype_Wc_Payment_Gateway_Stripe_Identification($this);
+
+        include_once __DIR__ .
+            "/partials/Growtype_Wc_Payment_Gateway_Stripe_Payment_Form.php";
+        Growtype_Wc_Payment_Gateway_Stripe_Payment_Form::init();
     }
 
     protected function setup_properties()
@@ -166,6 +169,18 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                 "type" => "checkbox",
                 "label" => __(
                     "Redirect to stripe checkout after add to cart",
+                    "growtype-wc",
+                ),
+                "default" => "no",
+            ],
+            "show_payment_form" => [
+                "title" => __(
+                    "Show payment form",
+                    "growtype-wc",
+                ),
+                "type" => "checkbox",
+                "label" => __(
+                    "Show payment form instead of redirect",
                     "growtype-wc",
                 ),
                 "default" => "no",
@@ -817,6 +832,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             if (
                 $this->get_option("add_to_card_redirect_stripe_checkout") ===
                     "yes" &&
+                $this->get_option("show_payment_form") !== "yes" &&
                 isset($_GET["payment_method"]) &&
                 $_GET["payment_method"] === self::PAYMENT_METHOD_KEY
             ) {
