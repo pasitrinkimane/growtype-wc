@@ -2,6 +2,8 @@
 
 class Growtype_Wc_Order
 {
+    private $order_key = "";
+
     public function __construct()
     {
         add_action(
@@ -26,7 +28,64 @@ class Growtype_Wc_Order
         );
 
         add_action("user_register", [$this, "attach_user_to_order"], 20);
+
         add_action("wp_login", [$this, "attach_user_to_order"], 20, 2);
+
+        add_action("template_redirect", [$this, "set_order_key_cookie"]);
+
+        add_filter("growtype_auth_success_redirect_url", [$this, "restore_order_key_on_redirect"], 20, 2);
+    }
+
+    /**
+     * Restore the order key in the success redirect URL after OAuth callback
+     * since the original redirect URL strips query parameters.
+     */
+    public function restore_order_key_on_redirect($redirect_url, $service)
+    {
+        if (strpos($redirect_url, "order-received") !== false && !isset($_GET["key"])) {
+            $key = $this->order_key ?: sanitize_text_field((string)($_COOKIE["growtype_wc_order_key"] ?? ""));
+            if ($key) {
+                $redirect_url = add_query_arg("key", $key, $redirect_url);
+            }
+        }
+        return $redirect_url;
+    }
+
+    /**
+     * Store order key in a cookie when visiting the order received page.
+     */
+    public function set_order_key_cookie()
+    {
+        $is_thankyou = (function_exists("growtype_wc_is_thankyou_page") && growtype_wc_is_thankyou_page())
+            || (function_exists("is_wc_endpoint_url") && is_wc_endpoint_url("order-received"));
+
+        if (isset($_GET["key"]) && $is_thankyou) {
+            // Use root path "/" to make sure the cookie is sent on all endpoints (like /gauth/)
+            $cookie_path = "/";
+            $cookie_domain = defined("COOKIE_DOMAIN") ? COOKIE_DOMAIN : "";
+
+            // Set SameSite=Lax for modern browsers to allow sending the cookie on cross-site redirect (from Google back to our site)
+            if (PHP_VERSION_ID >= 70300) {
+                setcookie("growtype_wc_order_key", sanitize_text_field($_GET["key"]), [
+                    'expires' => time() + 3600,
+                    'path' => $cookie_path,
+                    'domain' => $cookie_domain,
+                    'secure' => is_ssl(),
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]);
+            } else {
+                setcookie(
+                    "growtype_wc_order_key",
+                    sanitize_text_field($_GET["key"]),
+                    time() + 3600,
+                    $cookie_path . "; SameSite=Lax",
+                    $cookie_domain,
+                    is_ssl(),
+                    true
+                );
+            }
+        }
     }
 
     /**
@@ -36,23 +95,33 @@ class Growtype_Wc_Order
     function attach_user_to_order($user_id_or_login, $user = null)
     {
         $user_id = is_numeric($user_id_or_login)
-            ? (int) $user_id_or_login
+            ? (int)$user_id_or_login
             : $user->ID ?? 0;
 
         if (!$user_id) {
             return;
         }
 
-        $url_key = sanitize_text_field((string) ($_GET["key"] ?? ""));
+        $url_key = sanitize_text_field((string)($_GET["key"] ?? $_COOKIE["growtype_wc_order_key"] ?? ""));
+
+        error_log(sprintf(
+                "[PreSaid Debug] attach_user_to_order called for user_id=%d, url_key=%s",
+                $user_id,
+                $url_key
+            )
+        );
+
         if (!$url_key) {
             return;
         }
+
+        $this->order_key = $url_key;
 
         // Resolve order: prefer WooCommerce query var, fall back to key lookup
         global $wp;
         $order_id = absint($wp->query_vars["order-received"] ?? 0);
         if (!$order_id && function_exists("wc_get_order_id_by_order_key")) {
-            $order_id = (int) wc_get_order_id_by_order_key($url_key);
+            $order_id = (int)wc_get_order_id_by_order_key($url_key);
         }
         if (!$order_id) {
             return;
@@ -79,6 +148,22 @@ class Growtype_Wc_Order
 
         $order->save();
 
+        // Clear cookie
+        $cookie_path = "/";
+        $cookie_domain = defined("COOKIE_DOMAIN") ? COOKIE_DOMAIN : "";
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie("growtype_wc_order_key", "", [
+                'expires' => time() - 3600,
+                'path' => $cookie_path,
+                'domain' => $cookie_domain,
+                'secure' => is_ssl(),
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+        } else {
+            setcookie("growtype_wc_order_key", "", time() - 3600, $cookie_path . "; SameSite=Lax", $cookie_domain, is_ssl(), true);
+        }
+
         // Attach user to any subscriptions linked to this order
         if (function_exists('growtype_wc_order_update_subscriptions')) {
             growtype_wc_order_update_subscriptions($order_id, [
@@ -87,9 +172,9 @@ class Growtype_Wc_Order
         }
 
         // Add chat credits from order products (if not already credited)
-        if (class_exists('Growtype_Chat_Credits') && !$order->get_meta('_growtype_chat_credits_added')) {
+        if (class_exists('Growtype_Chat_Credits') && !$order->get_meta('growtype_chat_credits_added')) {
             // Set flag first to prevent double-credit from concurrent requests
-            $order->update_meta_data('_growtype_chat_credits_added', 1);
+            $order->update_meta_data('growtype_chat_credits_added', 1);
             $order->save();
 
             $credits_amount = Growtype_Chat_Credits::get_from_order($order_id, $user_id);
@@ -113,8 +198,8 @@ class Growtype_Wc_Order
             $order->get_id(),
             "_customer_full_name",
             $order->get_billing_last_name() .
-                " " .
-                $order->get_billing_first_name(),
+            " " .
+            $order->get_billing_first_name(),
         );
     }
 
@@ -184,10 +269,10 @@ class Growtype_Wc_Order
                     "Y-m-d H:i:s",
                     strtotime(
                         date("Y-m-d H:i:s") .
-                            " + " .
-                            $subscription->get_data_key("billing_interval") .
-                            " " .
-                            $subscription->get_data_key("billing_period"),
+                        " + " .
+                        $subscription->get_data_key("billing_interval") .
+                        " " .
+                        $subscription->get_data_key("billing_period"),
                     ),
                 ),
             );
@@ -198,10 +283,10 @@ class Growtype_Wc_Order
                     "Y-m-d H:i:s",
                     strtotime(
                         date("Y-m-d H:i:s") .
-                            " + " .
-                            $subscription->get_data_key("billing_interval") .
-                            " " .
-                            $subscription->get_data_key("billing_period"),
+                        " + " .
+                        $subscription->get_data_key("billing_interval") .
+                        " " .
+                        $subscription->get_data_key("billing_period"),
                     ),
                 ),
             );
@@ -306,7 +391,7 @@ class Growtype_Wc_Order
             } catch (Exception $e) {
                 error_log(
                     "Growtype Mail Error: Failed to fetch order - " .
-                        $e->getMessage(),
+                    $e->getMessage(),
                 );
             }
 
@@ -390,7 +475,7 @@ class Growtype_Wc_Order
 
         $relationship_map = [];
         foreach ($candidate_orders as $candidate) {
-            $parent_id = (int) $candidate->get_meta("parent_order_id", true);
+            $parent_id = (int)$candidate->get_meta("parent_order_id", true);
             if ($parent_id) {
                 $relationship_map[$parent_id][] = $candidate;
             }
@@ -435,15 +520,15 @@ class Growtype_Wc_Order
     }
 
     public static function growtype_wc_get_order_totals_with_upsells(
-        WC_Order $order,
+        WC_Order $order
     ) {
-        $subtotal = (float) $order->get_subtotal();
-        $total = (float) $order->get_total();
+        $subtotal = (float)$order->get_subtotal();
+        $total = (float)$order->get_total();
         $descendants = self::get_associated_descendants($order);
 
         foreach ($descendants as $child_order) {
-            $subtotal += (float) $child_order->get_subtotal();
-            $total += (float) $child_order->get_total();
+            $subtotal += (float)$child_order->get_subtotal();
+            $total += (float)$child_order->get_total();
         }
 
         return [
