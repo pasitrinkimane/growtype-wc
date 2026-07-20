@@ -32,7 +32,7 @@ class Growtype_Wc_Payment_Gateway
     function woocommerce_checkout_order_processed_callback(
         $order_id,
         $posted_data,
-        $order,
+        $order
     ) {
         error_log(
             sprintf(
@@ -79,7 +79,7 @@ class Growtype_Wc_Payment_Gateway
     public static function success_url(
         $order_id,
         $payment_provider = null,
-        $include_session_id = false,
+        $include_session_id = false
     ) {
         $order = wc_get_order($order_id);
 
@@ -126,7 +126,7 @@ class Growtype_Wc_Payment_Gateway
     public static function cancel_url(
         $order_id = null,
         $redirect_to_thankyou_page = false,
-        $applied_coupons = null,
+        $applied_coupons = null
     ) {
         // 1) If we have an order and want to go to thank you...
         if ($order_id && $redirect_to_thankyou_page) {
@@ -226,7 +226,7 @@ class Growtype_Wc_Payment_Gateway
 
     public static function update_user_email_if_not_exists(
         $wp_user_id,
-        $new_email,
+        $new_email
     ) {
         $wp_user = get_user_by("id", $wp_user_id);
 
@@ -256,7 +256,7 @@ class Growtype_Wc_Payment_Gateway
 
     public static function update_order_email_if_not_exists(
         $order_id,
-        $new_email,
+        $new_email
     ) {
         $order = wc_get_order($order_id);
 

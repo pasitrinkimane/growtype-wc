@@ -282,7 +282,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
     public function change_payment_complete_order_status(
         $status,
         $order_id,
-        $order,
+        $order
     ) {
         if ($order && $order->get_payment_method() === $this->id) {
             return "completed";
@@ -808,7 +808,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         $quantity,
         $variation_id,
         $variation_attributes,
-        $cart_item_data,
+        $cart_item_data
     ) {
         static $already_running = false;
 
@@ -1241,5 +1241,130 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
             "pi" => $pi,
             "order_id" => $upsell_order->get_id(),
         ];
+    }
+
+    /**
+     * Process a refund via the Stripe Refunds API.
+     *
+     * Called by WooCommerce when the admin triggers a refund (our custom order action
+     * or the built-in refund UI). Uses the stripe_transaction_id (PaymentIntent ID)
+     * stored on the order as the charge to refund.
+     *
+     * @param int        $order_id WooCommerce order ID.
+     * @param float|null $amount   Amount to refund (null = full order total).
+     * @param string     $reason   Reason shown in order notes.
+     * @return bool|WP_Error
+     */
+    public function process_refund( $order_id, $amount = null, $reason = '' ) {
+        $order = wc_get_order( $order_id );
+
+        if ( ! $order ) {
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'growtype-wc' ) );
+        }
+
+        if ( empty( $this->secret_key ) ) {
+            return new WP_Error( 'missing_key', __( 'Stripe secret key is not configured.', 'growtype-wc' ) );
+        }
+
+        // Prefer the WC-standard _transaction_id, fall back to stripe_transaction_id meta.
+        $pi_id = $order->get_transaction_id();
+        if ( empty( $pi_id ) ) {
+            $pi_id = (string) $order->get_meta( 'stripe_transaction_id' );
+        }
+
+        // Subscription orders: no direct transaction_id — resolve via subscription's latest invoice.
+        if ( empty( $pi_id ) ) {
+            $sub_id = (string) $order->get_meta( 'stripe_subscription_id' );
+            if ( ! empty( $sub_id ) ) {
+                try {
+                    $stripe      = new \Stripe\StripeClient( $this->secret_key );
+                    $sub         = $stripe->subscriptions->retrieve( $sub_id, [ 'expand' => [ 'latest_invoice.payment_intent' ] ] );
+                    $pi_id       = $sub->latest_invoice->payment_intent->id ?? '';
+
+                    error_log( sprintf(
+                        '[GWC Stripe] process_refund: resolved PI via subscription %s → %s',
+                        $sub_id, $pi_id
+                    ) );
+                } catch ( \Throwable $e ) {
+                    error_log( '[GWC Stripe] process_refund: failed to resolve PI from subscription: ' . $e->getMessage() );
+                }
+            }
+        }
+
+        if ( empty( $pi_id ) ) {
+            // Debug: dump stripe/payment meta so we can identify the correct key.
+            $all_meta    = $order->get_meta_data();
+            $meta_summary = [];
+            foreach ( $all_meta as $meta ) {
+                $key = $meta->key;
+                if ( stripos( $key, 'stripe' ) !== false || stripos( $key, 'transaction' ) !== false || stripos( $key, 'payment' ) !== false ) {
+                    $meta_summary[ $key ] = $meta->value;
+                }
+            }
+            error_log( sprintf(
+                '[GWC Stripe] process_refund DEBUG order=%d transaction_id="%s" stripe+payment meta=%s',
+                $order_id,
+                $order->get_transaction_id(),
+                wp_json_encode( $meta_summary )
+            ) );
+
+            return new WP_Error(
+                'missing_transaction_id',
+                __( 'Cannot refund: no Stripe PaymentIntent ID found on this order.', 'growtype-wc' )
+            );
+        }
+
+        $refund_amount = ( $amount !== null )
+            ? intval( round( (float) $amount * 100 ) )        // Stripe uses cents
+            : intval( round( (float) $order->get_total() * 100 ) );
+
+        $refund_params = [
+            'payment_intent' => $pi_id,
+            'amount'         => $refund_amount,
+        ];
+
+        if ( ! empty( $reason ) ) {
+            // Stripe accepts: 'duplicate', 'fraudulent', 'requested_by_customer'
+            $stripe_reasons = [ 'duplicate', 'fraudulent', 'requested_by_customer' ];
+            if ( in_array( $reason, $stripe_reasons, true ) ) {
+                $refund_params['reason'] = $reason;
+            }
+        }
+
+        try {
+            $stripe  = new \Stripe\StripeClient( $this->secret_key );
+            $refund  = $stripe->refunds->create( $refund_params );
+            $refund_id = $refund->id ?? '';
+            $status    = $refund->status ?? '';
+
+            error_log( sprintf(
+                '[GWC Stripe] process_refund: order=%d pi=%s refund_id=%s status=%s',
+                $order_id, $pi_id, $refund_id, $status
+            ) );
+
+            if ( ! in_array( $status, [ 'succeeded', 'pending' ], true ) ) {
+                return new WP_Error(
+                    'refund_failed',
+                    sprintf( __( 'Stripe refund status: %s', 'growtype-wc' ), $status )
+                );
+            }
+
+            $order->add_order_note( sprintf(
+                __( 'Stripe refund of %1$s %2$s processed. Refund ID: %3$s.%4$s', 'growtype-wc' ),
+                number_format( (float) $amount ?? $order->get_total(), 2 ),
+                $order->get_currency(),
+                $refund_id,
+                ! empty( $reason ) ? ' Reason: ' . $reason : ''
+            ) );
+
+            return true;
+
+        } catch ( \Stripe\Exception\ApiErrorException $e ) {
+            error_log( '[GWC Stripe] process_refund API error: ' . $e->getMessage() );
+            return new WP_Error( 'stripe_error', $e->getMessage() );
+        } catch ( \Throwable $e ) {
+            error_log( '[GWC Stripe] process_refund error: ' . $e->getMessage() );
+            return new WP_Error( 'refund_error', $e->getMessage() );
+        }
     }
 }

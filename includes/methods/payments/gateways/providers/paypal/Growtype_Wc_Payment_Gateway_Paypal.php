@@ -232,4 +232,114 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
     {
         return $this->orders->charge_intent($parent_order_id, $product_id, $description);
     }
+
+    /**
+     * Process a refund for an order via the PayPal Captures API.
+     *
+     * Called automatically by WooCommerce when the admin clicks the "Refund" button
+     * on the order edit screen. The order must have a _transaction_id (PayPal capture ID)
+     * stored on it for the refund to be processed automatically.
+     *
+     * @param int        $order_id WooCommerce order ID.
+     * @param float|null $amount   Amount to refund. Defaults to the full order total.
+     * @param string     $reason   Reason for the refund (shown in order notes).
+     * @return bool|WP_Error True on success, WP_Error on failure.
+     */
+    public function process_refund( $order_id, $amount = null, $reason = '' ) {
+        $order = wc_get_order( $order_id );
+
+        if ( ! $order ) {
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'growtype-wc' ) );
+        }
+
+        $capture_id = $order->get_transaction_id();
+
+        if ( empty( $capture_id ) ) {
+            return new WP_Error(
+                'missing_capture_id',
+                __( 'Cannot refund: no PayPal capture ID found on this order (_transaction_id is empty).', 'growtype-wc' )
+            );
+        }
+
+        // Obtain a fresh (or cached) access token.
+        $access_token = $this->get_access_token( $this->get_client_id(), $this->get_client_secret() );
+
+        if ( empty( $access_token ) ) {
+            return new WP_Error( 'token_error', __( 'Could not obtain a PayPal access token.', 'growtype-wc' ) );
+        }
+
+        // Determine refund amount — default to the full order total.
+        $refund_amount = ( $amount !== null )
+            ? number_format( (float) $amount, 2, '.', '' )
+            : number_format( (float) $order->get_total(), 2, '.', '' );
+
+        $currency = $order->get_currency();
+
+        $body = [
+            'amount' => [
+                'value'         => $refund_amount,
+                'currency_code' => $currency,
+            ],
+        ];
+
+        if ( ! empty( $reason ) ) {
+            $body['note_to_payer'] = substr( $reason, 0, 255 ); // PayPal caps at 255 chars
+        }
+
+        $refund_url = $this->get_api_url( "/v2/payments/captures/{$capture_id}/refund" );
+
+        $response = wp_remote_post( $refund_url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $access_token,
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( $body ),
+            'timeout' => 20,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            $msg = $response->get_error_message();
+            error_log( "[GWC PayPal] process_refund HTTP error for order {$order_id}: {$msg}" );
+            return new WP_Error( 'http_error', $msg );
+        }
+
+        $http_code   = wp_remote_retrieve_response_code( $response );
+        $body_raw    = wp_remote_retrieve_body( $response );
+        $data        = json_decode( $body_raw, true ) ?: [];
+        $refund_id   = $data['id'] ?? '';
+        $status      = $data['status'] ?? '';
+
+        error_log( sprintf(
+            '[GWC PayPal] process_refund: order=%d capture=%s http=%d status=%s refund_id=%s',
+            $order_id, $capture_id, $http_code, $status, $refund_id
+        ) );
+
+        // PayPal returns 201 Created for a successful refund.
+        if ( $http_code !== 201 || ! in_array( $status, [ 'COMPLETED', 'PENDING' ], true ) ) {
+            $detail = $data['details'][0]['description'] ?? $data['message'] ?? $body_raw;
+            error_log( "[GWC PayPal] process_refund failed. Response: {$body_raw}" );
+            return new WP_Error(
+                'refund_failed',
+                sprintf(
+                    /* translators: 1: HTTP status, 2: PayPal error detail */
+                    __( 'PayPal refund failed (HTTP %1$s): %2$s', 'growtype-wc' ),
+                    $http_code,
+                    $detail
+                )
+            );
+        }
+
+        $note = sprintf(
+            /* translators: 1: amount, 2: currency, 3: PayPal refund ID, 4: reason */
+            __( 'PayPal refund of %1$s %2$s processed successfully. PayPal Refund ID: %3$s.%4$s', 'growtype-wc' ),
+            $refund_amount,
+            $currency,
+            $refund_id,
+            ! empty( $reason ) ? ' Reason: ' . $reason : ''
+        );
+
+        $order->add_order_note( $note );
+
+        return true;
+    }
 }

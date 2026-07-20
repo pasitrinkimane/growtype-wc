@@ -34,6 +34,9 @@ class Growtype_Wc_Order
         add_action("template_redirect", [$this, "set_order_key_cookie"]);
 
         add_filter("growtype_auth_success_redirect_url", [$this, "restore_order_key_on_redirect"], 20, 2);
+
+        add_filter("woocommerce_order_actions", [$this, "add_refund_order_action"], 10, 2);
+        add_action("woocommerce_order_action_growtype_wc_refund_order", [$this, "process_refund_order_action"]);
     }
 
     /**
@@ -216,7 +219,7 @@ class Growtype_Wc_Order
      */
     function growtype_wc_woocommerce_payment_complete(
         $order_id,
-        $transaction_id,
+        $transaction_id
     ) {
         $order = wc_get_order($order_id);
         if (!$order) {
@@ -355,7 +358,7 @@ class Growtype_Wc_Order
     public static function get_abandoned_cart_order(
         $user_email,
         $min_age_in_minutes = 10,
-        $orders_period_in_minutes = 7200,
+        $orders_period_in_minutes = 7200
     ) {
         if (!array_key_exists($user_email, self::$user_last_order_cache)) {
             $current_time = current_time("timestamp");
@@ -421,7 +424,7 @@ class Growtype_Wc_Order
     public static function get_abandoned_cart_purchase_url(
         $user_email,
         $min_age_in_minutes = 10,
-        $orders_period_in_minutes = 7200,
+        $orders_period_in_minutes = 7200
     ) {
         $order_id = self::get_abandoned_cart_order(
             $user_email,
@@ -505,7 +508,7 @@ class Growtype_Wc_Order
 
     public static function growtype_wc_get_items_with_upsells(
         $order,
-        $types = "line_item",
+        $types = "line_item"
     ) {
         $items = $order->get_items($types);
         $descendants = self::get_associated_descendants($order);
@@ -562,5 +565,55 @@ class Growtype_Wc_Order
         }
 
         return $order->get_checkout_order_received_url();
+    }
+
+    /**
+     * Add "Refund via API" to WooCommerce order actions dropdown.
+     *
+     * @param array    $actions Order actions.
+     * @param WC_Order $order   Order object.
+     * @return array
+     */
+    public function add_refund_order_action($actions, $order = null)
+    {
+        $actions['growtype_wc_refund_order'] = __('Refund via Payment API', 'growtype-wc');
+        return $actions;
+    }
+
+    /**
+     * Process the custom refund order action.
+     *
+     * @param WC_Order $order Order object.
+     */
+    public function process_refund_order_action($order)
+    {
+        if (!$order) {
+            return;
+        }
+
+        $remaining_amount = $order->get_remaining_refund_amount();
+        if ($remaining_amount <= 0) {
+            $order->add_order_note(__('Refund failed: order is already fully refunded or has no paid amount.', 'growtype-wc'));
+            return;
+        }
+
+        $refund = wc_create_refund([
+            'order_id'       => $order->get_id(),
+            'amount'         => $remaining_amount,
+            'reason'         => __('Refunded via WooCommerce order action.', 'growtype-wc'),
+            'refund_payment' => true,
+        ]);
+
+        if (is_wp_error($refund)) {
+            $order->add_order_note(sprintf(
+                __('Automatic refund via API failed: %s', 'growtype-wc'),
+                $refund->get_error_message()
+            ));
+        } else {
+            $order->add_order_note(sprintf(
+                __('Automatic refund processed successfully via Order Actions. Refund ID: %d.', 'growtype-wc'),
+                $refund->get_id()
+            ));
+        }
     }
 }
