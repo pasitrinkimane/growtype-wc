@@ -88,7 +88,7 @@ class Growtype_Wc_Benefits_Shortcode
     public static function register_version(string $version): void
     {
         add_filter("growtype_wc_benefits_versions", function (
-            array $versions,
+            array $versions
         ) use ($version): array {
             if (!in_array($version, $versions, true)) {
                 $versions[] = $version;
@@ -101,7 +101,7 @@ class Growtype_Wc_Benefits_Shortcode
 
     private static function render_version_highlight(
         array $benefits,
-        array $params,
+        array $params
     ): string {
         $output = "";
 
@@ -244,7 +244,7 @@ class Growtype_Wc_Benefits_Shortcode
 
     private static function render_version_compact(
         array $benefits,
-        array $params,
+        array $params
     ): string {
         ob_start(); ?>
         <div class="ps-benefits-compact">

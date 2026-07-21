@@ -130,7 +130,7 @@ class Growtype_Wc_Testimonials
         $portraits_men,
         $portraits_women,
         &$m_idx,
-        &$w_idx,
+        &$w_idx
     ) {
         $image = $t["image"] ?? null;
         if ($image) {
@@ -1240,7 +1240,7 @@ class Growtype_Wc_Testimonials
         $full_width = false,
         $class = "gwt-slick-slider",
         $slides_to_show = 2,
-        $wrapper = true,
+        $wrapper = true
     ) {
         $style = "";
         $cards = $html;

@@ -197,8 +197,16 @@ class Growtype_Wc_Payment_Gateway_Paypal_Subscriptions
         array $applied_coupons = [],
     ): string {
         sort($applied_coupons);
+        // Include trial settings in the cache key so changing trial parameters
+        // (price/period/duration) automatically invalidates the cached plan.
+        $trial_sig = '';
+        if (growtype_wc_product_is_trial($wc_product_id)) {
+            $trial_sig = '_t' . growtype_wc_get_trial_price($wc_product_id)
+                . '_' . growtype_wc_get_trial_period($wc_product_id)
+                . '_' . growtype_wc_get_trial_duration($wc_product_id);
+        }
         $coupon_sig = md5(implode(",", $applied_coupons));
-        $option_key = "gwc_paypal_plan_{$wc_product_id}_{$coupon_sig}";
+        $option_key = "gwc_paypal_plan_{$wc_product_id}_{$coupon_sig}{$trial_sig}";
 
         $cached = get_option($option_key, "");
         if (!empty($cached)) {

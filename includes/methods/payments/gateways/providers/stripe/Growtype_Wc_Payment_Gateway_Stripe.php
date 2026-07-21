@@ -847,6 +847,8 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
                 $order_id = $order->get_id();
 
+                Growtype_Wc_Order::apply_trial_price($order, $product_id);
+
                 $cancel_url = Growtype_Wc_Payment_Gateway::cancel_url(
                     $order_id,
                     false,
@@ -921,10 +923,54 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                                 ],
                             ];
 
+                            // Only set trial_period_days for genuinely FREE trials (trial price = 0).
+                            // For paid trials, generate a Stripe coupon from the trial settings.
                             if (growtype_wc_product_is_trial($product_id)) {
-                                $checkout_session_data["subscription_data"][
-                                    "trial_period_days"
-                                ] = growtype_wc_get_trial_duration($product_id);
+                                $trial_price = (float) growtype_wc_get_trial_price($product_id);
+                                $trial_duration_raw = (int) growtype_wc_get_trial_duration($product_id);
+                                $trial_period = growtype_wc_get_trial_period($product_id) ?: 'day';
+
+                                if ($trial_price <= 0) {
+                                    // Free trial — convert to days for Stripe
+                                    $period_days_map = [
+                                        'day'   => 1,
+                                        'week'  => 7,
+                                        'month' => 30,
+                                        'year'  => 365,
+                                    ];
+                                    $multiplier = $period_days_map[strtolower($trial_period)] ?? 1;
+                                    $trial_days = $trial_duration_raw * $multiplier;
+
+                                    error_log("[Stripe Checkout] FREE trial: duration={$trial_duration_raw} period={$trial_period} trial_days={$trial_days}");
+
+                                    $checkout_session_data["subscription_data"][
+                                        "trial_period_days"
+                                    ] = $trial_days;
+                                } else {
+                                    // Paid introductory period — generate a Stripe coupon equal to the price difference,
+                                    // applied only to the first invoice.
+                                    $recurring_price = (float) growtype_wc_get_subscription_price($product_id);
+                                    $discount_amount_cents = (int) round(($recurring_price - $trial_price) * 100);
+
+                                    if ($discount_amount_cents > 0) {
+                                        try {
+                                            $trial_coupon = $stripe->coupons->create([
+                                                "amount_off" => $discount_amount_cents,
+                                                "currency"   => get_woocommerce_currency(),
+                                                "duration"   => "once",
+                                                "name"       => "Introductory offer",
+                                            ]);
+
+                                            $checkout_session_data["discounts"] = [
+                                                ["coupon" => $trial_coupon->id],
+                                            ];
+
+                                            error_log("[Stripe Checkout] PAID intro: recurring={$recurring_price} trial_price={$trial_price} discount_cents={$discount_amount_cents} stripe_coupon={$trial_coupon->id}");
+                                        } catch (\Exception $e) {
+                                            error_log("[Stripe Checkout] Failed to create trial discount coupon: " . $e->getMessage());
+                                        }
+                                    }
+                                }
                             }
 
                             $email =
@@ -1114,6 +1160,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         // 1) Load the original order
         $parent = wc_get_order($parent_order_id);
         if (!$parent) {
+            error_log("{$log_prefix} FAILED: Invalid parent order ID: {$parent_order_id}");
             throw new \Exception("Invalid parent order ID: {$parent_order_id}");
         }
 
@@ -1138,6 +1185,14 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         $upsell_order->calculate_totals();
 
         $amount = (float) $product->get_price();
+        $order_total = (float) $upsell_order->get_total();
+        error_log("{$log_prefix} Step 3 OK: Amounts - product_price={$amount} order_total={$order_total} currency={$upsell_order->get_currency()}");
+
+        // Validate that amount is valid for Stripe (must be > 0 for confirmed PaymentIntents)
+        if ($amount <= 0 && $order_total <= 0) {
+            error_log("{$log_prefix} FAILED: Cannot charge zero amount. Product price={$amount} order_total={$order_total}. This may be a trial/subscription product that requires checkout flow.");
+            throw new \Exception("This subscription includes a free trial. Please complete your purchase through the regular checkout.");
+        }
 
         // 4) Prepare Stripe off-session charge
         $customer_id = $parent->get_meta("stripe_customer_id");
@@ -1154,10 +1209,12 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         $payment_method = $parent->get_meta("stripe_payment_method_id");
 
         if (!$customer_id) {
+            error_log("{$log_prefix} FAILED: Missing Stripe customer.");
             throw new \Exception("Missing Stripe customer.");
         }
 
         if (!$payment_method) {
+            error_log("{$log_prefix} FAILED: Missing Stripe payment method.");
             throw new \Exception("Missing Stripe payment method.");
         }
 
@@ -1169,22 +1226,30 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         $stripe = new \Stripe\StripeClient($this->secret_key);
 
+        // Build the PaymentIntent params
+        $pi_amount = intval(round($amount * 100));
+        $pi_currency = strtolower($upsell_order->get_currency());
+        $pi_params = [
+            "amount" => $pi_amount,
+            "currency" => $pi_currency,
+            "customer" => $customer_id,
+            "payment_method" => $payment_method,
+            "off_session" => true,
+            "confirm" => true,
+            "description" => $description,
+            "metadata" => [
+                "parent_order_id" => $parent_order_id,
+                "upsell_order_id" => $upsell_order->get_id(),
+                "product_id" => $product_id,
+            ],
+        ];
+        error_log("{$log_prefix} Step 5: Creating Stripe PaymentIntent with params: amount={$pi_amount} currency={$pi_currency} customer={$customer_id} pm={$payment_method} off_session=true confirm=true");
+
         try {
-            $pi = $stripe->paymentIntents->create([
-                "amount" => intval(round($amount * 100)),
-                "currency" => strtolower($upsell_order->get_currency()),
-                "customer" => $customer_id,
-                "payment_method" => $payment_method,
-                "off_session" => true,
-                "confirm" => true,
-                "description" => $description,
-                "metadata" => [
-                    "parent_order_id" => $parent_order_id,
-                    "upsell_order_id" => $upsell_order->get_id(),
-                    "product_id" => $product_id,
-                ],
-            ]);
+            $pi = $stripe->paymentIntents->create($pi_params);
+            error_log("{$log_prefix} Step 5 OK: PaymentIntent created. id={$pi->id} status={$pi->status}");
         } catch (\Stripe\Exception\ApiErrorException $e) {
+            error_log("{$log_prefix} FAILED Step 5: Stripe API error. Type=" . get_class($e) . " Code={$e->getStripeCode()} HttpStatus={$e->getHttpStatus()} Message={$e->getMessage()}");
             // record failure on upsell order
             $upsell_order->add_order_note(
                 sprintf(
@@ -1192,6 +1257,8 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                     $e->getMessage(),
                 ),
             );
+            $upsell_order->update_status('failed');
+            $upsell_order->save();
             throw new \Exception(
                 "Upsell charge failed: " . $e->getMessage(),
                 $e->getCode(),
@@ -1201,6 +1268,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
 
         // 5) Mark the new order as paid
         $upsell_order->update_meta_data("stripe_transaction_id", $pi->id);
+        error_log("{$log_prefix} Step 6: Marking order as paid. pi_id={$pi->id}");
 
         // Inherit specific payment method info (Google Pay, Apple Pay etc) from parent
         $parent_method_type = $parent->get_meta("_stripe_payment_method_type");
@@ -1225,6 +1293,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
         );
 
         $upsell_order->payment_complete();
+        error_log("{$log_prefix} Step 7 OK: Order #{$upsell_order->get_id()} marked as completed.");
 
         // 6) Save everything
         $upsell_order->save();
@@ -1235,6 +1304,7 @@ class Growtype_Wc_Payment_Gateway_Stripe extends WC_Payment_Gateway
                 "stripe_customer_id",
                 $customer_id,
             );
+            error_log("{$log_prefix} Step 8 OK: Updated user_meta stripe_customer_id for user={$upsell_order->get_customer_id()}");
         }
 
         return [

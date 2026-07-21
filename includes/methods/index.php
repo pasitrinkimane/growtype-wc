@@ -101,6 +101,7 @@ include('components/product-loop-button.php');
 include('components/product-loop-rating.php');
 include('components/product-loop-title.php');
 include('components/product-loop-price.php');
+include('components/product-loop-price-html.php');
 
 include('components/product-price.php');
 

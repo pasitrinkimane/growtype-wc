@@ -550,6 +550,52 @@ class Growtype_Wc_Order
         ];
     }
 
+    /**
+     * Apply trial price to all line items in a WC_Order.
+     * Recalculates totals so the order matches what the customer actually pays.
+     */
+    public static function apply_trial_price($order, $product_id)
+    {
+        if (!function_exists('growtype_wc_product_is_trial') || !growtype_wc_product_is_trial($product_id)) {
+            return;
+        }
+
+        $trial_price = (float) growtype_wc_get_trial_price($product_id);
+        if ($trial_price <= 0 || $order->get_total() <= $trial_price) {
+            return;
+        }
+
+        foreach ($order->get_items() as $item) {
+            $item->set_subtotal($trial_price);
+            $item->set_total($trial_price);
+            $item->save();
+        }
+        $order->calculate_totals();
+        $order->save();
+    }
+
+    /**
+     * Filter callback: replace line item price with trial price for display.
+     */
+    public static function filter_trial_item_price($value, $item)
+    {
+        if (!$item instanceof \WC_Order_Item_Product) {
+            return $value;
+        }
+
+        $product_id = $item->get_product_id();
+        if (!function_exists('growtype_wc_product_is_trial') || !growtype_wc_product_is_trial($product_id)) {
+            return $value;
+        }
+
+        $trial_price = (float) growtype_wc_get_trial_price($product_id);
+        if ($trial_price <= 0) {
+            return $value;
+        }
+
+        return (string) $trial_price;
+    }
+
     public static function get_user_last_thank_you_url($user_id = null)
     {
         $user_id = !empty($user_id) ? $user_id : get_current_user_id();

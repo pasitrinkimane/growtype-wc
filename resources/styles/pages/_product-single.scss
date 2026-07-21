@@ -4,7 +4,9 @@
 @import "../sections/product-single-details";
 
 .woocommerce.single-product:not(.has-panel) {
-  .product-summary-inner, .product-extra-inner {
+
+  .product-summary-inner,
+  .product-extra-inner {
     padding-left: 15px;
     padding-right: 15px;
   }
@@ -16,7 +18,7 @@
     margin: 0;
   }
 
-  & > div {
+  &>div {
     margin-bottom: 20px !important;
   }
 
@@ -49,7 +51,8 @@
     width: 100%;
   }
 
-  .product-summary-inner, .product-extra-inner {
+  .product-summary-inner,
+  .product-extra-inner {
     max-width: $max-width-container;
     margin: auto;
   }
@@ -64,6 +67,7 @@
 
   .product-summary-inner {
     padding-top: 25px;
+
     @include bp-phone-xl() {
       padding: 0;
     }
@@ -107,6 +111,7 @@
     padding-left: 35px;
     float: right;
     margin-bottom: 0;
+
     @include bp-tablet-portrait() {
       width: 100%;
       padding-left: 0;
@@ -131,11 +136,13 @@
       display: inline-block;
       width: 100%;
 
-      p, span, ul {
+      p,
+      span,
+      ul {
         margin-bottom: 0;
       }
 
-      p + ul {
+      p+ul {
         margin-top: 10px;
       }
 
@@ -160,6 +167,7 @@
   div.product div.images {
     width: 55%;
     display: inline-block;
+
     @include bp-tablet-portrait() {
       width: 100%;
     }
@@ -201,7 +209,8 @@
     }
   }
 
-  .related.products, .up-sells {
+  .related.products,
+  .up-sells {
     padding-bottom: 0;
     width: 100%;
     border-top: 1px solid $color-border;
@@ -211,6 +220,7 @@
     max-width: $max-width-container;
     padding-left: $padding-left-container;
     padding-right: $padding-right-container;
+
     @include bp-phone-xl() {
       margin-top: 10px;
       justify-content: space-between;
@@ -225,11 +235,12 @@
     padding-bottom: 25px;
     overflow: hidden;
 
-    > h2 {
+    >h2 {
       margin-bottom: 25px;
       font-size: 20px;
       line-height: 34px;
       text-transform: uppercase;
+
       @include bp-phone-xl() {
         margin-bottom: 25px;
       }
@@ -245,6 +256,7 @@
     padding-top: 10px;
     padding-bottom: 10px;
     font-size: 12px;
+
     @include bp-phone-xl() {
       font-size: 13px;
       margin-bottom: 15px;
@@ -290,6 +302,7 @@
         width: 100%;
         margin-top: 20px;
         border-top: 1px solid $color-border;
+
         @include bp-phone-xl() {
           margin-top: 35px;
         }
@@ -311,6 +324,7 @@
         position: relative;
         margin-top: 7px;
         margin-left: 15px;
+
         @include bp-phone-xl() {
           margin: 15px 0 0;
           width: 100%;
@@ -374,12 +388,14 @@
     margin: 0;
     border-radius: 5px;
     overflow: hidden;
+
     @include bp-phone-xl() {
       width: 100%;
     }
 
     .qty {
       padding-left: 12px;
+
       @include bp-phone-xl() {
         width: 100%;
       }
@@ -402,7 +418,7 @@
     margin-bottom: 25px;
     max-width: 390px;
 
-    > div {
+    >div {
       margin-bottom: 15px;
     }
   }
@@ -410,6 +426,7 @@
   div.product .product_title {
     font-size: 26px;
     line-height: 32px;
+
     @include bp-phone-xl() {
       font-size: 24px;
     }
@@ -450,7 +467,7 @@
 /**
 Related products with panel
  */
-.panel-area + .main {
+.panel-area+.main {
   .related.products {
     padding-left: 15px;
     margin-left: -15px;
@@ -465,7 +482,7 @@ Related products with panel
     margin: 0;
   }
 
-  &.woocommerce.single-product div.product form.cart div.quantity + .btn {
+  &.woocommerce.single-product div.product form.cart div.quantity+.btn {
     margin-left: 0;
   }
 }

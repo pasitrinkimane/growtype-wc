@@ -38,6 +38,27 @@ function growtype_wc_product_options_advanced()
     echo '</div>';
 
     /**
+     * Price period
+     */
+    echo '<div class="options_group price_period">';
+
+    woocommerce_wp_select(array (
+        'id' => '_custom_price_period',
+        'label' => 'Price Period',
+        'description' => 'Select to show price as default, daily, weekly, monthly, or yearly.',
+        'desc_tip' => 'true',
+        'options' => array(
+            'default' => 'Default',
+            'day' => 'Daily',
+            'week' => 'Weekly',
+            'month' => 'Monthly',
+            'year' => 'Yearly'
+        )
+    ));
+
+    echo '</div>';
+
+    /**
      * Img placeholder
      */
     echo '<div class="options_group img_placeholder">';
@@ -254,6 +275,13 @@ function growtype_wc_admin_process_product_object_advanced($product)
      */
     if (isset($_POST['_preview_style'])) {
         $product->update_meta_data('_preview_style', $_POST['_preview_style']);
+    }
+
+    /**
+     * Price period
+     */
+    if (isset($_POST['_custom_price_period'])) {
+        $product->update_meta_data('_custom_price_period', $_POST['_custom_price_period']);
     }
 
     /**

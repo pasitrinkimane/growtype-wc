@@ -3,7 +3,7 @@
     max-width: initial;
   }
 
-  &.woocommerce-checkout .container > .content {
+  &.woocommerce-checkout .container>.content {
     max-width: 1220px;
     margin: auto;
   }
@@ -23,6 +23,7 @@
       margin-top: 20px;
       width: 100%;
       flex-direction: column-reverse;
+
       @include bp-phone-xl() {
         max-width: initial;
       }
@@ -119,7 +120,8 @@
           text-decoration: none;
         }
 
-        .e-separator, .price-details {
+        .e-separator,
+        .price-details {
           order: 3;
 
           .e-separator {

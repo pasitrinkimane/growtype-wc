@@ -120,6 +120,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
 
             $order->calculate_totals();
 
+            Growtype_Wc_Order::apply_trial_price($order, $wc_product->get_id());
+
             if (is_user_logged_in()) {
                 $order->set_customer_id(get_current_user_id());
             }

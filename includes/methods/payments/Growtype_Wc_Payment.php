@@ -17,7 +17,8 @@ class Growtype_Wc_Payment
         $this->load_partials();
 
         add_action('growtype_wc_before_add_to_cart', [$this, 'handle_disabled_payment'], 10, 6);
-        add_action('template_redirect', [$this, 'process_upsell_endpoint']);
+        // Use 'wp' hook (which we've confirmed fires) instead of 'template_redirect' (which doesn't fire for this URL)
+        add_action('wp', [$this, 'process_upsell_endpoint'], 5);
         add_action('template_redirect', [$this, 'process_remove_saved_payment_method'], 1);
         add_filter('woocommerce_saved_payment_methods_list', [$this, 'extend_saved_payment_methods_list'], 10, 2);
         add_filter('woocommerce_available_payment_gateways', [$this, 'filter_available_gateways_for_add_payment_method'], 20);
@@ -32,6 +33,10 @@ class Growtype_Wc_Payment
         add_action('wp_ajax_nopriv_growtype_wc_finalize_order', [$this, 'ajax_finalize_order']);
 
         add_action('wp_footer', [$this, 'render_upsell_error_alert']);
+
+        // Adjust displayed line item prices for trial products
+        add_filter('woocommerce_order_item_get_subtotal', ['Growtype_Wc_Order', 'filter_trial_item_price'], 10, 2);
+        add_filter('woocommerce_order_item_get_total', ['Growtype_Wc_Order', 'filter_trial_item_price'], 10, 2);
 
         add_filter('growtype_analytics_get_user_email', [$this, 'growtype_analytics_get_user_email_fallback'], 20, 1);
     }
@@ -289,11 +294,14 @@ class Growtype_Wc_Payment
         $cache_key = $user_id . '|' . ($provider_id ?? 'all');
 
         if ($user_id < 1) {
+            error_log('[get_latest_repeat_purchase_order] user_id < 1, returning null');
             return null;
         }
 
         if (array_key_exists($cache_key, $cache)) {
-            return $cache[$cache_key];
+            $cached = $cache[$cache_key];
+            error_log("[get_latest_repeat_purchase_order] cache hit for key={$cache_key}, result=" . ($cached ? 'Order #' . $cached->get_id() : 'NULL'));
+            return $cached;
         }
 
         $orders = wc_get_orders([
@@ -319,6 +327,7 @@ class Growtype_Wc_Payment
             }
 
             if (self::order_supports_repeat_purchase($order)) {
+                error_log("[get_latest_repeat_purchase_order] Found matching order #{$order->get_id()} pm={$order->get_payment_method()}");
                 $cache[$cache_key] = $order;
                 return $cache[$cache_key];
             }
@@ -642,7 +651,9 @@ class Growtype_Wc_Payment
         $customer_id = $order->get_meta('stripe_customer_id');
         $payment_method_id = $order->get_meta('stripe_payment_method_id');
 
-        return !empty($customer_id) && !empty($payment_method_id);
+        $result = !empty($customer_id) && !empty($payment_method_id);
+        error_log("[order_supports_saved_payment_charge] order_id={$order->get_id()} pm={$order->get_payment_method()} stripe_customer=" . ($customer_id ? 'yes' : 'no') . " stripe_pm=" . ($payment_method_id ? 'yes' : 'no') . " result=" . ($result ? 'yes' : 'no'));
+        return $result;
     }
 
     public static function order_supports_repeat_purchase($order): bool
@@ -772,7 +783,7 @@ class Growtype_Wc_Payment
         $explicit_return_url = self::sanitize_return_url($_GET[self::RETURN_URL_QUERY_ARG] ?? '');
 
         if (!$order_id || !$product_id) {
-            error_log('Upsell endpoint error: Missing order or product ID.');
+            error_log('[process_upsell_endpoint] FAILED: Missing order or product ID.');
             wp_die('Invalid parameters.', 'Error', ['response' => 400]);
         }
 
@@ -780,7 +791,7 @@ class Growtype_Wc_Payment
         $lock_key = $this->instant_charge_lock_key($order_id, $product_id, get_current_user_id());
 
         if (!$this->acquire_instant_charge_lock($lock_key)) {
-            error_log('Upsell in-flight double-click prevented: Order ' . $order_id . ', Product ' . $product_id);
+            error_log('[process_upsell_endpoint] LOCKED: In-flight double-click prevented. Order=' . $order_id . ', Product=' . $product_id);
 
             $current_url = !empty($explicit_return_url)
                 ? $explicit_return_url
@@ -797,11 +808,13 @@ class Growtype_Wc_Payment
 
             if (!$order || !$product) {
                 $this->release_instant_charge_lock($lock_key);
+                error_log('[process_upsell_endpoint] FAILED: Order or product not found. order_exists=' . ($order ? 'yes' : 'no') . ' product_exists=' . ($product ? 'yes' : 'no'));
                 throw new \Exception('Order or product not found.');
             }
 
             if ((int)$order->get_customer_id() !== (int)get_current_user_id()) {
                 $this->release_instant_charge_lock($lock_key);
+                error_log('[process_upsell_endpoint] FAILED: Order does not belong to current user. order_customer=' . $order->get_customer_id() . ' current_user=' . get_current_user_id());
                 throw new \Exception('Order does not belong to current user.');
             }
 
@@ -809,6 +822,7 @@ class Growtype_Wc_Payment
 
             if (!$charge_source_order) {
                 $this->release_instant_charge_lock($lock_key);
+                error_log('[process_upsell_endpoint] FAILED: No reusable payment source order found. Original order pm=' . $order->get_payment_method() . ' has_stripe_customer=' . ($order->get_meta('stripe_customer_id') ? 'yes' : 'no') . ' has_stripe_pm=' . ($order->get_meta('stripe_payment_method_id') ? 'yes' : 'no'));
                 throw new \Exception('No reusable payment source order found.');
             }
 
@@ -816,10 +830,12 @@ class Growtype_Wc_Payment
 
             if (!$gateway) {
                 $this->release_instant_charge_lock($lock_key);
+                error_log('[process_upsell_endpoint] FAILED: Payment gateway unavailable for key=' . $gateway_key);
                 throw new \Exception('Payment gateway is unavailable.');
             }
 
             if (!method_exists($gateway, 'charge_intent')) {
+                error_log('[process_upsell_endpoint] Gateway does not support charge_intent, falling back to checkout. gateway_class=' . get_class($gateway));
                 $this->release_instant_charge_lock($lock_key);
                 wp_safe_redirect($this->build_gateway_checkout_fallback_url($product_id, $charge_source_order->get_payment_method(), $explicit_return_url));
                 exit;
@@ -843,6 +859,7 @@ class Growtype_Wc_Payment
                     $this->release_instant_charge_lock($lock_key);
                     $new_order = $new_order_id ? wc_get_order($new_order_id) : $order;
                     $redirect_url = !empty($explicit_return_url) ? $explicit_return_url : $gateway->get_return_url($new_order);
+                    error_log("[process_upsell_endpoint] Safe status ({$pi_status}) - redirecting to: {$redirect_url}");
                     wp_safe_redirect($redirect_url);
                     exit;
                 }
@@ -947,28 +964,38 @@ class Growtype_Wc_Payment
     protected function resolve_charge_source_order($requested_order)
     {
         if (!$requested_order instanceof WC_Order) {
+            error_log('[resolve_charge_source_order] FAILED: Not a WC_Order instance.');
             return null;
         }
 
-        if ($requested_order->get_payment_method() === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID) {
-            if (self::order_supports_saved_payment_charge($requested_order)) {
+        $pm = $requested_order->get_payment_method();
+        $cust_id = (int)$requested_order->get_customer_id();
+        error_log("[resolve_charge_source_order] order_id={$requested_order->get_id()} payment_method={$pm} customer_id={$cust_id}");
+
+        if ($pm === Growtype_Wc_Payment_Gateway_Stripe::PROVIDER_ID) {
+            $supports = self::order_supports_saved_payment_charge($requested_order);
+            error_log("[resolve_charge_source_order] Stripe path: direct_order_supports_saved_payment=" . ($supports ? 'yes' : 'no'));
+            if ($supports) {
                 return $requested_order;
             }
 
-            $latest_saved_order = self::get_latest_saved_payment_order((int)$requested_order->get_customer_id());
+            $latest_saved_order = self::get_latest_saved_payment_order($cust_id);
+            error_log("[resolve_charge_source_order] Stripe path: latest_saved_order=" . ($latest_saved_order ? 'Order #' . $latest_saved_order->get_id() : 'NULL'));
             if (self::order_supports_saved_payment_charge($latest_saved_order)) {
+                error_log("[resolve_charge_source_order] Using latest saved payment order #{$latest_saved_order->get_id()}");
                 return $latest_saved_order;
             }
 
+            error_log('[resolve_charge_source_order] FAILED: No Stripe saved payment source found.');
             return null;
         }
 
-        if ($requested_order->get_payment_method() === Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID) {
+        if ($pm === Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID) {
             if (self::order_supports_repeat_purchase($requested_order)) {
                 return $requested_order;
             }
 
-            $latest_repeat_order = self::get_latest_repeat_purchase_order((int)$requested_order->get_customer_id(), Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID);
+            $latest_repeat_order = self::get_latest_repeat_purchase_order($cust_id, Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID);
             if (self::order_supports_repeat_purchase($latest_repeat_order)) {
                 return $latest_repeat_order;
             }
