@@ -1,6 +1,24 @@
 <?php
 
 /**
+ * Disable checkout page access
+ */
+$wp_customize->add_setting('woocommerce_checkout_disable_access',
+    array (
+        'default' => false,
+        'transport' => 'refresh',
+    )
+);
+
+$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_disable_access',
+    array (
+        'label' => esc_html__('Disable checkout page access'),
+        'section' => 'woocommerce_checkout',
+        'description' => __('Enable to redirect unauthorized/non-authenticated users away from the checkout page', 'growtype-wc'),
+    )
+));
+
+/**
  * Checkout style
  */
 $wp_customize->add_setting('woocommerce_checkout_style_select',
@@ -623,23 +641,5 @@ $wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_custom
         'label' => esc_html__('Breadcrumbs'),
         'section' => 'woocommerce_checkout',
         'description' => __('Enabled/disable breadcrumbs', 'growtype-wc'),
-    )
-));
-
-/**
- * Disable checkout page access
- */
-$wp_customize->add_setting('woocommerce_checkout_disable_access',
-    array (
-        'default' => false,
-        'transport' => 'refresh',
-    )
-);
-
-$wp_customize->add_control(new Skyrocket_Toggle_Switch_Custom_control($wp_customize, 'woocommerce_checkout_disable_access',
-    array (
-        'label' => esc_html__('Disable checkout page access'),
-        'section' => 'woocommerce_checkout',
-        'description' => __('Enable to redirect unauthorized/non-authenticated users away from the checkout page', 'growtype-wc'),
     )
 ));
