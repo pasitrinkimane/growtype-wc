@@ -1299,7 +1299,7 @@ class Growtype_Wc_Testimonials
             .gwt-slick-slider .slick-dots li button {
                 width: 10px; height: 10px; padding: 0; border-radius: 50%;
                 border: 1.5px solid var(--ps-border, rgba(255, 255, 255, .2));
-                background: transparent; font-size: 0; cursor: pointer; transition: all .25s;
+                background: color-mix(in srgb, var(--link-color, var(--theme-color, #1d9bf0)) 30%, transparent); font-size: 0; cursor: pointer; transition: all .25s;
             }
             .gwt-slick-slider .slick-dots li button:before { display: none; }
             .gwt-slick-slider .slick-dots li.slick-active button {

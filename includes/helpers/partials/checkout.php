@@ -34,3 +34,8 @@ function growtype_wc_checkout_payment_methods_position()
 {
     return apply_filters('growtype_wc_checkout_payment_methods_position', get_theme_mod('woocommerce_checkout_payment_methods_position', 'default'));
 }
+
+function growtype_wc_checkout_disable_access_active()
+{
+    return apply_filters('growtype_wc_checkout_disable_access_active', get_theme_mod('woocommerce_checkout_disable_access', false));
+}

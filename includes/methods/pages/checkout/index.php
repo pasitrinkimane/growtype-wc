@@ -194,3 +194,24 @@ add_action('wp_loaded', function () {
         return $value;
     });
 });
+
+/**
+ * Prevent checkout page access based on Customizer option
+ */
+add_action('template_redirect', 'growtype_wc_prevent_checkout_page_access');
+function growtype_wc_prevent_checkout_page_access()
+{
+    if (
+        class_exists('WooCommerce') &&
+        is_checkout() &&
+        !growtype_wc_is_thankyou_page() &&
+        growtype_wc_checkout_disable_access_active()
+    ) {
+        $redirect_url = function_exists('growtype_chat_plans_purchase_url')
+            ? growtype_chat_plans_purchase_url()
+            : home_url('/');
+
+        wp_redirect($redirect_url);
+        exit;
+    }
+}
