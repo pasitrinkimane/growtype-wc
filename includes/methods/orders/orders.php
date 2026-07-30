@@ -107,13 +107,6 @@ class Growtype_Wc_Order
 
         $url_key = sanitize_text_field((string)($_GET["key"] ?? $_COOKIE["growtype_wc_order_key"] ?? ""));
 
-        error_log(sprintf(
-                "[PreSaid Debug] attach_user_to_order called for user_id=%d, url_key=%s",
-                $user_id,
-                $url_key
-            )
-        );
-
         if (!$url_key) {
             return;
         }
