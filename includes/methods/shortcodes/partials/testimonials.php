@@ -101,20 +101,25 @@ class Growtype_Wc_Testimonials
 
     /**
      * Fetch deterministic gender-separated portrait pools.
+     *
+     * Pulls the full local portrait set (50 per gender) rather than only
+     * $count, so name-hashed avatar picks spread across many slots instead
+     * of colliding on a handful of images.
      */
     private static function portrait_pools($count = 5)
     {
+        $pool_count = max(50, $count);
         $men = function_exists("growtype_wc_get_user_portraits")
             ? growtype_wc_get_user_portraits([
                 "gender" => "men",
-                "count" => $count,
+                "count" => $pool_count,
                 "shuffle" => false,
             ])
             : [];
         $women = function_exists("growtype_wc_get_user_portraits")
             ? growtype_wc_get_user_portraits([
                 "gender" => "women",
-                "count" => $count,
+                "count" => $pool_count,
                 "shuffle" => false,
             ])
             : [];
@@ -129,8 +134,8 @@ class Growtype_Wc_Testimonials
         $idx,
         $portraits_men,
         $portraits_women,
-        &$m_idx,
-        &$w_idx
+        &$used_men,
+        &$used_women
     ) {
         $image = $t["image"] ?? null;
         if ($image) {
@@ -140,18 +145,35 @@ class Growtype_Wc_Testimonials
         $gender = $t["image_gender"] ?? "";
         $name = $t["image_name"] ?? "";
 
+        $pick = function ($pool, &$used, $name) {
+            $total = count($pool);
+            if ($total === 0) {
+                return null;
+            }
+
+            // Same name always hashes to the same index; probe forward past
+            // already-assigned indexes so two people never share an avatar.
+            $index = $name
+                ? abs(crc32($name)) % $total
+                : count($used) % $total;
+            while (
+                count($used) < $total &&
+                in_array($index, $used, true)
+            ) {
+                $index = ($index + 1) % $total;
+            }
+            $used[] = $index;
+            return $index;
+        };
+
         if ($gender === "women" && !empty($portraits_women)) {
-            $pick = $name
-                ? abs(crc32($name)) % count($portraits_women)
-                : $w_idx++;
-            return $portraits_women[$pick] ?? "";
+            $picked = $pick($portraits_women, $used_women, $name);
+            return $picked !== null ? $portraits_women[$picked] : "";
         }
 
         if ($gender === "men" && !empty($portraits_men)) {
-            $pick = $name
-                ? abs(crc32($name)) % count($portraits_men)
-                : $m_idx++;
-            return $portraits_men[$pick] ?? "";
+            $picked = $pick($portraits_men, $used_men, $name);
+            return $picked !== null ? $portraits_men[$picked] : "";
         }
 
         return "https://randomuser.me/api/portraits/" .
@@ -578,8 +600,8 @@ class Growtype_Wc_Testimonials
             : self::default_testimonials();
 
         [$portraits_men, $portraits_women] = self::portrait_pools($count);
-        $m_idx = 0;
-        $w_idx = 0;
+        $used_men = [];
+        $used_women = [];
 
         $items = "";
         foreach ($testimonials as $idx => $t) {
@@ -594,8 +616,8 @@ class Growtype_Wc_Testimonials
                 $idx,
                 $portraits_men,
                 $portraits_women,
-                $m_idx,
-                $w_idx,
+                $used_men,
+                $used_women,
             );
 
             $items .=
@@ -702,8 +724,8 @@ class Growtype_Wc_Testimonials
             : self::default_testimonials();
 
         [$portraits_men, $portraits_women] = self::portrait_pools($count);
-        $m_idx = 0;
-        $w_idx = 0;
+        $used_men = [];
+        $used_women = [];
 
         $engagement = [
             ["replies" => 3, "likes" => 24],
@@ -733,8 +755,8 @@ class Growtype_Wc_Testimonials
                 $idx,
                 $portraits_men,
                 $portraits_women,
-                $m_idx,
-                $w_idx,
+                $used_men,
+                $used_women,
             );
 
             // Extract username (handle)
