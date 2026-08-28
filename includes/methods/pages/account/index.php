@@ -4,6 +4,7 @@
  * Add methods
  */
 include "subpages/edit-account.php";
+include "subpages/profile.php";
 
 /**
  * Account permalink
@@ -38,7 +39,7 @@ function growtype_wc_get_account_subpage_intro_details($subpage)
         "edit-account" =>
             __("Profile", "growtype-wc") .
             ' <div class="e-subtitle">' .
-            __("Adjust account details", "growtype-wc") .
+            __("Adjust profile details", "growtype-wc") .
             "</div>",
         "edit-address" =>
             __("Addresses", "growtype-wc") .
@@ -207,89 +208,59 @@ add_filter(
 );
 function growtype_wc_woocommerce_account_extend_menu_items($items)
 {
+    $key_to_mod = [
+        "orders" => "woocommerce_account_orders_tab_disabled",
+        "payment-methods" => "woocommerce_account_payment_methods_tab_disabled",
+        "downloads" => "woocommerce_account_downloads_tab_disabled",
+        "purchased-products" => "woocommerce_account_purchased_products_tab_disabled",
+        "uploaded-products" => "woocommerce_account_uploaded_products_tab_disabled",
+        "subscriptions" => "woocommerce_account_subscriptions_tab_disabled",
+        "customer-logout" => "woocommerce_account_logout_tab_disabled",
+        "edit-address" => "woocommerce_account_addresses_tab_disabled",
+    ];
+
     /**
-     * Reorder menu
+     * Preferred menu order
      */
+    $ordered_keys = [
+        "profile",
+        "chat-settings",
+        "edit-account",
+        "subscriptions",
+        "affiliate",
+        "payment-methods",
+        "customer-logout",
+    ];
+
     $new_items = [];
-    foreach ($items as $key => $item) {
-        $item = growtype_wc_get_account_subpage_intro_details($key) ?? $item;
 
-        if ($key === "dashboard") {
+    foreach ($ordered_keys as $key) {
+        $mod_key = $key_to_mod[$key] ?? "";
+        if (!empty($mod_key) && get_theme_mod($mod_key, false)) {
+            unset($items[$key]);
             continue;
         }
 
-        if (
-            get_theme_mod("woocommerce_account_orders_tab_disabled") &&
-            $key === "orders"
-        ) {
-            continue;
+        if (isset($items[$key])) {
+            $new_items[$key] = growtype_wc_get_account_subpage_intro_details($key) ?? $items[$key];
+            unset($items[$key]);
+        } elseif (in_array($key, ["profile", "subscriptions"])) {
+            $new_items[$key] = growtype_wc_get_account_subpage_intro_details($key);
         }
+    }
 
-        if (
-            get_theme_mod("woocommerce_account_downloads_tab_disabled") &&
-            $key === "downloads"
-        ) {
-            continue;
-        }
+    if (!empty($items)) {
+        foreach ($items as $key => $val) {
+            if ($key === "dashboard") {
+                continue;
+            }
 
-        if (
-            get_theme_mod("woocommerce_account_logout_tab_disabled") &&
-            $key === "customer-logout"
-        ) {
-            continue;
-        }
+            $mod_key = $key_to_mod[$key] ?? "";
+            if (!empty($mod_key) && get_theme_mod($mod_key, false)) {
+                continue;
+            }
 
-        if (
-            get_theme_mod("woocommerce_account_addresses_tab_disabled") &&
-            $key === "edit-address"
-        ) {
-            continue;
-        }
-
-        if (
-            get_theme_mod("woocommerce_account_payment_methods_tab_disabled") &&
-            $key === "payment-methods"
-        ) {
-            continue;
-        }
-
-        $new_items[$key] = $item;
-
-        /**
-         * Purchased products tab
-         */
-        if (
-            !get_theme_mod(
-                "woocommerce_account_purchased_products_tab_disabled",
-            )
-        ) {
-            $new_items[
-                "purchased-products"
-            ] = growtype_wc_get_account_subpage_intro_details(
-                "purchased-products",
-            );
-        }
-
-        /**
-         * Uploaded products tab
-         */
-        if (
-            !get_theme_mod("woocommerce_account_uploaded_products_tab_disabled")
-        ) {
-            $new_items[
-                "uploaded-products"
-            ] = growtype_wc_get_account_subpage_intro_details(
-                "uploaded-products",
-            );
-        }
-
-        /**
-         * Subscription
-         */
-        if (!get_theme_mod("woocommerce_account_subscriptions_tab_disabled")) {
-            $new_items[
-                "subscriptions"
-            ] = growtype_wc_get_account_subpage_intro_details("subscriptions");
+            $new_items[$key] = growtype_wc_get_account_subpage_intro_details($key) ?? $val;
         }
     }
 

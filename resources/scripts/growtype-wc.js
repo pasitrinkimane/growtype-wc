@@ -9,6 +9,7 @@ import { message } from "./components/message";
 import { justpurchased } from "./components/popup/justpurchased";
 import { upsellModal } from "./components/upsell-modal";
 import { sidebar } from "./sidebar";
+const { accountDeleteConfirmation } = require('./components/accountDeleteConfirmation.cjs');
 
 import { growtypeWcPaymentButton } from "./components/buttons/growtypeWcPaymentButton";
 import { GrowtypeWcStripeProvider } from "./providers/stripe/growtypeWcStripeProvider";
@@ -25,6 +26,7 @@ new GrowtypeWcStripeProvider();
 new GrowtypeWcPaypalProvider();
 
 jQuery(document).ready(() => {
+    accountDeleteConfirmation();
     growtypeWcPaymentButton();
 
     justpurchased();

@@ -683,6 +683,9 @@ class GrowtypeWcPaypalProvider {
             throw new Error('[PayPal] createOrder: productId is missing or invalid');
         }
 
+        // Clear any stale error from a previous failed attempt
+        this.clearPaymentError();
+
         const config = await this.getConfig();
         const configAjax = window.growtype_wc_ajax || window.growtype_wc_params || {};
 
@@ -749,12 +752,35 @@ class GrowtypeWcPaypalProvider {
                 console.log('[PayPal] Capture successful — redirecting to:', response.data.redirect);
                 window.location.href = response.data.redirect;
             } else {
-                throw new Error(response.data.message || 'Payment capture failed');
+                // Attach decline_code to the error so the catch block can read it
+                const err = new Error(response.data.message || 'Payment capture failed');
+                err.declineCode = response.data.decline_code || null;
+                throw err;
             }
         } catch (error) {
             console.error('[PayPal] captureOrder error:', error);
             this.hideLoader();
-            alert(error.message || 'Payment capture failed. Please try again.');
+
+            const message = error.message || 'Payment capture failed. Please try again.';
+            // declineCode is set on thrown Errors; for network-level jqXHR failures
+            // it may also be in responseJSON (jQuery sets this automatically).
+            const declineCode = error.declineCode
+                || error?.responseJSON?.data?.decline_code
+                || null;
+
+            // Notify any listeners (e.g. card form's own showError) so the error
+            // appears in the right DOM context. Listeners can call preventDefault()
+            // to suppress our fallback banner if they handle it themselves.
+            const notCancelled = document.dispatchEvent(new CustomEvent('gwc:payment:error', {
+                bubbles: true,
+                cancelable: true,
+                detail: { message, decline_code: declineCode }
+            }));
+
+            if (notCancelled) {
+                // No listener cancelled the event — use our own display logic
+                this.showPaymentError(message);
+            }
         }
     }
 
@@ -785,6 +811,74 @@ class GrowtypeWcPaypalProvider {
         if (loader) {
             loader.style.opacity = '0';
             setTimeout(() => loader.remove(), 300);
+        }
+    }
+
+    /**
+     * Display a payment error message in the UI.
+     *
+     * Priority:
+     *   1. #gwc-hf-errors — the dedicated error div inside the card form (always in DOM
+     *      when the card form is rendered; show_errors defaults to true).
+     *   2. A temporary fixed banner injected at the top of the viewport as fallback
+     *      (used when the card form is not visible, e.g. Google Pay / Apple Pay path).
+     *
+     * Styling for the banner lives in styles/payments/paypal/_error-banner.scss
+     * (class: .gwc-payment-error-banner). Inline styles are intentionally avoided here.
+     */
+    showPaymentError(message) {
+        // 1. Try the inline error div inside the card form
+        const errEl = document.getElementById('gwc-hf-errors');
+        if (errEl) {
+            errEl.textContent = message; // .textContent prevents XSS
+            errEl.style.display = 'block';
+            errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // 2. Fallback — inject a temporary fixed banner (styled via CSS class)
+        this.clearPaymentError(); // remove any leftover banner first
+
+        const banner = document.createElement('div');
+        banner.id = 'gwc-payment-error-banner';
+        banner.className = 'gwc-payment-error-banner';
+        banner.textContent = message; // .textContent prevents XSS
+        banner.setAttribute('role', 'alert');
+        banner.setAttribute('aria-live', 'assertive');
+        banner.title = 'Click to dismiss';
+        banner.addEventListener('click', () => banner.remove());
+        document.body.appendChild(banner);
+
+        // Auto-dismiss after 8 seconds
+        this._errorBannerTimer = setTimeout(() => {
+            if (banner.parentNode) {
+                banner.classList.add('gwc-payment-error-banner--hiding');
+                setTimeout(() => banner.remove(), 400);
+            }
+        }, 8000);
+    }
+
+    /**
+     * Clear any visible payment error — both the inline card-form error
+     * and the fixed banner. Called automatically at the start of each new
+     * payment attempt so stale errors never linger.
+     */
+    clearPaymentError() {
+        // Clear inline card-form error
+        const errEl = document.getElementById('gwc-hf-errors');
+        if (errEl) {
+            errEl.textContent = '';
+            errEl.style.display = 'none';
+        }
+
+        // Clear fixed banner
+        const banner = document.getElementById('gwc-payment-error-banner');
+        if (banner) banner.remove();
+
+        // Cancel pending auto-dismiss timer
+        if (this._errorBannerTimer) {
+            clearTimeout(this._errorBannerTimer);
+            this._errorBannerTimer = null;
         }
     }
 

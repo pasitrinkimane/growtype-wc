@@ -111,6 +111,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Payment_Form
         $show_loader = (bool)($args['show_loader'] ?? true);
         $submit_label = $args['submit_label'] ?? Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label();
         $boot_script = (bool)($args['boot_script'] ?? true); // false when rendered via AJAX
+        $gateways = (function_exists('WC') && WC() && WC()->payment_gateways())
+            ? WC()->payment_gateways()->payment_gateways()
+            : [];
+        $paypal_gateway = $gateways[Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID] ?? null;
+        $show_dev_helper = $paypal_gateway ? (bool) $paypal_gateway->is_test_mode() : false;
 
         $methods_str = implode(',', array_map('sanitize_text_field', $express_methods));
         ?>
@@ -143,6 +148,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Payment_Form
 
                     <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render([
                         'submit_label' => $submit_label,
+                        'show_dev_helper' => $show_dev_helper,
                     ]); ?>
                 </div>
             <?php endif; ?>

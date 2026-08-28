@@ -396,6 +396,9 @@ class Growtype_Wc_Product
         $product_ids = array ();
         foreach ($customer_orders as $customer_order) {
             $order = wc_get_order($customer_order->ID);
+            if (!$order || !is_a($order, 'WC_Order')) {
+                continue;
+            }
             $items = $order->get_items();
             foreach ($items as $item) {
                 $product_id = $item->get_product_id();

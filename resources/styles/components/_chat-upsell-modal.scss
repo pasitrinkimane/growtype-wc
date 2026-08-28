@@ -51,7 +51,6 @@
     z-index: 10;
     opacity: 0.6;
     transition: opacity 0.2s, transform 0.2s;
-    filter: invert(1) grayscale(100%) brightness(200%);
 
     &:hover {
       opacity: 1;

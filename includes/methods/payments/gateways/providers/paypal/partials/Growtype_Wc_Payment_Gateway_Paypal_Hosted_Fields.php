@@ -557,20 +557,32 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     $capture_result["purchase_units"][0]["payments"][
                         "captures"
                     ][0]["processor_response"]["response_code"] ?? "";
-                $detail = sprintf(
-                    "Payment declined by card issuer (code: %s). Please try again or contact our support %s",
-                    $proc_code ?: "unknown",
-                    get_option("admin_email"),
-                );
+                $advice_code =
+                    $capture_result["purchase_units"][0]["payments"][
+                        "captures"
+                    ][0]["processor_response"]["payment_advice_code"] ?? "";
+
                 error_log(
                     sprintf(
-                        "[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s",
+                        "[GWC PayPal Capture] Inner capture DECLINED for WC order %d: capture_status=%s response_code=%s advice_code=%s",
                         $wc_order_id,
                         $capture_status,
                         $proc_code,
+                        $advice_code,
                     ),
                 );
-                throw new \Exception($detail);
+
+                $user_message = self::get_decline_message($proc_code, $advice_code);
+                $order->update_status("failed", $user_message);
+                delete_transient($lock_key);
+                wp_send_json_error(
+                    [
+                        "message"      => $user_message,
+                        "decline_code" => $proc_code ?: "unknown",
+                    ],
+                    402,
+                );
+                return;
             }
 
             // Extract the capture transaction ID
@@ -718,13 +730,14 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             delete_transient($lock_key);
             wp_send_json_error(
                 [
-                    "message" => sprintf(
+                    "message"      => sprintf(
                         __(
                             "Payment capture failed. Please try again or contact our support %s",
                             "growtype-wc",
                         ),
                         get_option("admin_email"),
                     ),
+                    "decline_code" => "unknown",
                 ],
                 500,
             );
@@ -892,7 +905,9 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         <div id="gwc-paypal-fields-wrap" style="position:relative; min-height: 250px;">
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_loader(); ?>
 
-                            <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render(); ?>
+                            <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render([
+                                "show_dev_helper" => $gateway ? (bool) $gateway->is_test_mode() : false,
+                            ]); ?>
 
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_badge(); ?>
                         </div>
@@ -961,6 +976,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 var gwcProductId = 0;
                 var gwcWcOrderId = 0;
                 var gwcReturnUrl = ''; // Explicit return URL set by the triggering widget (e.g. chat). Empty = no custom redirect.
+                var gwcPaypalDevMode = <?php echo $is_sandbox ? 'true' : 'false'; ?>;
 
                 // Card Fields instance
                 var cardFields = null;
@@ -984,6 +1000,96 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                         && window.growtype_wc_ajax.paypal.nonce)
                         ? window.growtype_wc_ajax.paypal.nonce
                         : '';
+                }
+
+                function bindDevelopmentCardHelper(formRoot) {
+                    if (!gwcPaypalDevMode || !formRoot || !formRoot.querySelector) {
+                        return;
+                    }
+
+                    var helper = formRoot.querySelector('.gwc-paypal-dev-helper');
+                    if (!helper) {
+                        return;
+                    }
+
+                    var statusEl = helper.querySelector('.gwc-paypal-dev-copy-status');
+                    var copyButtons = helper.querySelectorAll('.gwc-paypal-dev-copy-value');
+                    var cardSelect = helper.querySelector('.gwc-paypal-dev-card-select');
+                    var cardNumberCopyBtn = helper.querySelector('.gwc-paypal-dev-copy-card-number');
+                    if (!copyButtons.length) {
+                        return;
+                    }
+
+                    function syncSelectedCardValue() {
+                        if (!cardSelect || !cardNumberCopyBtn) {
+                            return;
+                        }
+
+                        cardNumberCopyBtn.setAttribute('data-copy-value', cardSelect.value || '');
+                    }
+
+                    syncSelectedCardValue();
+                    if (cardSelect && cardSelect.dataset.gwcBound !== '1') {
+                        cardSelect.dataset.gwcBound = '1';
+                        cardSelect.addEventListener('change', function () {
+                            syncSelectedCardValue();
+                            showStatus('Selected card number updated.');
+                        });
+                    }
+
+                    function showStatus(message) {
+                        if (!statusEl) {
+                            return;
+                        }
+
+                        statusEl.textContent = message;
+                        statusEl.style.display = 'inline-block';
+                    }
+
+                    function focusField(fieldLabel) {
+                        var label = String(fieldLabel || '').toLowerCase();
+                        var selectorMap = {
+                            'cardholder name': '#card-name-field-container iframe',
+                            'card number': '#card-number-field-container iframe',
+                            'expiry': '#card-expiry-field-container iframe',
+                            'cvv': '#card-cvv-field-container iframe'
+                        };
+                        var selector = selectorMap[label] || '#card-number-field-container iframe';
+                        var iframe = formRoot.querySelector(selector);
+                        if (iframe && typeof iframe.focus === 'function') {
+                            iframe.focus();
+                        }
+                    }
+
+                    copyButtons.forEach(function (copyBtn) {
+                        if (copyBtn.dataset.gwcBound === '1') {
+                            return;
+                        }
+
+                        copyBtn.dataset.gwcBound = '1';
+                        copyBtn.addEventListener('click', function () {
+                            var copyValue = copyBtn.getAttribute('data-copy-value') || '';
+                            var fieldLabel = copyBtn.getAttribute('data-field-label') || 'Field';
+
+                            if (!copyValue) {
+                                showStatus('No test value configured for ' + fieldLabel + '.');
+                                return;
+                            }
+
+                            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                                navigator.clipboard.writeText(copyValue).then(function () {
+                                    showStatus(fieldLabel + ' copied. Paste it into the PayPal field.');
+                                    focusField(fieldLabel);
+                                }).catch(function () {
+                                    showStatus('Copy failed. Use the visible ' + fieldLabel.toLowerCase() + ' value.');
+                                });
+                                return;
+                            }
+
+                            showStatus('Clipboard unavailable. Use the visible ' + fieldLabel.toLowerCase() + ' value.');
+                            focusField(fieldLabel);
+                        });
+                    });
                 }
 
                 // ── Handle inline payment form mounting ───────────────────────────
@@ -1330,6 +1436,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     // inline form.  We scope every lookup to the .gwc-payment-form
                     // that owns this product so we always hit the right element.
                     var formRoot = getActiveFormRoot();
+                    bindDevelopmentCardHelper(formRoot);
 
                     function scopedEl(id) {
                         var el = formRoot.querySelector ? formRoot.querySelector('#' + id) : null;
@@ -1357,6 +1464,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     ]).then(function () {
                         console.log('[GWC HF] ✅ All card fields rendered successfully.');
                         cardFieldsLoading = false;
+                        bindDevelopmentCardHelper(formRoot);
                         setTimeout(function () {
                             if (window.GrowtypeWcPaypalProvider) {
                                 window.GrowtypeWcPaypalProvider.hideSpinner('#gwcPaypalHostedFieldsModal #gwc-paypal-fields-wrap');
@@ -1735,5 +1843,117 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             wp_create_nonce("gwc_paypal_hosted_fields"),
             admin_url("admin-ajax.php"),
         );
+    }
+
+    /**
+     * Map a PayPal processor response code (and optional advice code) to a
+     * user-friendly decline message.
+     *
+     * Reference: https://developer.paypal.com/docs/checkout/integration-features/processor-response-codes/
+     *
+     * @param string $response_code     PayPal processor_response.response_code
+     * @param string $advice_code       PayPal processor_response.payment_advice_code (optional)
+     * @return string                   Translated, human-readable message safe to show the customer.
+     */
+    public static function get_decline_message(
+        string $response_code,
+        string $advice_code = ""
+    ): string {
+        $admin_email = (string) get_option("admin_email", "");
+
+        // Advice code 02 → customer must call their bank before retrying
+        if ($advice_code === "02") {
+            return sprintf(
+                __(
+                    "Your bank has blocked this transaction. Please contact your card issuer before trying again, or use a different card.",
+                    "growtype-wc",
+                ),
+            );
+        }
+
+        // Map specific response codes to clear, actionable messages
+        $map = [
+            // Do Not Honor — generic bank block
+            "9100" => __(
+                "Your card was declined by your bank. Please try a different card or contact your card issuer.",
+                "growtype-wc",
+            ),
+            // Not authorized for this transaction type
+            "5700" => __(
+                "Your card is not authorized for this type of transaction. Please try a different card.",
+                "growtype-wc",
+            ),
+            // Insufficient funds
+            "0500" => __(
+                "Insufficient funds on your card. Please use a different card or top up your balance.",
+                "growtype-wc",
+            ),
+            "51"   => __(
+                "Insufficient funds on your card. Please use a different card or top up your balance.",
+                "growtype-wc",
+            ),
+            // Call issuer / Refer to issuer
+            "0100" => __(
+                "Your card issuer requires you to call them before this transaction can proceed.",
+                "growtype-wc",
+            ),
+            "05"   => __(
+                "Your card issuer has declined the transaction. Please contact your bank.",
+                "growtype-wc",
+            ),
+            // Expired card
+            "54"   => __(
+                "Your card has expired. Please use a different card.",
+                "growtype-wc",
+            ),
+            // Lost or stolen card
+            "41"   => __(
+                "Your card has been reported lost. Please use a different card.",
+                "growtype-wc",
+            ),
+            "43"   => __(
+                "Your card has been reported stolen. Please use a different card.",
+                "growtype-wc",
+            ),
+            // Invalid card number / format errors
+            "13001" => __(
+                "The card number entered is invalid. Please check and try again.",
+                "growtype-wc",
+            ),
+            "13002" => __(
+                "This card type is not supported. Please use Visa, Mastercard, or Amex.",
+                "growtype-wc",
+            ),
+            "13006" => __(
+                "The card security code (CVV) is invalid. Please check and try again.",
+                "growtype-wc",
+            ),
+            "13007" => __(
+                "Your card failed the security check. Please try a different card.",
+                "growtype-wc",
+            ),
+            "13014" => __(
+                "The card expiry date is invalid. Please check and try again.",
+                "growtype-wc",
+            ),
+        ];
+
+        if (isset($map[$response_code])) {
+            return $map[$response_code];
+        }
+
+        // Unknown code — generic but actionable fallback
+        return !empty($admin_email)
+            ? sprintf(
+                __(
+                    "Your payment could not be completed. Please try a different card or contact us at %s.",
+                    "growtype-wc",
+                ),
+                $admin_email,
+            )
+            : __(
+                "Your payment could not be completed. Please try a different card.",
+                "growtype-wc",
+            );
     }
 }
