@@ -3,6 +3,13 @@
 .woocommerce-account {
   .edit-account {
 
+    .growtype-wc-account-delete-control {
+      @include bp-phone-xl() {
+        display: block;
+        width: 100%;
+      }
+    }
+
     .fields-group-title {
       .e-title {
         margin: 0;

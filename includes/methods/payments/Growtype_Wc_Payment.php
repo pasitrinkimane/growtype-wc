@@ -300,7 +300,6 @@ class Growtype_Wc_Payment
 
         if (array_key_exists($cache_key, $cache)) {
             $cached = $cache[$cache_key];
-            error_log("[get_latest_repeat_purchase_order] cache hit for key={$cache_key}, result=" . ($cached ? 'Order #' . $cached->get_id() : 'NULL'));
             return $cached;
         }
 
