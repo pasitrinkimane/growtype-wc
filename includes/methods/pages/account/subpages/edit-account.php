@@ -81,22 +81,12 @@ function growtype_wc_after_my_account()
 add_action('woocommerce_api_' . strtolower('wc-delete-account'), 'woocommerce_api_wc_delete_account');
 function growtype_wc_clear_deleted_account_browser_state(): void
 {
-    $cookie_paths = array_unique(array_filter([
-        '/',
-        defined('COOKIEPATH') ? COOKIEPATH : '/',
-        defined('SITECOOKIEPATH') ? SITECOOKIEPATH : '/',
-        defined('ADMIN_COOKIE_PATH') ? ADMIN_COOKIE_PATH : '/wp-admin',
-        defined('PLUGINS_COOKIE_PATH') ? PLUGINS_COOKIE_PATH : '/wp-content/plugins',
-    ]));
-    $cookie_domain = defined('COOKIE_DOMAIN') ? (string) COOKIE_DOMAIN : '';
-
-    foreach (array_keys($_COOKIE) as $cookie_name) {
-        foreach ($cookie_paths as $cookie_path) {
-            setcookie((string) $cookie_name, '', time() - YEAR_IN_SECONDS, (string) $cookie_path, $cookie_domain, is_ssl(), true);
-        }
-        unset($_COOKIE[$cookie_name]);
+    if (function_exists('WC') && WC()->session) {
+        WC()->session->destroy_session();
     }
 
+    // Clear only application session cookies. Expiring every incoming cookie on
+    // every WordPress path can overflow proxy response-header limits.
     wp_clear_auth_cookie();
 
     if (session_status() === PHP_SESSION_ACTIVE) {
