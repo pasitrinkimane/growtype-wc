@@ -194,10 +194,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     );
                 }
 
-                error_log(
-                    "[GWC PayPal] woocommerce_add_to_cart_extend: PayPal response: " .
-                        wp_json_encode($paypal_checkout),
-                );
+                error_log(sprintf(
+                    '[GWC PayPal] woocommerce_add_to_cart_extend: response received; status=%s; has_order_id=%s; link_count=%d.',
+                    sanitize_key((string) ($paypal_checkout['status'] ?? 'unknown')),
+                    empty($paypal_checkout['id']) ? 'no' : 'yes',
+                    count((array) ($paypal_checkout['links'] ?? []))
+                ));
 
                 if (
                     defined("WP_DEBUG") &&
@@ -205,10 +207,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     isset($paypal_checkout["name"]) &&
                     $paypal_checkout["name"] === "INVALID_REQUEST"
                 ) {
-                    error_log(
-                        "[GWC PayPal] Invalid request response: " .
-                            wp_json_encode($paypal_checkout),
-                    );
+                    error_log(sprintf(
+                        '[GWC PayPal] Invalid request response; issue_count=%d.',
+                        count((array) ($paypal_checkout['details'] ?? []))
+                    ));
                 }
 
                 if (!empty($paypal_checkout["links"])) {

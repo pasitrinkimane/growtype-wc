@@ -103,7 +103,7 @@ class Growtype_Wc_Payment_Gateway_Stripe_Webhook
             $amount = ($data['data']['object']['amount'] ?? 0) / 100;
 
             if ($email && $amount > 0) {
-                error_log("Growtype WC: No order found for PI $pi_id. Attempting self-healing for $email...");
+                error_log("Growtype WC: No order found for PI $pi_id. Attempting self-healing.");
                 $order = $this->find_order_by_email_and_amount($email, $amount);
             }
         }

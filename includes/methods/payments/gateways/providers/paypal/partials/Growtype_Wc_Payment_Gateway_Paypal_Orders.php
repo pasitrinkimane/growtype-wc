@@ -196,7 +196,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true) ?: [];
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[GWC PayPal] create_order raw response: ' . $body);
+            error_log(sprintf(
+                '[GWC PayPal] create_order response received; http_status=%d; has_order_id=%s.',
+                (int) wp_remote_retrieve_response_code($response),
+                empty($data['id']) ? 'no' : 'yes'
+            ));
         }
 
         if (empty($data['id'])) {

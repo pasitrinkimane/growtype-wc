@@ -1,5 +1,6 @@
 const DELETE_ACCOUNT_SELECTOR = '.btn-remove-account[data-delete-account-confirmation]';
 const initializedDocuments = new WeakSet();
+const submittingControls = new WeakSet();
 
 function shouldProceedWithAccountDeletion(message, confirmAction) {
     return confirmAction(message) === true;
@@ -60,12 +61,26 @@ function accountDeleteConfirmation(doc = document, confirmAction = window.confir
         }
 
         event.preventDefault();
+        if (submittingControls.has(deleteButton)) {
+            return;
+        }
+
         const message = deleteButton.getAttribute('data-delete-account-confirmation');
         if (!message || !shouldProceedWithAccountDeletion(message, confirmAction)) {
             return;
         }
 
-        submitConfirmedAccountDeletion(deleteButton, doc);
+        submittingControls.add(deleteButton);
+        if (typeof deleteButton.setAttribute === 'function') {
+            deleteButton.setAttribute('aria-disabled', 'true');
+        }
+
+        if (!submitConfirmedAccountDeletion(deleteButton, doc)) {
+            submittingControls.delete(deleteButton);
+            if (typeof deleteButton.removeAttribute === 'function') {
+                deleteButton.removeAttribute('aria-disabled');
+            }
+        }
     });
 
     initializedDocuments.add(doc);

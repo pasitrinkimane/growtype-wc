@@ -55,22 +55,13 @@ function growtype_wc_account_delete_confirmation_message(): string
 function growtype_wc_render_account_delete_form(string $delete_url): void
 {
     ?>
-    <span
-        class="growtype-wc-account-delete-control ms-auto"
+    <a
+        href="<?php echo esc_url($delete_url); ?>"
+        class="btn btn-secondary btn-remove-account growtype-wc-account-delete-control ms-auto"
         data-delete-account-confirmation="<?php echo esc_attr(growtype_wc_account_delete_confirmation_message()); ?>"
     >
-        <input type="hidden" name="delete_account_confirmed" value="1">
-        <button
-            type="submit"
-            class="btn btn-secondary btn-remove-account"
-            formaction="<?php echo esc_url($delete_url); ?>"
-            formmethod="post"
-            formnovalidate
-            onclick="return window.confirm(this.parentElement.getAttribute('data-delete-account-confirmation'));"
-        >
-            <?php esc_html_e('Delete Account', 'growtype-wc'); ?>
-        </button>
-    </span>
+        <?php esc_html_e('Delete Account', 'growtype-wc'); ?>
+    </a>
     <?php
 }
 
@@ -116,8 +107,15 @@ function growtype_wc_clear_deleted_account_browser_state(): void
 
 function woocommerce_api_wc_delete_account()
 {
-    if (!is_user_logged_in() || current_user_can('manage_options')) {
+    if (current_user_can('manage_options')) {
         wp_die(esc_html__('You are not allowed to delete this account.', 'growtype-wc'), '', ['response' => 403]);
+    }
+
+    // A repeated deletion request means the previous request already removed the
+    // account and cleared its session. Treat that completed state as success.
+    if (!is_user_logged_in()) {
+        wp_safe_redirect(home_url());
+        exit;
     }
 
     if (

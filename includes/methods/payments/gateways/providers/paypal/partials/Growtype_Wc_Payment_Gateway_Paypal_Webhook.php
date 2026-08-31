@@ -193,7 +193,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
             $amount = $resource['amount']['value'] ?? 0;
 
             if ($email && $amount > 0) {
-                error_log("Growtype WC: PayPal searching via self-healing for $email...");
+                error_log('Growtype WC: PayPal searching via self-healing.');
                 $order = $this->find_order_by_email_and_amount($email, $amount);
             }
         }
