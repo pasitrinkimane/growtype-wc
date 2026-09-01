@@ -68,6 +68,45 @@ function growtype_wc_user_has_active_subscription($user_id = null)
 }
 
 /**
+ * Determine whether a user has at least one paid order.
+ *
+ * WooCommerce's cached customer order count avoids an order query for users
+ * with no orders. The paid-order result is then cached for the request so
+ * repeated UI components do not query WooCommerce again.
+ */
+function growtype_wc_user_has_paid_orders($user_id = null): bool
+{
+    $user_id = !empty($user_id) ? absint($user_id) : get_current_user_id();
+
+    if ($user_id <= 0 || !function_exists('wc_get_orders') || !function_exists('wc_get_is_paid_statuses')) {
+        return false;
+    }
+
+    static $has_paid_orders_cache = [];
+
+    if (array_key_exists($user_id, $has_paid_orders_cache)) {
+        return $has_paid_orders_cache[$user_id];
+    }
+
+    if (function_exists('wc_get_customer_order_count') && wc_get_customer_order_count($user_id) < 1) {
+        return $has_paid_orders_cache[$user_id] = false;
+    }
+
+    $has_paid_orders = !empty(wc_get_orders([
+        'customer' => $user_id,
+        'status' => wc_get_is_paid_statuses(),
+        'limit' => 1,
+        'return' => 'ids',
+    ]));
+
+    return $has_paid_orders_cache[$user_id] = (bool) apply_filters(
+        'growtype_wc_user_has_paid_orders',
+        $has_paid_orders,
+        $user_id
+    );
+}
+
+/**
  * Get user portrait URLs from local cache or remote fallback.
  *
  * @param array $args {
@@ -240,4 +279,3 @@ function growtype_wc_get_account_avatar_html($user_id = null, int $size = 54, ?s
         $has_custom_photo
     );
 }
-
