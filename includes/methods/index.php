@@ -105,6 +105,9 @@ include('components/product-loop-price-html.php');
 
 include('components/product-price.php');
 
+include('components/class-growtype-wc-mail-segments.php');
+new Growtype_Wc_Mail_Segments();
+
 /**
  * Product cart
  */
