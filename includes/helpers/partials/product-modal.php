@@ -27,10 +27,14 @@ if (!function_exists('growtype_wc_product_modal')) {
      *   @type string $max_width            Dialog max-width. Default '550px'.
      *
      *   -- Styling --
-     *   @type string $bg_color             Background colour. Default '#0a0a0b'.
-     *   @type string $accent_color         Border / badge / price colour. Default '#00f2ff'.
-     *   @type string $accent_color_rgb     RGB triplet for rgba() use. Default '0, 242, 255'.
-     *   @type string $accent_text_color    Text on accent surfaces. Default '#fff'.
+     *   @type string $bg_color             Background colour. Default '#0e0e0e'.
+     *   @type string $accent_color         Border / badge / price colour. Default '#fcb901'.
+     *   @type string $accent_color_rgb     RGB triplet for rgba() use. Default '252, 185, 1'.
+     *   @type string $accent_text_color    Text on accent surfaces. Default '#000'.
+     *   @type string $modal_text_color     Main modal text colour. Default '#fff'.
+     *   @type string $accent_shadow_color  Accent glow colour. Auto-derived from accent_color_rgb.
+     *   @type string $accent_surface_color Features background colour. Auto-derived from accent_color_rgb.
+     *   @type string $accent_border_color  Features border colour. Auto-derived from accent_color_rgb.
      *   @type string $border_width         Default '1px'.
      *   @type string $border_radius        Default '20px'.
      *   @type string $box_shadow           Auto-derived when empty.
@@ -56,6 +60,8 @@ if (!function_exists('growtype_wc_product_modal')) {
      *   @type string $price_color          Defaults to $accent_color.
      *   @type string $price_label          Auto-filled from _price_details meta.
      *   @type string $discount_badge       Auto-calculated (e.g. "33% OFF").
+     *   @type string $discount_badge_bg    Discount badge background. Default '#ff0055'.
+     *   @type string $discount_badge_color Discount badge text colour. Default '#fff'.
      *   @type string $regular_price_prefix Default 'Value: $'.
      *
      *   -- CTA --
@@ -67,6 +73,8 @@ if (!function_exists('growtype_wc_product_modal')) {
      *   -- Footer --
      *   @type string $dismiss_text         Auto-filled from _modal_dismiss_text meta.
      *   @type string $dismiss_href         Default '#' (dismisses modal).
+     *   @type string $dismiss_color        Dismiss link colour. Default '#fff'.
+     *   @type string $dismiss_border_color Dismiss link border colour. Default rgba(255,255,255,0.2).
      *   @type string $footer_html          Arbitrary HTML below dismiss link.
      *
      *   -- Slots --
@@ -91,6 +99,10 @@ if (!function_exists('growtype_wc_product_modal')) {
         $accent_color         = (string) ($params['accent_color']       ?? '#fcb901');
         $accent_color_rgb     = (string) ($params['accent_color_rgb']   ?? '252, 185, 1');
         $accent_text_color    = (string) ($params['accent_text_color']  ?? '#000');
+        $modal_text_color     = (string) ($params['modal_text_color']   ?? '#fff');
+        $accent_shadow_color  = (string) ($params['accent_shadow_color'] ?? "rgba({$accent_color_rgb}, 0.4)");
+        $accent_surface_color = (string) ($params['accent_surface_color'] ?? "rgba({$accent_color_rgb}, 0.05)");
+        $accent_border_color  = (string) ($params['accent_border_color'] ?? "rgba({$accent_color_rgb}, 0.3)");
         $border_width         = (string) ($params['border_width']       ?? '1px');
         $border_radius        = (string) ($params['border_radius']      ?? '20px');
         $box_shadow           = (string) ($params['box_shadow']         ?? "0 0 30px rgba({$accent_color_rgb}, 0.2)");
@@ -105,6 +117,10 @@ if (!function_exists('growtype_wc_product_modal')) {
         $dismiss_href         = (string) ($params['dismiss_href']       ?? '#');
         $regular_price_prefix = (string) ($params['regular_price_prefix'] ?? 'Value: $');
         $price_color          = (string) ($params['price_color']        ?? $accent_color);
+        $discount_badge_bg    = (string) ($params['discount_badge_bg'] ?? '#ff0055');
+        $discount_badge_color = (string) ($params['discount_badge_color'] ?? '#fff');
+        $dismiss_color        = (string) ($params['dismiss_color'] ?? '#fff');
+        $dismiss_border_color = (string) ($params['dismiss_border_color'] ?? 'rgba(255,255,255,0.2)');
 
         $before_badge         = (string) ($params['before_badge']       ?? '');
         $before_features      = (string) ($params['before_features']    ?? '');
@@ -176,7 +192,7 @@ if (!function_exists('growtype_wc_product_modal')) {
      <?php echo $modal_data_str; ?>>
     <div class="modal-dialog modal-dialog-centered" style="max-width:<?php echo esc_attr($max_width); ?>;">
         <div class="modal-content"
-             style="background:<?php echo esc_attr($bg_color); ?>; border:<?php echo esc_attr($border_width); ?> solid <?php echo esc_attr($accent_color); ?>; border-radius:<?php echo esc_attr($border_radius); ?>; overflow:hidden; color:#fff; position:relative;">
+             style="background:<?php echo esc_attr($bg_color); ?>; border:<?php echo esc_attr($border_width); ?> solid <?php echo esc_attr($accent_color); ?>; border-radius:<?php echo esc_attr($border_radius); ?>; box-shadow:<?php echo esc_attr($box_shadow); ?>; overflow:hidden; color:<?php echo esc_attr($modal_text_color); ?>; position:relative;">
 <?php endif; ?>
 
             <?php if ($show_bg_image) : ?>
@@ -195,13 +211,13 @@ if (!function_exists('growtype_wc_product_modal')) {
 
                 <?php if (!empty($badge_label)) : ?>
                 <div class="gwc-modal__badge mb-3"
-                     style="display:inline-block; background:<?php echo esc_attr($badge_bg); ?>; color:<?php echo esc_attr($badge_text_color); ?>; padding:5px 18px; border-radius:50px; font-weight:800; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; box-shadow:0 0 18px rgba(<?php echo esc_attr($accent_color_rgb); ?>, 0.4);">
+                     style="display:inline-block; background:<?php echo esc_attr($badge_bg); ?>; color:<?php echo esc_attr($badge_text_color); ?>; padding:5px 18px; border-radius:50px; font-weight:800; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; box-shadow:0 0 18px <?php echo esc_attr($accent_shadow_color); ?>;">
                     <?php echo $badge_label; ?>
                 </div>
                 <?php endif; ?>
 
                 <?php if (!empty($title)) : ?>
-                <h3 class="gwc-modal__title" style="font-weight:900; font-size:1.8rem; margin-bottom:8px; color:#fff;">
+                <h3 class="gwc-modal__title" style="font-weight:900; font-size:1.8rem; margin-bottom:8px; color:<?php echo esc_attr($modal_text_color); ?>;">
                     <?php echo $title; ?>
                 </h3>
                 <?php endif; ?>
@@ -216,7 +232,7 @@ if (!function_exists('growtype_wc_product_modal')) {
 
                 <?php if (!empty($features_html)) : ?>
                 <div class="gwc-modal__features mb-4"
-                     style="background:rgba(<?php echo esc_attr($accent_color_rgb); ?>, 0.05); border:1px dashed rgba(<?php echo esc_attr($accent_color_rgb); ?>, 0.3); padding:20px 25px; border-radius:14px; text-align:left; <?php echo esc_attr($features_box_style); ?>">
+                     style="background:<?php echo esc_attr($accent_surface_color); ?>; border:1px dashed <?php echo esc_attr($accent_border_color); ?>; padding:20px 25px; border-radius:14px; text-align:left; <?php echo esc_attr($features_box_style); ?>">
                     <?php echo $features_html; ?>
                 </div>
                 <?php endif; ?>
@@ -234,12 +250,12 @@ if (!function_exists('growtype_wc_product_modal')) {
                         $<?php echo esc_html($sale_price); ?>
                     </span>
                     <?php elseif (!empty($regular_price)) : ?>
-                        <span style="font-size:3rem; font-weight:950; color:#fff; line-height:1;">
+                        <span style="font-size:3rem; font-weight:950; color:<?php echo esc_attr($modal_text_color); ?>; line-height:1;">
                         $<?php echo esc_html($regular_price); ?>
                     </span>
                     <?php endif; ?>
                         <?php if (!empty($discount_badge)) : ?>
-                        <span style="background:#ff0055; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:800;">
+                        <span style="background:<?php echo esc_attr($discount_badge_bg); ?>; color:<?php echo esc_attr($discount_badge_color); ?>; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:800;">
                             <?php echo esc_html($discount_badge); ?>
                         </span>
                         <?php endif; ?>
@@ -277,7 +293,7 @@ if (!function_exists('growtype_wc_product_modal')) {
                 <div class="gwc-modal__dismiss" style="margin-top:16px;">
                     <a href="<?php echo esc_url($dismiss_href); ?>"
                        <?php echo $dismiss_href === '#' ? 'data-bs-dismiss="modal"' : ''; ?>
-                       style="font-size:0.82rem; color:#fff; text-decoration:none; opacity:0.45; border-bottom:1px solid rgba(255,255,255,0.2);">
+                       style="font-size:0.82rem; color:<?php echo esc_attr($dismiss_color); ?>; text-decoration:none; opacity:0.45; border-bottom:1px solid <?php echo esc_attr($dismiss_border_color); ?>;">
                         <?php echo $dismiss_text; ?>
                     </a>
                 </div>

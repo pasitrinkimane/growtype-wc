@@ -87,6 +87,20 @@ function growtype_wc_clear_deleted_account_browser_state(): void
 
     // Clear only application session cookies. Expiring every incoming cookie on
     // every WordPress path can overflow proxy response-header limits.
+    $identity_cookie_names = [
+        'growtype_chat_user_token',
+        'growtype_chat_last_session',
+        'growtype_chat_session_intent',
+        'growtype_chat_pending_intents',
+        'growtype_wc_order_key',
+    ];
+    $cookie_domain = defined('COOKIE_DOMAIN') ? (string) COOKIE_DOMAIN : '';
+
+    foreach ($identity_cookie_names as $cookie_name) {
+        setcookie($cookie_name, '', time() - YEAR_IN_SECONDS, '/', $cookie_domain, is_ssl(), true);
+        unset($_COOKIE[$cookie_name]);
+    }
+
     wp_clear_auth_cookie();
 
     if (session_status() === PHP_SESSION_ACTIVE) {
