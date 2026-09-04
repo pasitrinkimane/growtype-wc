@@ -761,7 +761,9 @@ class GrowtypeWcPaypalProvider {
             console.error('[PayPal] captureOrder error:', error);
             this.hideLoader();
 
-            const message = error.message || 'Payment capture failed. Please try again.';
+            const message = error?.responseJSON?.data?.message
+                || error.message
+                || 'Payment capture failed. Please try again.';
             // declineCode is set on thrown Errors; for network-level jqXHR failures
             // it may also be in responseJSON (jQuery sets this automatically).
             const declineCode = error.declineCode

@@ -11,9 +11,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
         add_action('init', [$this, 'handle_webhook_init']);
     }
 
-    /**
-     * Fallback listener for init
-     */
     public function handle_webhook_init()
     {
         if (isset($_GET['wc-api']) && $_GET['wc-api'] === 'wc_paypal') {
@@ -21,9 +18,6 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
         }
     }
 
-    /**
-     * Handle incoming PayPal webhooks
-     */
     public function handle_webhook()
     {
         static $processed = false;
@@ -34,255 +28,330 @@ class Growtype_Wc_Payment_Gateway_Paypal_Webhook
 
         $body = file_get_contents('php://input');
         $data = json_decode($body, true);
-
-        if (empty($data) || !isset($data['event_type'])) {
-            return;
-        }
-
-        $event_type = $data['event_type'];
-
-        // ── Acknowledge unhandled events immediately ───────────────────────────
-        // Return 200 for event types we don't act on so PayPal stops retrying them.
-        // BILLING.SUBSCRIPTION.CREATED fires before user approves/pays — intentionally
-        // not processed here (only BILLING.SUBSCRIPTION.ACTIVATED is actionable).
-        // Without this gate, unhandled events fall through to signature verification,
-        // which returns 400 on failure, causing PayPal to retry every 2 hours forever.
-        $handled_events = [
-            'PAYMENT.CAPTURE.COMPLETED',
-            'PAYMENT.SALE.COMPLETED',
-            'BILLING.SUBSCRIPTION.ACTIVATED',
-        ];
-
-        if (!in_array($event_type, $handled_events, true)) {
-            error_log('[GWC PayPal Webhook] Unhandled event acknowledged (no action needed): ' . $event_type);
-            status_header(200);
-            exit;
-        }
-
-        // ── Signature verification ─────────────────────────────────────────────
-        // Only verify signature for events that trigger order completion.
-        // This prevents attackers from faking payment/activation events.
-        $webhook_id = $this->gateway->get_option('webhook_id');
-
-        if (!empty($webhook_id) && !$this->verify_webhook_signature($body, $webhook_id)) {
-            error_log('[GWC PayPal Webhook] ⚠ Signature verification FAILED — rejecting event ' . $event_type);
+        if (!is_array($data) || empty($data['id']) || empty($data['event_type'])) {
             status_header(400);
             exit;
         }
 
-        if (empty($webhook_id)) {
-            error_log('[GWC PayPal Webhook] WARNING: webhook_id not configured — skipping signature verification. Set it in WooCommerce → PayPal settings.');
-        }
-        // ── End verification ───────────────────────────────────────────────────
+        $event_id = sanitize_text_field((string) $data['id']);
+        $event_type = sanitize_text_field((string) $data['event_type']);
+        $event_handlers = $this->get_event_handlers();
 
-        error_log('[GWC PayPal Webhook] Processing event: ' . $event_type . ' | ' . json_encode($data));
-
-        switch ($event_type) {
-            case 'PAYMENT.CAPTURE.COMPLETED':
-            case 'PAYMENT.SALE.COMPLETED':
-                $this->handle_payment_completed($data);
-                break;
-            case 'BILLING.SUBSCRIPTION.ACTIVATED':
-                // NOTE: Do NOT handle BILLING.SUBSCRIPTION.CREATED here.
-                // CREATED fires immediately when the API creates the subscription object —
-                // BEFORE the user approves or pays. Only ACTIVATED fires after the user
-                // approves and the first payment succeeds.
-                $this->handle_subscription_event($data);
-                break;
+        if (!isset($event_handlers[$event_type]) || !is_callable($event_handlers[$event_type])) {
+            error_log(sprintf('[GWC PayPal Webhook] Acknowledged event %s (%s); no state transition configured.', $event_type, $event_id));
+            status_header(200);
+            exit;
         }
 
-        status_header(200);
-        exit;
+        $webhook_id = trim((string) $this->gateway->get_option('webhook_id'));
+        if ($webhook_id === '') {
+            error_log(sprintf('[GWC PayPal Webhook] Rejected %s (%s): webhook ID is not configured.', $event_type, $event_id));
+            status_header(503);
+            exit;
+        }
+
+        if (!$this->verify_webhook_signature($body, $webhook_id)) {
+            error_log(sprintf('[GWC PayPal Webhook] Rejected %s (%s): signature verification failed.', $event_type, $event_id));
+            status_header(400);
+            exit;
+        }
+
+        $claim_key = 'gwc_pp_webhook_' . md5($event_id);
+        if (!add_option($claim_key, gmdate('Y-m-d H:i:s'), '', false)) {
+            error_log(sprintf('[GWC PayPal Webhook] Duplicate event ignored: %s (%s).', $event_type, $event_id));
+            status_header(200);
+            exit;
+        }
+
+        try {
+            $handled = (bool) call_user_func($event_handlers[$event_type], $data);
+
+            if (!$handled) {
+                delete_option($claim_key);
+                status_header(500);
+                exit;
+            }
+
+            do_action('growtype_wc_paypal_webhook_processed', $event_type, $event_id);
+            error_log(sprintf('[GWC PayPal Webhook] Processed %s (%s).', $event_type, $event_id));
+            status_header(200);
+            exit;
+        } catch (Throwable $throwable) {
+            delete_option($claim_key);
+            error_log(sprintf('[GWC PayPal Webhook] Processing failed for %s (%s): %s', $event_type, $event_id, $throwable->getMessage()));
+            status_header(500);
+            exit;
+        }
     }
 
-    /**
-     * Verify the PayPal webhook signature via the REST API.
-     * @see https://developer.paypal.com/api/rest/webhooks/rest/#link-verifywebhooksignature
-     */
+    protected function get_event_handlers(): array
+    {
+        $handlers = [
+            'PAYMENT.CAPTURE.COMPLETED' => [$this, 'handle_payment_completed'],
+            'PAYMENT.SALE.COMPLETED' => [$this, 'handle_payment_completed'],
+            'BILLING.SUBSCRIPTION.ACTIVATED' => [$this, 'handle_subscription_event'],
+            'BILLING.SUBSCRIPTION.SUSPENDED' => [$this, 'handle_subscription_event'],
+            'BILLING.SUBSCRIPTION.CANCELLED' => [$this, 'handle_subscription_event'],
+            'BILLING.SUBSCRIPTION.EXPIRED' => [$this, 'handle_subscription_event'],
+            'BILLING.SUBSCRIPTION.PAYMENT.FAILED' => [$this, 'handle_subscription_event'],
+        ];
+
+        $handlers = apply_filters('growtype_wc_paypal_webhook_event_handlers', $handlers, $this);
+
+        return is_array($handlers) ? $handlers : [];
+    }
+
     protected function verify_webhook_signature(string $raw_body, string $webhook_id): bool
     {
-        // Normalize header keys to lowercase — LiteSpeed/FastCGI lowercases all
-        // custom HTTP headers in getallheaders() (e.g. PAYPAL-AUTH-ALGO → paypal-auth-algo).
-        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+        $headers = function_exists('getallheaders') ? getallheaders() : [];
+        $headers = array_change_key_case(is_array($headers) ? $headers : [], CASE_LOWER);
 
-        $verify_url = $this->gateway->get_api_url('/v1/notifications/verify-webhook-signature');
+        $required = [
+            'paypal-auth-algo',
+            'paypal-cert-url',
+            'paypal-transmission-id',
+            'paypal-transmission-sig',
+            'paypal-transmission-time',
+        ];
+        foreach ($required as $header) {
+            if (empty($headers[$header])) {
+                return false;
+            }
+        }
 
         $access_token = $this->gateway->get_access_token(
             $this->gateway->get_client_id(),
             $this->gateway->get_client_secret()
         );
-
         if (empty($access_token)) {
-            error_log('[GWC PayPal Webhook] Could not obtain access token for signature verification.');
             return false;
         }
 
-        $auth_algo       = $headers['paypal-auth-algo']        ?? '';
-        $cert_url        = $headers['paypal-cert-url']          ?? '';
-        $transmission_id = $headers['paypal-transmission-id']  ?? '';
-        $transmission_sig= $headers['paypal-transmission-sig'] ?? '';
-        $transmission_time=$headers['paypal-transmission-time']?? '';
+        $response = wp_remote_post(
+            $this->gateway->get_api_url('/v1/notifications/verify-webhook-signature'),
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => wp_json_encode([
+                    'auth_algo' => $headers['paypal-auth-algo'],
+                    'cert_url' => $headers['paypal-cert-url'],
+                    'transmission_id' => $headers['paypal-transmission-id'],
+                    'transmission_sig' => $headers['paypal-transmission-sig'],
+                    'transmission_time' => $headers['paypal-transmission-time'],
+                    'webhook_id' => $webhook_id,
+                    'webhook_event' => json_decode($raw_body, true),
+                ]),
+                'timeout' => 10,
+            ]
+        );
 
-        if (empty($auth_algo) || empty($transmission_id) || empty($transmission_sig)) {
-            error_log('[GWC PayPal Webhook] ⚠ Missing PayPal signature headers — auth_algo=' . $auth_algo . ' transmission_id=' . $transmission_id);
-        }
-
-        $payload = [
-            'auth_algo'         => $auth_algo,
-            'cert_url'          => $cert_url,
-            'transmission_id'   => $transmission_id,
-            'transmission_sig'  => $transmission_sig,
-            'transmission_time' => $transmission_time,
-            'webhook_id'        => $webhook_id,
-            'webhook_event'     => json_decode($raw_body, true),
-        ];
-
-        $response = wp_remote_post($verify_url, [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $access_token,
-                'Content-Type'  => 'application/json',
-            ],
-            'body'    => wp_json_encode($payload),
-            'timeout' => 10,
-        ]);
-
-        if (is_wp_error($response)) {
-            error_log('[GWC PayPal Webhook] Signature verify HTTP error: ' . $response->get_error_message());
+        if (is_wp_error($response) || (int) wp_remote_retrieve_response_code($response) !== 200) {
             return false;
         }
 
         $result = json_decode(wp_remote_retrieve_body($response), true);
-        $verified = ($result['verification_status'] ?? '') === 'SUCCESS';
-
-        if (!$verified) {
-            error_log('[GWC PayPal Webhook] Signature verify response: ' . wp_remote_retrieve_body($response));
-        }
-
-        return $verified;
+        return is_array($result) && ($result['verification_status'] ?? '') === 'SUCCESS';
     }
 
-    /**
-     * Handle payment completion events
-     */
-    protected function handle_payment_completed($data)
+    protected function handle_payment_completed(array $data): bool
     {
-        $resource = $data['resource'];
-        $invoice_id = $resource['invoice_id'] ?? $resource['custom'] ?? $resource['custom_id'] ?? '';
-        $paypal_id = $resource['id'] ?? '';
-
-        $order = null;
-
-        // 1. Try by Invoice ID (WooCommerce Order ID)
-        if (!empty($invoice_id)) {
-            $candidate = wc_get_order($invoice_id);
-            // Only accept it if it is a PayPal order and not a child/upsell order.
-            if ($candidate instanceof WC_Order
-                && $candidate->get_payment_method() === $this->gateway->id
-                && empty($candidate->get_meta('parent_order_id'))
-            ) {
-                error_log(sprintf('[GWC PayPal Webhook] invoice_id %s matched order #%d — accepted.', $invoice_id, $candidate->get_id()));
-                $order = $candidate;
-            } elseif ($candidate) {
-                error_log(sprintf('[GWC PayPal Webhook] invoice_id %s matched order #%d but rejected — payment_method=%s parent_order_id=%s', $invoice_id, $candidate->get_id(), $candidate->get_payment_method(), $candidate->get_meta('parent_order_id')));
-            }
+        $resource = is_array($data['resource'] ?? null) ? $data['resource'] : [];
+        if (($resource['status'] ?? 'COMPLETED') !== 'COMPLETED') {
+            return false;
         }
 
-        // 2. Self-healing fallback: Email and Amount
+        $transaction_id = sanitize_text_field((string) ($resource['id'] ?? ''));
+        if ($transaction_id === '') {
+            return false;
+        }
+
+        $subscription_id = sanitize_text_field((string) ($resource['billing_agreement_id'] ?? ''));
+        if ($subscription_id !== '') {
+            $order = $this->find_order_by_subscription_id($subscription_id);
+            if (!$order) {
+                return false;
+            }
+
+            $order->update_meta_data('_paypal_subscription_last_payment_id', $transaction_id);
+            $order->update_meta_data('_paypal_subscription_last_payment_at', gmdate('Y-m-d H:i:s'));
+            $order->save();
+
+            if ($order->get_meta('_paypal_subscription_verified_active') === 'yes') {
+                $this->process_order_completion($order, $transaction_id);
+            }
+
+            $this->refresh_linked_subscription($order, 'paypal_webhook_payment');
+            return true;
+        }
+
+        $invoice_id = absint($resource['invoice_id'] ?? $resource['custom_id'] ?? 0);
+        if ($invoice_id <= 0) {
+            return false;
+        }
+
+        $order = wc_get_order($invoice_id);
+        if (
+            !$order instanceof WC_Order
+            || $order->get_payment_method() !== $this->gateway->id
+            || !empty($order->get_meta('parent_order_id'))
+            || Growtype_Wc_Subscription::is_subscription_order($order->get_id())
+            || !$this->payment_matches_order($resource, $order)
+        ) {
+            return false;
+        }
+
+        $this->process_order_completion($order, $transaction_id);
+        return true;
+    }
+
+    protected function handle_subscription_event(array $data): bool
+    {
+        $event_type = (string) ($data['event_type'] ?? '');
+        $resource = is_array($data['resource'] ?? null) ? $data['resource'] : [];
+        $subscription_id = sanitize_text_field((string) ($resource['id'] ?? ''));
+        if ($subscription_id === '') {
+            return false;
+        }
+
+        $order = $this->find_order_by_subscription_id($subscription_id);
         if (!$order) {
-            $email = $resource['payer']['email_address'] ?? $resource['billing_details']['email'] ?? '';
-            $amount = $resource['amount']['value'] ?? 0;
+            return false;
+        }
 
-            if ($email && $amount > 0) {
-                error_log('Growtype WC: PayPal searching via self-healing.');
-                $order = $this->find_order_by_email_and_amount($email, $amount);
+        if ($event_type === 'BILLING.SUBSCRIPTION.ACTIVATED') {
+            $access_token = $this->gateway->get_access_token(
+                $this->gateway->get_client_id(),
+                $this->gateway->get_client_secret()
+            );
+            if (empty($access_token)) {
+                return false;
+            }
+
+            $provider_data = $this->gateway->subscriptions->fetch_subscription($access_token, $subscription_id);
+            if (is_wp_error($provider_data)) {
+                return false;
+            }
+
+            $validation = $this->gateway->subscriptions->validate_activation_response(
+                $provider_data,
+                $subscription_id,
+                trim((string) $order->get_meta('paypal_subscription_plan_id')),
+                (int) $order->get_id()
+            );
+            if (is_wp_error($validation)) {
+                return false;
+            }
+
+            $order->update_meta_data('_paypal_subscription_verified_active', 'yes');
+            $order->update_meta_data('_paypal_subscription_verified_at', gmdate('Y-m-d H:i:s'));
+            $order->save();
+            $this->process_order_completion($order, $subscription_id);
+            $this->refresh_linked_subscription($order, 'paypal_webhook_activation', $provider_data);
+            return true;
+        }
+
+        if ($event_type === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED') {
+            $order->update_meta_data('_paypal_subscription_payment_failed_at', gmdate('Y-m-d H:i:s'));
+            $order->add_order_note(__('PayPal reported a subscription payment failure.', 'growtype-wc'));
+            $order->save();
+            $this->refresh_linked_subscription($order, 'paypal_webhook_payment_failed');
+            return true;
+        }
+
+        return $this->refresh_linked_subscription($order, 'paypal_webhook_status', $resource);
+    }
+
+    protected function find_order_by_subscription_id(string $subscription_id)
+    {
+        $orders = wc_get_orders([
+            'limit' => 1,
+            'meta_key' => 'paypal_subscription_id',
+            'meta_value' => $subscription_id,
+        ]);
+        $order = !empty($orders) ? $orders[0] : null;
+
+        if (
+            !$order instanceof WC_Order
+            || $order->get_payment_method() !== $this->gateway->id
+            || trim((string) $order->get_meta('paypal_subscription_id')) !== $subscription_id
+        ) {
+            return null;
+        }
+
+        return $order;
+    }
+
+    protected function refresh_linked_subscription($order, string $source, ?array $provider_data = null): bool
+    {
+        $subscriptions = growtype_wc_get_subscriptions([
+            'order_id' => $order->get_id(),
+            'limit' => 1,
+        ]);
+        if (empty($subscriptions)) {
+            // The activation event can complete the order and create this record;
+            // other events should be retried until their linked record exists.
+            return false;
+        }
+
+        if ($provider_data === null) {
+            $access_token = $this->gateway->get_access_token(
+                $this->gateway->get_client_id(),
+                $this->gateway->get_client_secret()
+            );
+            if (empty($access_token)) {
+                return false;
+            }
+            $provider_data = $this->gateway->subscriptions->fetch_subscription(
+                $access_token,
+                trim((string) $order->get_meta('paypal_subscription_id'))
+            );
+            if (is_wp_error($provider_data)) {
+                return false;
             }
         }
 
-        if ($order) {
-            $this->process_order_completion($order, $paypal_id);
-        } else {
-            error_log("Growtype WC: PayPal Webhook failed to find order for ID: $invoice_id");
-        }
+        $result = $this->gateway->subscriptions->reconcile_subscription(
+            (int) $subscriptions[0]->ID,
+            $provider_data,
+            null,
+            $source
+        );
+
+        return ($result['outcome'] ?? '') !== 'ignored';
     }
 
-    /**
-     * Handle subscription events
-     */
-    protected function handle_subscription_event($data)
+    protected function payment_matches_order(array $resource, $order): bool
     {
-        $resource = $data['resource'];
-        $subscription_id = $resource['id'] ?? '';
-        $invoice_id = $resource['custom_id'] ?? $resource['custom'] ?? '';
+        $amount = $resource['amount']['value'] ?? null;
+        $currency = strtoupper((string) ($resource['amount']['currency_code'] ?? $resource['amount']['currency'] ?? ''));
+        if ($amount === null || $currency === '') {
+            return false;
+        }
 
-        if (empty($subscription_id)) {
+        return abs((float) $amount - (float) $order->get_total()) < 0.00001
+            && $currency === strtoupper((string) $order->get_currency());
+    }
+
+    protected function process_order_completion($order, $transaction_id): void
+    {
+        if (!$order instanceof WC_Order || $order->is_paid()) {
             return;
         }
 
-        $order = null;
-
-        // 1. Try by Invoice ID
-        if (!empty($invoice_id)) {
-            $order = wc_get_order($invoice_id);
-        }
-
-        // 2. Try by Meta Lookup
-        if (!$order) {
-            $orders = wc_get_orders([
-                'limit' => 1,
-                'meta_key' => 'paypal_subscription_id',
-                'meta_value' => $subscription_id,
-            ]);
-            $order = !empty($orders) ? $orders[0] : null;
-        }
-
-        if ($order) {
-            $this->process_order_completion($order, $subscription_id);
-        }
-    }
-
-    /**
-     * Finalize the order
-     */
-    protected function process_order_completion($order, $transaction_id)
-    {
-        if (!$order || in_array($order->get_status(), ['completed', 'processing'])) {
+        if (
+            Growtype_Wc_Subscription::is_subscription_order($order->get_id())
+            && $order->get_meta('_paypal_subscription_verified_active') !== 'yes'
+        ) {
             return;
         }
 
         $order->payment_complete($transaction_id);
-
         if ($order->get_status() !== 'completed') {
-            $order->update_status('completed', __('Forced completion via PayPal webhook.', 'growtype-wc'));
+            $order->update_status('completed', __('Completed after verified PayPal provider event.', 'growtype-wc'));
         }
-
-        $order->add_order_note(sprintf(__('PayPal payment verified via webhook (ID: %s).', 'growtype-wc'), $transaction_id));
+        $order->add_order_note(sprintf(__('PayPal provider event verified transaction %s.', 'growtype-wc'), $transaction_id));
         $order->save();
-
-        error_log("Growtype WC: PayPal Order #" . $order->get_id() . " successfully completed via Webhook.");
-    }
-
-    /**
-     * Self-healing: find order by email and amount
-     */
-    protected function find_order_by_email_and_amount($email, $amount)
-    {
-        $orders = wc_get_orders([
-            'limit'         => 5,
-            'status'        => ['pending', 'on-hold', 'failed'],
-            'billing_email' => $email,
-            'orderby'       => 'date',
-            'order'         => 'DESC',
-        ]);
-
-        foreach ($orders as $order) {
-            if (abs($order->get_total() - $amount) < 0.01
-                && $order->get_payment_method() === $this->gateway->id
-                && empty($order->get_meta('parent_order_id'))
-            ) {
-                return $order;
-            }
-        }
-
-        return null;
     }
 }

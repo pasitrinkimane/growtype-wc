@@ -37,6 +37,38 @@ class Growtype_Wc_Order
 
         add_filter("woocommerce_order_actions", [$this, "add_refund_order_action"], 10, 2);
         add_action("woocommerce_order_action_growtype_wc_refund_order", [$this, "process_refund_order_action"]);
+        add_action("woocommerce_order_refunded", [$this, "cancel_subscriptions_for_refunded_order"], 10, 2);
+        add_action("woocommerce_order_status_refunded", [$this, "cancel_subscriptions_for_refunded_order"], 10, 2);
+
+        add_filter("woocommerce_my_account_my_orders_actions", [$this, "add_product_to_pay_action"], 20, 2);
+    }
+
+    /**
+     * Let single-product account orders open the existing payment modal.
+     */
+    public function add_product_to_pay_action($actions, $order)
+    {
+        if (empty($actions["pay"]["url"]) || !$order instanceof WC_Order) {
+            return $actions;
+        }
+
+        $items = array_values($order->get_items("line_item"));
+        if (count($items) !== 1 || (int)$items[0]->get_quantity() !== 1) {
+            return $actions;
+        }
+
+        $product_id = (int)($items[0]->get_variation_id() ?: $items[0]->get_product_id());
+        if (!$product_id) {
+            return $actions;
+        }
+
+        $actions["pay"]["url"] = add_query_arg(
+            "gwc_product_id",
+            $product_id,
+            $actions["pay"]["url"],
+        );
+
+        return $actions;
     }
 
     /**
@@ -229,66 +261,144 @@ class Growtype_Wc_Order
         );
 
         if (!empty($subscription)) {
-            $post_id = wp_insert_post([
-                "post_title" => $subscription->get_data_key("title"),
-                "post_type" => "growtype_wc_subs",
-                "post_status" => "private",
+            $activation_allowed = $this->can_activate_subscription_for_order($order);
+            if ($activation_allowed !== true) {
+                $reason = is_wp_error($activation_allowed)
+                    ? $activation_allowed->get_error_message()
+                    : __('Recurring billing was not verified.', 'growtype-wc');
+                $order->add_order_note(
+                    sprintf(
+                        __('Local subscription was not activated: %s', 'growtype-wc'),
+                        $reason
+                    )
+                );
+                $order->save();
+                return;
+            }
+
+            // A completed-payment callback can arrive more than once (return URL,
+            // webhook, retry). Reuse the existing local subscription for this order.
+            $existing_subscriptions = growtype_wc_get_subscriptions([
+                'order_id' => $order_id,
+                'limit' => 1,
             ]);
+            if (!empty($existing_subscriptions)) {
+                $order->update_meta_data(
+                    '_growtype_wc_subscription_id',
+                    (int) $existing_subscriptions[0]->ID
+                );
+                $order->save();
+                return;
+            }
 
-            update_post_meta($post_id, "_order_id", $order_id);
-            update_post_meta(
-                $post_id,
-                "_status",
-                Growtype_Wc_Subscription::STATUS_ACTIVE,
-            );
-            update_post_meta(
-                $post_id,
-                "_duration",
-                $subscription->get_data_key("billing_interval"),
-            );
-            update_post_meta(
-                $post_id,
-                "_price",
-                $subscription->get_data_key("billing_price"),
-            );
-            update_post_meta(
-                $post_id,
-                "_period",
-                $subscription->get_data_key("billing_period"),
-            );
-            update_post_meta($post_id, "_user_id", $user_id);
-            update_post_meta($post_id, "_start_date", wp_date("Y-m-d H:i:s"));
-            update_post_meta(
-                $post_id,
-                "_end_date",
-                wp_date(
-                    "Y-m-d H:i:s",
-                    strtotime(
-                        date("Y-m-d H:i:s") .
-                        " + " .
-                        $subscription->get_data_key("billing_interval") .
-                        " " .
-                        $subscription->get_data_key("billing_period"),
-                    ),
-                ),
-            );
-            update_post_meta(
-                $post_id,
-                "_next_charge_date",
-                wp_date(
-                    "Y-m-d H:i:s",
-                    strtotime(
-                        date("Y-m-d H:i:s") .
-                        " + " .
-                        $subscription->get_data_key("billing_interval") .
-                        " " .
-                        $subscription->get_data_key("billing_period"),
-                    ),
-                ),
-            );
+            // add_option() is an atomic insert because option_name is unique. It
+            // prevents concurrent callbacks from both inserting a subscription.
+            $lock_key = 'gwc_sub_create_' . (int) $order_id;
+            $lock_value = gmdate('U');
+            if (!add_option($lock_key, $lock_value, '', false)) {
+                $existing_lock = (int) get_option($lock_key, 0);
+                if ($existing_lock > 0 && $existing_lock < (time() - 300)) {
+                    delete_option($lock_key);
+                    if (!add_option($lock_key, $lock_value, '', false)) {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            }
 
-            // Clear active subscription cache for this user
-            delete_transient("growtype_wc_user_has_active_sub_" . $user_id);
+            try {
+                $existing_subscriptions = growtype_wc_get_subscriptions([
+                    'order_id' => $order_id,
+                    'limit' => 1,
+                ]);
+                if (!empty($existing_subscriptions)) {
+                    $order->update_meta_data(
+                        '_growtype_wc_subscription_id',
+                        (int) $existing_subscriptions[0]->ID
+                    );
+                    $order->save();
+                    return;
+                }
+
+                $post_id = wp_insert_post([
+                    "post_title" => $subscription->get_data_key("title"),
+                    "post_type" => "growtype_wc_subs",
+                    "post_status" => "private",
+                ], true);
+
+                if (is_wp_error($post_id) || !$post_id) {
+                    $message = is_wp_error($post_id)
+                        ? $post_id->get_error_message()
+                        : __('Unknown subscription creation error.', 'growtype-wc');
+                    $order->add_order_note(sprintf(
+                        __('Local subscription creation failed: %s', 'growtype-wc'),
+                        $message
+                    ));
+                    $order->save();
+                    return;
+                }
+
+                update_post_meta($post_id, "_order_id", $order_id);
+                update_post_meta(
+                    $post_id,
+                    "_status",
+                    Growtype_Wc_Subscription::STATUS_ACTIVE,
+                );
+                update_post_meta(
+                    $post_id,
+                    "_duration",
+                    $subscription->get_data_key("billing_interval"),
+                );
+                update_post_meta(
+                    $post_id,
+                    "_price",
+                    $subscription->get_data_key("billing_price"),
+                );
+                update_post_meta(
+                    $post_id,
+                    "_period",
+                    $subscription->get_data_key("billing_period"),
+                );
+                update_post_meta($post_id, "_user_id", $user_id);
+                update_post_meta($post_id, "_start_date", wp_date("Y-m-d H:i:s"));
+                update_post_meta(
+                    $post_id,
+                    "_end_date",
+                    wp_date(
+                        "Y-m-d H:i:s",
+                        strtotime(
+                            date("Y-m-d H:i:s") .
+                            " + " .
+                            $subscription->get_data_key("billing_interval") .
+                            " " .
+                            $subscription->get_data_key("billing_period"),
+                        ),
+                    ),
+                );
+                update_post_meta(
+                    $post_id,
+                    "_next_charge_date",
+                    wp_date(
+                        "Y-m-d H:i:s",
+                        strtotime(
+                            date("Y-m-d H:i:s") .
+                            " + " .
+                            $subscription->get_data_key("billing_interval") .
+                            " " .
+                            $subscription->get_data_key("billing_period"),
+                        ),
+                    ),
+                );
+
+                $order->update_meta_data('_growtype_wc_subscription_id', (int) $post_id);
+                $order->save();
+
+                // Clear active subscription cache for this user
+                delete_transient("growtype_wc_user_has_active_sub_" . $user_id);
+            } finally {
+                delete_option($lock_key);
+            }
         }
 
         /**
@@ -301,6 +411,30 @@ class Growtype_Wc_Order
                 $current_user->add_role("customer");
             }
         }
+    }
+
+    /**
+     * PayPal subscription products require proof of a real, ACTIVE Billing
+     * Subscription. Other gateways keep their existing activation contract.
+     */
+    private function can_activate_subscription_for_order($order)
+    {
+        if (!$order instanceof WC_Order) {
+            return false;
+        }
+
+        // Load gateway policy registrations before evaluating eligibility. This
+        // prevents a direct payment_complete() call from bypassing a strict
+        // provider merely because the checkout UI was not initialized first.
+        if (function_exists('WC') && WC()->payment_gateways()) {
+            WC()->payment_gateways()->payment_gateways();
+        }
+
+        return apply_filters(
+            'growtype_wc_can_activate_subscription_for_order',
+            true,
+            $order
+        );
     }
 
     /**
@@ -353,6 +487,11 @@ class Growtype_Wc_Order
         $min_age_in_minutes = 10,
         $orders_period_in_minutes = 7200
     ) {
+        $user_email = strtolower(sanitize_email(trim((string)$user_email)));
+        if (empty($user_email) || !is_email($user_email)) {
+            return null;
+        }
+
         if (!array_key_exists($user_email, self::$user_last_order_cache)) {
             $current_time = current_time("timestamp");
             $period_start_time =
@@ -372,17 +511,19 @@ class Growtype_Wc_Order
 
                 if ($orders) {
                     $order = $orders[0];
-                    $order_info = [
-                        "id" => $order->get_id(),
-                        "status" => $order->get_status(),
-                        "is_paid" => $order->is_paid(),
-                        "timestamp" => $order
-                            ->get_date_created()
-                            ->getOffsetTimestamp(),
-                        "created_str" => $order
-                            ->get_date_created()
-                            ->date("Y-m-d H:i:s"),
-                    ];
+                    if ($order instanceof WC_Order) {
+                        $order_info = [
+                            "id" => $order->get_id(),
+                            "status" => $order->get_status(),
+                            "is_paid" => $order->is_paid(),
+                            "timestamp" => $order
+                                ->get_date_created()
+                                ->getOffsetTimestamp(),
+                            "created_str" => $order
+                                ->get_date_created()
+                                ->date("Y-m-d H:i:s"),
+                        ];
+                    }
                 }
             } catch (Exception $e) {
                 error_log(
@@ -654,5 +795,68 @@ class Growtype_Wc_Order
                 $refund->get_id()
             ));
         }
+    }
+
+    /**
+     * Cancel linked subscriptions after an order has been fully refunded.
+     *
+     * @param int                  $order_id Order ID.
+     * @param WC_Order|int|null    $context  Order object or refund ID, depending on the hook.
+     */
+    public function cancel_subscriptions_for_refunded_order($order_id, $context = null)
+    {
+        $order_id = absint($order_id);
+        $order = $context instanceof WC_Order ? $context : wc_get_order($order_id);
+
+        if (!$order instanceof WC_Order || (float)$order->get_remaining_refund_amount() > 0) {
+            return;
+        }
+
+        $subscriptions = growtype_wc_get_subscriptions([
+            'order_id' => $order_id,
+            'limit' => -1,
+        ]);
+
+        foreach ($subscriptions as $subscription) {
+            $subscription_id = (int)$subscription->ID;
+            if (Growtype_Wc_Subscription::status($subscription_id) === Growtype_Wc_Subscription::STATUS_CANCELLED) {
+                continue;
+            }
+
+            $allowed = apply_filters(
+                'growtype_wc_pre_change_subscription_status',
+                true,
+                $subscription_id,
+                Growtype_Wc_Subscription::STATUS_CANCELLED,
+            );
+
+            if (is_wp_error($allowed) || $allowed === false) {
+                $message = is_wp_error($allowed)
+                    ? $allowed->get_error_message()
+                    : __('The payment provider rejected the subscription cancellation.', 'growtype-wc');
+                $order->add_order_note(sprintf(
+                    __('Subscription #%1$d was not cancelled after the refund: %2$s', 'growtype-wc'),
+                    $subscription_id,
+                    $message,
+                ));
+                continue;
+            }
+
+            Growtype_Wc_Subscription::change_status(
+                $subscription_id,
+                Growtype_Wc_Subscription::STATUS_CANCELLED,
+            );
+            do_action(
+                'growtype_wc_change_subscription_status',
+                $subscription_id,
+                Growtype_Wc_Subscription::STATUS_CANCELLED,
+            );
+            $order->add_order_note(sprintf(
+                __('Subscription #%d was cancelled because the order was fully refunded.', 'growtype-wc'),
+                $subscription_id,
+            ));
+        }
+
+        $order->save();
     }
 }

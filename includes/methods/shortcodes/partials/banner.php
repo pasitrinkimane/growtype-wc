@@ -10,6 +10,152 @@ class Growtype_Wc_Banner_Shortcode
     }
 
     /**
+     * Return the canonical seasonal promotion periods for a reference date.
+     *
+     * Other components, such as landing-page carousels, should consume this
+     * method instead of copying campaign dates.
+     *
+     * @param DateTimeInterface|string|null $reference
+     * @return array
+     */
+    public static function get_discount_periods($reference = null)
+    {
+        $timezone = wp_timezone();
+
+        try {
+            $reference = $reference instanceof DateTimeInterface
+                ? DateTimeImmutable::createFromInterface($reference)->setTimezone($timezone)
+                : new DateTimeImmutable((string) ($reference ?? 'now'), $timezone);
+        } catch (Exception $exception) {
+            $reference = current_datetime();
+        }
+
+        $year = (int) $reference->format('Y');
+        $new_year_start_year = (int) $reference->format('n') === 1 ? $year - 1 : $year;
+        $date = static function (int $date_year, string $month_day) use ($timezone): string {
+            return (new DateTimeImmutable($date_year . '-' . $month_day, $timezone))->format('Y-m-d');
+        };
+        $easter = (new DateTimeImmutable($year . '-03-21', $timezone))
+            ->modify('+' . easter_days($year) . ' days');
+        $back_to_school_start = new DateTimeImmutable($year . '-07-15', $timezone);
+        $back_to_school_end = new DateTimeImmutable($year . '-10-01', $timezone);
+        $summer_end = $back_to_school_start->modify('-1 day');
+        $halloween_start = $back_to_school_end->modify('+1 day');
+        $thanksgiving = (new DateTimeImmutable($year . '-11-01', $timezone))
+            ->modify('first thursday of this month')
+            ->modify('+3 weeks');
+        $black_friday = $thanksgiving->modify('+1 day');
+        $cyber_monday = $black_friday->modify('+3 days');
+        $black_friday_end = $cyber_monday->modify('-1 day');
+        $cyber_monday_end = $cyber_monday->modify('+3 days');
+        $christmas_start = $cyber_monday_end->modify('+1 day');
+
+        $periods = [
+            'halloween' => [
+                'start' => $halloween_start->format('Y-m-d'),
+                'end' => $date($year, '10-31'),
+                'intro_title' => 'Spooky Savings',
+                'intro_subtitle' => 'Limited time offer',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/halloween/graveyard.png'],
+                'decor' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/halloween/pumpkin.svg'],
+                'font' => [
+                    'family' => 'Rubik Wet Paint',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&display=swap',
+                ],
+            ],
+            'black_friday' => [
+                'start' => $black_friday->modify('-11 days')->format('Y-m-d'),
+                'end' => $black_friday_end->format('Y-m-d'),
+                'intro_title' => 'Black Friday Deal',
+                'intro_subtitle' => 'Exclusive offer',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/friday/bg.jpg'],
+                'font' => [
+                    'family' => 'Tiny5',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Tiny5&display=swap',
+                ],
+                'styles' => ['background-position: top'],
+            ],
+            'cyber_monday' => [
+                'start' => $cyber_monday->format('Y-m-d'),
+                'end' => $cyber_monday_end->format('Y-m-d'),
+                'intro_title' => 'Cyber Monday',
+                'intro_subtitle' => 'Limited time offer',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/friday/bg.jpg'],
+                'font' => [
+                    'family' => 'Tiny5',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Tiny5&display=swap',
+                ],
+                'styles' => ['background-position: top'],
+            ],
+            'christmas' => [
+                'start' => $christmas_start->format('Y-m-d'),
+                'end' => $date($year, '12-26'),
+                'intro_title' => 'Merry Deals Await!',
+                'intro_subtitle' => 'Limited time offer',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/christmas/banner.png'],
+                'font' => [
+                    'family' => 'Mountains of Christmas',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap',
+                ],
+                'styles' => ['background-position: top'],
+            ],
+            'new_year' => [
+                'start' => $date($new_year_start_year, '12-27'),
+                'end' => $date($new_year_start_year + 1, '01-07'),
+                'intro_title' => 'New Year, New Savings!',
+                'intro_subtitle' => "Don't Miss Out",
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/newyear/happy.jpg'],
+            ],
+            'valentines' => [
+                'start' => $date($year, '01-29'),
+                'end' => $date($year, '02-14'),
+                'intro_title' => 'Show Some Love!',
+                'intro_subtitle' => 'Valentine’s Day Special',
+                'font' => [
+                    'family' => 'Pacifico',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Pacifico&display=swap',
+                ],
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/valentines/pink.jpg'],
+            ],
+            'easter' => [
+                'start' => $easter->modify('-14 days')->format('Y-m-d'),
+                'end' => $easter->modify('+2 days')->format('Y-m-d'),
+                'intro_title' => 'Easter Sale',
+                'intro_subtitle' => 'Hop into Savings this Easter!',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/spring/pink.jpg'],
+                'font' => [
+                    'family' => 'Itim',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Itim&display=swap',
+                ],
+            ],
+            'back_to_school' => [
+                'start' => $back_to_school_start->format('Y-m-d'),
+                'end' => $back_to_school_end->format('Y-m-d'),
+                'intro_title' => 'Back to School',
+                'intro_subtitle' => 'Gear Up for School!',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/school/intro.jpg'],
+                'font' => [
+                    'family' => 'Itim',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Itim&display=swap',
+                ],
+            ],
+            'summer' => [
+                'start' => $date($year, '06-01'),
+                'end' => $summer_end->format('Y-m-d'),
+                'intro_title' => 'Summer Sale',
+                'intro_subtitle' => 'Sizzling Summer Deals!',
+                'background_images' => [GROWTYPE_WC_URL_PUBLIC . 'images/banners/summer/relax.jpg'],
+                'font' => [
+                    'family' => 'Rubik Gemstones',
+                    'url' => 'https://fonts.googleapis.com/css2?family=Rubik+Gemstones&display=swap',
+                ],
+            ],
+        ];
+
+        return $periods;
+    }
+
+    /**
      * Shortcode handler
      *
      * @param $attr
@@ -46,135 +192,12 @@ class Growtype_Wc_Banner_Shortcode
         $current_date = current_time('Y-m-d');
 
         if ($params['discount_periods_enabled']) {
-            $discount_periods = [
-                'halloween' => [
-                    'start' => date('Y-m-d', strtotime('October 24')),
-                    'end' => date('Y-m-d', strtotime('October 31')),
-                    'intro_title' => 'Spooky Savings',
-                    'intro_subtitle' => 'Limited time offer',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/halloween/graveyard.png'
-                    ],
-                    'decor' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/halloween/pumpkin.svg'
-                    ],
-                    'font' => [
-                        'family' => 'Rubik Wet Paint',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&display=swap'
-                    ]
-                ],
-                'black_friday' => [
-                    'start' => date('Y-m-d', strtotime('November 18')), // Original date November 25
-                    'end' => date('Y-m-d', strtotime('November 30')),
-                    'intro_title' => 'Black Friday Deal',
-                    'intro_subtitle' => 'Exclusive offer',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/friday/bg.jpg'
-                    ],
-                    'font' => [
-                        'family' => 'Tiny5',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Tiny5&display=swap'
-                    ],
-                    'styles' => [
-                        'background-position: top'
-                    ]
-                ],
-                'cyber_monday' => [
-                    'start' => date('Y-m-d', strtotime('December 1')),
-                    'end' => date('Y-m-d', strtotime('December 3')), // Original date November 27
-                    'intro_title' => 'Cyber Monday',
-                    'intro_subtitle' => 'Limited time offer',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/friday/bg.jpg'
-                    ],
-                    'font' => [
-                        'family' => 'Tiny5',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Tiny5&display=swap'
-                    ],
-                    'styles' => [
-                        'background-position: top'
-                    ]
-                ],
-                'christmas' => [
-                    'start' => date('Y-m-d', strtotime('December 20')),
-                    'end' => date('Y-m-d', strtotime('December 26')),
-                    'intro_title' => 'Merry Deals Await!',
-                    'intro_subtitle' => 'Limited time offer',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/christmas/banner.png'
-                    ],
-                    'font' => [
-                        'family' => 'Mountains of Christmas',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap'
-                    ],
-                    'styles' => [
-                        'background-position: top'
-                    ]
-                ],
-                'new_year' => [
-                    'start' => date('Y-m-d', strtotime('December 27')),
-                    'end' => date('Y-m-d', strtotime('January 2')),
-                    'intro_title' => 'New Year, New Savings!',
-                    'intro_subtitle' => "Don't Miss Out",
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/newyear/happy.jpg'
-                    ]
-                ],
-                'valentines' => [
-                    'start' => date('Y-m-d', strtotime('February 7')),
-                    'end' => date('Y-m-d', strtotime('February 14')),
-                    'intro_title' => 'Show Some Love!',
-                    'intro_subtitle' => 'Valentine’s Day Special',
-                    'font' => [
-                        'family' => 'Pacifico',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Pacifico&display=swap'
-                    ],
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/valentines/pink.jpg'
-                    ]
-                ],
-                'easter' => [
-                    'start' => date('Y-m-d', strtotime('-7 days', strtotime(date('Y-m-d', easter_date(date('Y')))))),
-                    'end' => date('Y-m-d', strtotime('+2 days', strtotime(date('Y-m-d', easter_date(date('Y')))))),
-                    'intro_title' => 'Easter Sale',
-                    'intro_subtitle' => 'Hop into Savings this Easter!',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/spring/pink.jpg'
-                    ],
-                    'font' => [
-                        'family' => 'Itim',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Itim&display=swap'
-                    ],
-                ],
-                'back_to_school' => [
-                    'start' => date('Y-m-d', strtotime('August 1')),
-                    'end' => date('Y-m-d', strtotime('August 31')),
-                    'intro_title' => 'Back to School',
-                    'intro_subtitle' => 'Gear Up for School!',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/school/intro.jpg'
-                    ],
-                    'font' => [
-                        'family' => 'Itim',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Itim&display=swap'
-                    ],
-                ],
-                'summer' => [
-                    'start' => date('Y-m-d', strtotime('June 1')),
-                    'end' => date('Y-m-d', strtotime('August 31')),
-                    'intro_title' => 'Summer Sale',
-                    'intro_subtitle' => 'Sizzling Summer Deals!',
-                    'background_images' => [
-                        GROWTYPE_WC_URL_PUBLIC . 'images/banners/summer/relax.jpg'
-                    ],
-                    'font' => [
-                        'family' => 'Rubik Gemstones',
-                        'url' => 'https://fonts.googleapis.com/css2?family=Rubik+Gemstones&display=swap'
-                    ],
-                ]
-            ];
-
-            $discount_periods = apply_filters('growtype_wc_banner_discount_periods', $discount_periods);
+            $discount_periods = self::get_discount_periods();
+            $discount_periods = apply_filters(
+                'growtype_wc_banner_discount_periods',
+                $discount_periods,
+                current_datetime()
+            );
             $discount_periods = !empty($discount_periods) ? $discount_periods : [];
 
             $current_banner = [];

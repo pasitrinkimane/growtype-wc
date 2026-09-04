@@ -145,6 +145,16 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                 if (
                     growtype_wc_product_is_subscription($wc_product->get_id())
                 ) {
+                    $checkout_flow = $this->gateway->resolve_checkout_flow(
+                        (int) $wc_product->get_id(),
+                        'paypal'
+                    );
+                    if ($checkout_flow !== Growtype_Wc_Payment_Gateway_Paypal::CHECKOUT_FLOW_BILLING_SUBSCRIPTION) {
+                        throw new \Exception(
+                            __('No recurring checkout flow is available for this payment method.', 'growtype-wc')
+                        );
+                    }
+
                     error_log(
                         "[GWC PayPal] woocommerce_add_to_cart_extend: Processing subscription...",
                     );
@@ -181,6 +191,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                             "paypal_subscription_id",
                             $paypal_checkout["id"],
                         );
+                        $order->update_meta_data('_growtype_wc_checkout_flow', $checkout_flow);
+                    } else {
+                        throw new \Exception(
+                            __('PayPal did not create a billing subscription.', 'growtype-wc')
+                        );
                     }
                 } else {
                     error_log(
@@ -213,97 +228,32 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     ));
                 }
 
-                if (!empty($paypal_checkout["links"])) {
-                    error_log(
-                        "[GWC PayPal] woocommerce_add_to_cart_extend: Links found: " .
-                            count($paypal_checkout["links"]),
-                    );
-                    foreach ($paypal_checkout["links"] as $link) {
-                        $link = (array) $link;
-                        error_log(
-                            "[GWC PayPal] Checking link rel: " .
-                                ($link["rel"] ?? "none"),
-                        );
+                $checkout_url = self::resolve_approval_url((array) ($paypal_checkout['links'] ?? []));
+                if (!is_wp_error($checkout_url)) {
+                    $parsed_url = parse_url($checkout_url);
+                    $query = [];
+                    parse_str($parsed_url['query'] ?? '', $query);
+                    $ba_token = $query['ba_token'] ?? null;
+                    $token = $query['token'] ?? null;
 
-                        if (
-                            $link["rel"] === "approve" ||
-                            $link["rel"] === "payer-action"
-                        ) {
-                            $checkout_url = $link["href"];
-                            error_log(
-                                "[GWC PayPal] Redirecting to: " . $checkout_url,
-                            );
-
-                            $parsed_url = parse_url($checkout_url);
-                            $query = [];
-                            parse_str($parsed_url["query"], $query);
-                            $ba_token = isset($query["ba_token"])
-                                ? $query["ba_token"]
-                                : null;
-                            $token = isset($query["token"])
-                                ? $query["token"]
-                                : null;
-
-                            $order->update_meta_data(
-                                "payment_provider_checkout_url",
-                                $checkout_url,
-                            );
-
-                            if (!empty($ba_token)) {
-                                $order->update_meta_data(
-                                    "paypal_ba_token",
-                                    $ba_token,
-                                );
-                            }
-
-                            if (
-                                isset($subscription_plan_id) &&
-                                !empty($subscription_plan_id)
-                            ) {
-                                $order->update_meta_data(
-                                    "paypal_subscription_plan_id",
-                                    $subscription_plan_id,
-                                );
-                            }
-
-                            if (!empty($token)) {
-                                $order->update_meta_data(
-                                    "paypal_token",
-                                    $token,
-                                );
-                            }
-
-                            do_action(
-                                "woocommerce_checkout_create_order",
-                                $order,
-                                $cart_item_data,
-                            );
-
-                            $order->save();
-
-                            // Validate the redirect URL is a PayPal domain (defense-in-depth)
-                            $parsed = parse_url($checkout_url);
-                            $host = strtolower($parsed["host"] ?? "");
-                            if (!str_ends_with($host, "paypal.com")) {
-                                error_log(
-                                    "[GWC PayPal] Redirect URL rejected — not a PayPal domain: " .
-                                        $checkout_url,
-                                );
-                                break;
-                            }
-
-                            wp_redirect($checkout_url);
-                            exit();
-                        }
+                    $order->update_meta_data('payment_provider_checkout_url', $checkout_url);
+                    if (!empty($ba_token)) {
+                        $order->update_meta_data('paypal_ba_token', $ba_token);
                     }
-                } else {
-                    error_log(
-                        sprintf(
-                            "[GWC PayPal] No links in response for order %s",
-                            $order_id,
-                        ),
-                    );
+                    if (isset($subscription_plan_id) && !empty($subscription_plan_id)) {
+                        $order->update_meta_data('paypal_subscription_plan_id', $subscription_plan_id);
+                    }
+                    if (!empty($token)) {
+                        $order->update_meta_data('paypal_token', $token);
+                    }
+
+                    do_action('woocommerce_checkout_create_order', $order, $cart_item_data);
+                    $order->save();
+                    wp_redirect($checkout_url);
+                    exit();
                 }
+
+                throw new \Exception($checkout_url->get_error_message());
             } catch (\Exception $e) {
                 error_log(
                     sprintf(
@@ -323,6 +273,37 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
             wp_redirect($cancel_url);
             exit();
         }
+    }
+
+    public static function resolve_approval_url(array $links)
+    {
+        foreach ($links as $link) {
+            $link = (array) $link;
+            if (!in_array((string) ($link['rel'] ?? ''), ['approve', 'payer-action'], true)) {
+                continue;
+            }
+
+            $url = esc_url_raw((string) ($link['href'] ?? ''));
+            $host = strtolower((string) wp_parse_url($url, PHP_URL_HOST));
+            $scheme = strtolower((string) wp_parse_url($url, PHP_URL_SCHEME));
+            if (
+                $url === ''
+                || $scheme !== 'https'
+                || ($host !== 'paypal.com' && !str_ends_with($host, '.paypal.com'))
+            ) {
+                return new WP_Error(
+                    'paypal_approval_url_invalid',
+                    __('PayPal returned an invalid approval URL.', 'growtype-wc')
+                );
+            }
+
+            return $url;
+        }
+
+        return new WP_Error(
+            'paypal_approval_url_missing',
+            __('PayPal did not return an approval URL.', 'growtype-wc')
+        );
     }
 
     public function payment_redirect()
@@ -418,25 +399,28 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
             );
 
             if ($is_subscription) {
-                $subscription_id = sanitize_text_field(
-                    $_GET["subscription_id"] ??
-                        $order->get_meta("paypal_subscription_id"),
+                $subscription_id = trim((string) $order->get_meta('paypal_subscription_id'));
+                $returned_subscription_id = sanitize_text_field(
+                    wp_unslash($_GET['subscription_id'] ?? '')
                 );
-                if (!empty($subscription_id)) {
-                    $order->update_meta_data(
-                        "paypal_subscription_id",
-                        $subscription_id,
-                    );
-                }
 
-                // Cannot verify a subscription without its ID — bail out cleanly.
-                if (empty($subscription_id)) {
+                // The provider ID was stored before redirect. Never replace it with
+                // a return-URL value supplied by the browser.
+                if ($subscription_id === '') {
                     error_log(
                         sprintf(
-                            '[GWC PayPal] payment_redirect: order %d — subscription_id empty in both $_GET and meta. Aborting.',
+                            '[GWC PayPal] payment_redirect: order %d has no stored subscription ID. Aborting.',
                             $order_id,
                         ),
                     );
+                    return;
+                }
+
+                if ($returned_subscription_id !== '' && $returned_subscription_id !== $subscription_id) {
+                    error_log(sprintf(
+                        '[GWC PayPal] payment_redirect: subscription ID mismatch for order %d.',
+                        $order_id
+                    ));
                     return;
                 }
 
@@ -444,6 +428,39 @@ class Growtype_Wc_Payment_Gateway_Paypal_Redirects
                     $access_token,
                     $subscription_id,
                 );
+
+                $validation = $this->gateway->subscriptions->validate_activation_response(
+                    $paypal_order_data,
+                    $subscription_id,
+                    trim((string) $order->get_meta('paypal_subscription_plan_id')),
+                    (int) $order_id
+                );
+                if (is_wp_error($validation)) {
+                    $order->add_order_note(sprintf(
+                        __('PayPal subscription activation rejected: %s', 'growtype-wc'),
+                        $validation->get_error_message()
+                    ));
+                    $order->save();
+                    return;
+                }
+
+                $customer_email = sanitize_email((string) ($paypal_order_data['subscriber']['email_address'] ?? ''));
+                if ($customer_email !== '') {
+                    Growtype_Wc_Payment_Gateway::update_user_email_if_not_exists(
+                        get_current_user_id(),
+                        $customer_email
+                    );
+                    Growtype_Wc_Payment_Gateway::update_order_email_if_not_exists(
+                        $order_id,
+                        $customer_email
+                    );
+                }
+
+                $order->update_meta_data('_paypal_subscription_verified_active', 'yes');
+                $order->update_meta_data('_paypal_subscription_verified_at', gmdate('Y-m-d H:i:s'));
+                $order->save();
+                $order->payment_complete($subscription_id);
+                return;
             } else {
                 $paypal_order_data = $this->gateway->orders->get_order_data(
                     $access_token,

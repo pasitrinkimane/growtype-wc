@@ -12,12 +12,43 @@ function woocommerce_account_subscriptions_endpoint_extend()
     }
 
     if (isset($_POST['subscription_id']) && !empty($_POST['subscription_id']) && isset($_POST['change_subscription_status']) && !empty($_POST['change_subscription_status'])) {
+        $subscription_id = absint($_POST['subscription_id']);
+        $requested_status = sanitize_key(wp_unslash($_POST['change_subscription_status']));
+        $nonce = sanitize_text_field(wp_unslash($_POST['_growtype_wc_subscription_status_nonce'] ?? ''));
+
+        if (!wp_verify_nonce($nonce, 'growtype_wc_change_subscription_status_' . $subscription_id)) {
+            wc_add_notice(__('The subscription request expired. Please try again.', 'growtype-wc'), 'error');
+            return;
+        }
+
+        if (!in_array($requested_status, [Growtype_Wc_Subscription::STATUS_ACTIVE, Growtype_Wc_Subscription::STATUS_CANCELLED], true)) {
+            wc_add_notice(__('Invalid subscription status requested.', 'growtype-wc'), 'error');
+            return;
+        }
+
         $subscriptions = growtype_wc_get_user_subscriptions(get_current_user_id());
 
         foreach ($subscriptions as $subscription) {
-            if ((int)$subscription->ID == (int)$_POST['subscription_id']) {
-                Growtype_Wc_Subscription::change_status($_POST['subscription_id'], $_POST['change_subscription_status']);
-                do_action('growtype_wc_change_subscription_status', $_POST['subscription_id'], $_POST['change_subscription_status']);
+            if ((int)$subscription->ID === $subscription_id) {
+                $allowed = apply_filters(
+                    'growtype_wc_pre_change_subscription_status',
+                    true,
+                    $subscription_id,
+                    $requested_status
+                );
+
+                if (is_wp_error($allowed)) {
+                    wc_add_notice($allowed->get_error_message(), 'error');
+                    break;
+                }
+
+                if ($allowed === false) {
+                    wc_add_notice(__('The subscription could not be changed.', 'growtype-wc'), 'error');
+                    break;
+                }
+
+                Growtype_Wc_Subscription::change_status($subscription_id, $requested_status);
+                do_action('growtype_wc_change_subscription_status', $subscription_id, $requested_status);
                 break;
             }
         }
@@ -28,6 +59,7 @@ function woocommerce_account_subscriptions_endpoint_extend()
      */
     if (isset($_GET['action']) && $_GET['action'] === 'manage') {
         $manage_subscription_externally = true;
+        $stripe_billing_portal_url = '';
 
         if (isset($_GET['subscription']) && !empty($_GET['subscription'])) {
             $user_subscriptions = growtype_wc_get_user_subscriptions();
@@ -69,8 +101,15 @@ function woocommerce_account_subscriptions_endpoint_extend()
                                 $billing_portal_url = $stripe_subscription_details['billing_portal_url'] ?? '';
 
                                 if (!empty($billing_portal_url)) {
-                                    wp_redirect($billing_portal_url);
-                                    die();
+                                    $stripe_billing_portal_url = $billing_portal_url;
+                                    $manage_subscription_externally = false;
+
+                                    echo growtype_wc_include_view('woocommerce.myaccount.subscription-manage',
+                                        [
+                                            'subscription' => $subscription,
+                                            'stripe_billing_portal_url' => $stripe_billing_portal_url,
+                                        ]
+                                    );
                                 }
                             }
                         } else {

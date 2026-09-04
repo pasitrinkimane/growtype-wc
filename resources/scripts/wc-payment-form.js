@@ -472,11 +472,13 @@ import {
     // ── Checkout button → payment form transition ─────────────────────────────
 
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.' + BTN_CLASS + '[data-product-id], .btn-show-paypal-card[data-product-id], a.btn-addtocart[href*="payment_method=gwc-paypal"]');
+        var btn = e.target.closest('.' + BTN_CLASS + '[data-product-id], .btn-show-paypal-card[data-product-id], a.btn-addtocart[href*="payment_method=gwc-paypal"], a.woocommerce-button.pay[href*="gwc_product_id="]');
         if (!btn) return;
-        var isPaypalAddToCart = isPaypalAddToCartLink(btn);
 
-        if (isPaypalAddToCart) {
+        var isPaypalAddToCart = isPaypalAddToCartLink(btn);
+        var isOrderPay = btn.matches('a.woocommerce-button.pay[href*="gwc_product_id="]');
+
+        if (isPaypalAddToCart || isOrderPay) {
             e.preventDefault();
             e.stopImmediatePropagation();
         }
@@ -487,11 +489,12 @@ import {
             primaryPaymentMethod: btn.getAttribute('data-primary-payment-method'),
             methods: btn.getAttribute('data-methods'),
             isPaypalAddToCart: isPaypalAddToCart,
+            isOrderPay: isOrderPay,
             hasInstantChargeUrl: !!btn.getAttribute('data-instant-charge-url'),
             instantCharge: btn.getAttribute('data-instant-charge'),
         });
 
-        var paymentFormMode = (btn.getAttribute('data-payment-form-mode') || (isPaypalAddToCart ? 'form' : '')).toLowerCase();
+        var paymentFormMode = (btn.getAttribute('data-payment-form-mode') || ((isPaypalAddToCart || isOrderPay) ? 'form' : '')).toLowerCase();
         var expressShowForm = (btn.getAttribute('data-express-show-form') || btn.getAttribute('data-stripe-express-show-form') || 'no').toLowerCase();
         var shouldShowPaymentForm = paymentFormMode
             ? paymentFormMode === 'form'
@@ -520,7 +523,9 @@ import {
         if (btn.getAttribute('data-instant-charge') === '1' && !shouldShowPaymentForm) return;
         e.preventDefault();
 
-        var productId = btn.getAttribute('data-product-id') || getUrlParam(btn.getAttribute('href'), 'add-to-cart');
+        var productId = btn.getAttribute('data-product-id')
+            || getUrlParam(btn.getAttribute('href'), 'add-to-cart')
+            || getUrlParam(btn.getAttribute('href'), 'gwc_product_id');
         if (!productId) {
             debugPaymentForm('checkout_click:blocked_missing_product_id', {
                 button: getContainerDebugSummary(btn),
@@ -530,12 +535,12 @@ import {
             return;
         }
 
-        var methods = btn.getAttribute('data-methods') || (isPaypalAddToCart ? 'applepay,googlepay,paypal' : 'applepay,googlepay');
+        var methods = btn.getAttribute('data-methods') || ((isPaypalAddToCart || isOrderPay) ? 'applepay,googlepay,paypal' : 'applepay,googlepay');
         var returnUrl = btn.getAttribute('data-return-url') || '';
         var fallbackUrl = btn.getAttribute('data-fallback') || btn.getAttribute('href') || '';
         var buttonLabel = (btn.textContent || '').trim();
-        var primaryMethod = (btn.getAttribute('data-primary-payment-method') || (isPaypalAddToCart ? 'gwc-paypal' : '')).toLowerCase();
-        var provider = (btn.getAttribute('data-provider') || (isPaypalAddToCart ? 'paypal' : '') || normalizeProviderFromPaymentMethod(primaryMethod) || 'paypal').toLowerCase();
+        var primaryMethod = (btn.getAttribute('data-primary-payment-method') || ((isPaypalAddToCart || isOrderPay) ? 'gwc-paypal' : '')).toLowerCase();
+        var provider = (btn.getAttribute('data-provider') || ((isPaypalAddToCart || isOrderPay) ? 'paypal' : '') || normalizeProviderFromPaymentMethod(primaryMethod) || 'paypal').toLowerCase();
         var paymentFormAction = btn.getAttribute('data-payment-form-action') || getDefaultPaymentFormAction(provider);
         var paymentFormNonce = btn.getAttribute('data-payment-form-nonce') || '';
 
@@ -732,6 +737,13 @@ import {
                                 wrap.style.opacity = '1';
                             });
                         });
+
+                        if (res.data.mount_express === false) {
+                            debugPaymentForm('fetch_form:subscription_redirect_only', {
+                                productId: res.data.product_id,
+                            });
+                            return;
+                        }
 
                         // Boot provider-specific express buttons
                         debugPaymentForm('fetch_form:dispatch_mount_express', {

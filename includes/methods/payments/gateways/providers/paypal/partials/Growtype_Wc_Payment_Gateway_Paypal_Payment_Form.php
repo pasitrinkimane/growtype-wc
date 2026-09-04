@@ -54,6 +54,13 @@ class Growtype_Wc_Payment_Gateway_Paypal_Payment_Form
         $methods_raw = sanitize_text_field($_POST['methods'] ?? 'applepay,googlepay');
         $methods = array_map('sanitize_text_field', explode(',', $methods_raw));
         $container_id = 'gwc-express-' . $product_id . '-' . wp_rand(1000, 9999);
+        $is_subscription = $product_id > 0 && growtype_wc_product_is_subscription($product_id);
+        if ($is_subscription) {
+            // PayPal currently documents recurring vaulting for Apple Pay, but
+            // not for Google Pay. Keep the unsupported wallet out of checkout.
+            $methods = ['applepay'];
+            $methods_raw = 'applepay';
+        }
 
         ob_start();
 
@@ -77,6 +84,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Payment_Form
             'container_id' => $container_id,
             'product_id' => $product_id,
             'methods' => $methods_raw,
+            'mount_express' => !$is_subscription || in_array('applepay', $methods, true),
             'total_price' => $total_price,
         ]);
     }
@@ -115,7 +123,37 @@ class Growtype_Wc_Payment_Gateway_Paypal_Payment_Form
             ? WC()->payment_gateways()->payment_gateways()
             : [];
         $paypal_gateway = $gateways[Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID] ?? null;
-        $show_dev_helper = $paypal_gateway ? (bool) $paypal_gateway->is_test_mode() : false;
+        $show_dev_helper = Growtype_Wc_Payment_Gateway_Paypal_Card_Form::should_show_dev_helper($paypal_gateway);
+
+        if ($product_id > 0 && growtype_wc_product_is_subscription($product_id)) {
+            ?>
+            <div class="gwc-payment-form gwc-payment-form--subscription" data-product-id="<?php echo esc_attr($product_id); ?>">
+                <?php if ($show_express && in_array('applepay', $express_methods, true)) : ?>
+                    <div id="<?php echo esc_attr($container_id); ?>"
+                         class="gwc-payment-form__express gwc-payment-form__express--subscription"
+                         data-product-id="<?php echo esc_attr($product_id); ?>"
+                         data-method="applepay"></div>
+                <?php endif; ?>
+                <?php if ($show_card) : ?>
+                    <div class="gwc-payment-form__card" style="position:relative; min-height:250px;">
+                        <?php self::render_loader(); ?>
+                        <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render([
+                            'submit_label' => $submit_label,
+                            'show_dev_helper' => $show_dev_helper,
+                        ]); ?>
+                    </div>
+                    <p class="gwc-payment-form__recurring-consent" style="padding-top:25px;font-size:12px;text-align:center;color:grey;">
+                        <?php esc_html_e(
+                            'By subscribing, you authorize recurring charges according to the plan shown. You can cancel from your account.',
+                            'growtype-wc'
+                        ); ?>
+                    </p>
+                <?php endif; ?>
+                <?php self::render_badge(); ?>
+            </div>
+            <?php
+            return;
+        }
 
         $methods_str = implode(',', array_map('sanitize_text_field', $express_methods));
         ?>

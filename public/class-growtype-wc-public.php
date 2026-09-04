@@ -78,7 +78,11 @@ class Growtype_Wc_Public
         wp_enqueue_script($this->growtype_wc, plugin_dir_url(__FILE__) . 'scripts/growtype-wc.js', ['jquery'], $this->version, true);
         wp_enqueue_script('growtype-wc-countdown', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.min.js', ['jquery'], $this->version, true);
         wp_register_script('growtype-wc-countdown-language', plugin_dir_url(__FILE__) . 'libs/jquery-countdown/jquery.countdown.language.js', ['jquery', 'growtype-wc-countdown'], $this->version, true);
-        wp_enqueue_script('growtype-wc-payment-form', plugin_dir_url(__FILE__) . 'scripts/wc-payment-form.js', [], $this->version, true);
+        $payment_form_path = __DIR__ . '/scripts/wc-payment-form.js';
+        $payment_form_version = file_exists($payment_form_path) ? (string) filemtime($payment_form_path) : $this->version;
+        $payment_form_url = add_query_arg('asset_ver', $payment_form_version, plugin_dir_url(__FILE__) . 'scripts/wc-payment-form.js');
+
+        wp_enqueue_script('growtype-wc-payment-form', $payment_form_url, [], null, true);
     }
 
     /**

@@ -7,6 +7,12 @@
 class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
 {
     public $domain;
+
+    const CHECKOUT_FLOW_ORDERS_API_ONE_TIME = 'orders_api_one_time';
+    const CHECKOUT_FLOW_ORDERS_API_RECURRING_CARD = 'orders_api_recurring_card';
+    const CHECKOUT_FLOW_ORDERS_API_RECURRING_APPLE_PAY = 'orders_api_recurring_apple_pay';
+    const CHECKOUT_FLOW_BILLING_SUBSCRIPTION = 'billing_subscription';
+    const CHECKOUT_FLOW_UNAVAILABLE = 'unavailable';
     const PAYMENT_METHOD_KEY = 'gwc-paypal';
     const PROVIDER_ID = 'growtype_wc_paypal';
     
@@ -159,6 +165,45 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
     }
 
     /**
+     * Resolve the server implementation allowed for this product/source pair.
+     * Future recurring methods must register a distinct flow and endpoint.
+     */
+    public function resolve_checkout_flow(int $product_id, string $payment_source): string
+    {
+        $payment_source = sanitize_key($payment_source);
+        $is_subscription = growtype_wc_product_is_subscription($product_id);
+
+        if (!$is_subscription) {
+            $default_flow = self::CHECKOUT_FLOW_ORDERS_API_ONE_TIME;
+        } elseif ($payment_source === 'paypal') {
+            $default_flow = self::CHECKOUT_FLOW_BILLING_SUBSCRIPTION;
+        } elseif ($payment_source === 'card') {
+            $default_flow = self::CHECKOUT_FLOW_ORDERS_API_RECURRING_CARD;
+        } elseif ($payment_source === 'applepay') {
+            $default_flow = self::CHECKOUT_FLOW_ORDERS_API_RECURRING_APPLE_PAY;
+        } else {
+            $default_flow = self::CHECKOUT_FLOW_UNAVAILABLE;
+        }
+
+        return (string) apply_filters(
+            'growtype_wc_paypal_checkout_flow',
+            $default_flow,
+            $product_id,
+            $payment_source,
+            $is_subscription,
+            $this
+        );
+    }
+
+    public function is_orders_api_recurring_flow(string $checkout_flow): bool
+    {
+        return in_array($checkout_flow, [
+            self::CHECKOUT_FLOW_ORDERS_API_RECURRING_CARD,
+            self::CHECKOUT_FLOW_ORDERS_API_RECURRING_APPLE_PAY,
+        ], true);
+    }
+
+    /**
      * Initialise Gateway Settings Form Fields
      */
     public function init_form_fields()
@@ -223,9 +268,9 @@ class Growtype_Wc_Payment_Gateway_Paypal extends WC_Payment_Gateway
         return $this->orders->create_order($access_token, $wc_order_id, $applied_coupons, $vault_source);
     }
 
-    public function capture_order($access_token, $order_id)
+    public function capture_order($access_token, $order_id, string $request_id = '')
     {
-        return $this->orders->capture_order($access_token, $order_id);
+        return $this->orders->capture_order($access_token, $order_id, $request_id);
     }
 
     public function charge_intent($parent_order_id, $product_id, $description)

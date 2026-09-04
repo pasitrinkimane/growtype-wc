@@ -34,7 +34,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         return is_array($data) ? $data : [];
     }
 
-    public function build_vault_payment_source(string $vault_source, string $paypal_customer_id = '', string $return_url = '', string $cancel_url = ''): array
+    public function build_vault_payment_source(string $vault_source, string $paypal_customer_id = '', string $return_url = '', string $cancel_url = '', bool $recurring_payment = false): array
     {
         if ($vault_source === 'applepay') {
             // PayPal requires payment_source.apple_pay with experience_context so its backend
@@ -43,7 +43,24 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             $ctx = [];
             if (!empty($return_url)) $ctx['return_url'] = $return_url;
             if (!empty($cancel_url)) $ctx['cancel_url'] = $cancel_url;
-            return ['apple_pay' => !empty($ctx) ? ['experience_context' => $ctx] : new \stdClass()];
+            $apple_pay = !empty($ctx) ? ['experience_context' => $ctx] : [];
+            if ($recurring_payment) {
+                $apple_pay['stored_credential'] = [
+                    'payment_initiator' => 'CUSTOMER',
+                    'payment_type' => 'RECURRING',
+                    'usage' => 'FIRST',
+                ];
+                $apple_pay['attributes'] = [
+                    'vault' => [
+                        'store_in_vault' => 'ON_SUCCESS',
+                    ],
+                ];
+                if (!empty($paypal_customer_id)) {
+                    $apple_pay['attributes']['customer'] = ['id' => $paypal_customer_id];
+                }
+            }
+
+            return ['apple_pay' => !empty($apple_pay) ? $apple_pay : new \stdClass()];
         }
 
         if ($vault_source === 'googlepay') {
@@ -85,18 +102,26 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             return ['paypal' => $paypal_source];
         }
 
-        return [
-            'card' => [
-                'attributes' => [
+        $card = [
+            'attributes' => [
                     'verification' => [
                         'method' => 'SCA_WHEN_REQUIRED',
                     ],
                     'vault' => [
                         'store_in_vault' => 'ON_SUCCESS',
                     ],
-                ],
             ],
         ];
+
+        if ($recurring_payment) {
+            $card['stored_credential'] = [
+                'payment_initiator' => 'CUSTOMER',
+                'payment_type' => 'RECURRING',
+                'usage' => 'FIRST',
+            ];
+        }
+
+        return ['card' => $card];
     }
 
     public function create_order($access_token, $wc_order_id, $applied_coupons = null, $vault_source = 'card')
@@ -148,7 +173,27 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         $is_redirect_flow = in_array($vault_source, ['paypal', 'googlepay', 'applepay'], true);
         $processing_instruction = $is_redirect_flow ? null : 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL';
 
-        $payment_source = $this->build_vault_payment_source($vault_source, $paypal_customer_id, $return_url, $cancel_url);
+        $recurring_payment = false;
+        if ($wc_order instanceof WC_Order) {
+            foreach ($wc_order->get_items() as $item) {
+                if (growtype_wc_product_is_subscription((int) $item->get_product_id())) {
+                    $checkout_flow = $this->gateway->resolve_checkout_flow(
+                        (int) $item->get_product_id(),
+                        $vault_source
+                    );
+                    $recurring_payment = $this->gateway->is_orders_api_recurring_flow($checkout_flow);
+                    break;
+                }
+            }
+        }
+
+        $payment_source = $this->build_vault_payment_source(
+            $vault_source,
+            $paypal_customer_id,
+            $return_url,
+            $cancel_url,
+            $recurring_payment
+        );
 
         $order_body = [
             "intent"         => "CAPTURE",
@@ -242,20 +287,22 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         return $data;
     }
 
-    public function capture_order($access_token, $order_id)
+    public function capture_order($access_token, $order_id, string $request_id = '')
     {
         $capture_url = $this->gateway->get_api_url("/v2/checkout/orders/{$order_id}/capture");
 
         $headers = [
             'Authorization' => 'Bearer ' . $access_token,
             'Content-Type' => 'application/json',
+            'Prefer' => 'return=representation',
         ];
 
+        if ($request_id !== '') {
+            $headers['PayPal-Request-Id'] = $request_id;
+        }
+
         $response = wp_remote_post($capture_url, [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $access_token,
-                'Content-Type'  => 'application/json',
-            ],
+            'headers' => $headers,
             'body'    => '{}',
             'timeout' => 20,
         ]);
@@ -276,6 +323,96 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
         }
 
         return $data;
+    }
+
+    /**
+     * Create a merchant-initiated subscription renewal against a vaulted source.
+     * The caller persists the returned PayPal order ID before capture so a
+     * crashed worker can reconcile the same provider order without charging twice.
+     */
+    public function create_recurring_vault_order(
+        string $access_token,
+        string $vault_id,
+        string $paypal_customer_id,
+        WC_Order $renewal_order,
+        string $request_id,
+        string $vault_source = 'card'
+    ): array {
+        $payment_source_key = $vault_source === 'applepay' ? 'apple_pay' : 'card';
+        $response = wp_remote_post($this->gateway->get_api_url('/v2/checkout/orders'), [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $access_token,
+                'Content-Type' => 'application/json',
+                'Prefer' => 'return=representation',
+                'PayPal-Request-Id' => $request_id,
+            ],
+            'body' => wp_json_encode([
+                'intent' => 'CAPTURE',
+                'customer' => ['id' => $paypal_customer_id],
+                'purchase_units' => [[
+                    'invoice_id' => (string) $renewal_order->get_id(),
+                    'description' => sprintf(
+                        __('Subscription renewal for order %d', 'growtype-wc'),
+                        $renewal_order->get_id()
+                    ),
+                    'amount' => [
+                        'currency_code' => $renewal_order->get_currency(),
+                        'value' => number_format((float) $renewal_order->get_total(), 2, '.', ''),
+                    ],
+                ]],
+                'payment_source' => [
+                    $payment_source_key => [
+                        'vault_id' => $vault_id,
+                        'stored_credential' => [
+                            'payment_initiator' => 'MERCHANT',
+                            'payment_type' => 'RECURRING',
+                            'usage' => 'SUBSEQUENT',
+                        ],
+                    ],
+                ],
+            ]),
+            'timeout' => 20,
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($data)) {
+            return new WP_Error(
+                'paypal_recurring_card_invalid_response',
+                __('PayPal returned an invalid recurring-card response.', 'growtype-wc')
+            );
+        }
+
+        $response_code = (int) wp_remote_retrieve_response_code($response);
+        if ($response_code < 200 || $response_code >= 300 || empty($data['id'])) {
+            return new WP_Error(
+                'paypal_recurring_card_create_failed',
+                sanitize_text_field((string) ($data['details'][0]['description'] ?? $data['message'] ?? __('PayPal declined the recurring charge.', 'growtype-wc'))),
+                ['response_code' => $response_code, 'provider_response' => $data]
+            );
+        }
+
+        return $data;
+    }
+
+    public function create_recurring_card_order(
+        string $access_token,
+        string $vault_id,
+        string $paypal_customer_id,
+        WC_Order $renewal_order,
+        string $request_id
+    ): array {
+        return $this->create_recurring_vault_order(
+            $access_token,
+            $vault_id,
+            $paypal_customer_id,
+            $renewal_order,
+            $request_id,
+            'card'
+        );
     }
 
     public function get_vault_id_for_order($order): string
@@ -637,23 +774,32 @@ class Growtype_Wc_Payment_Gateway_Paypal_Orders
             );
         }
 
-        global $woocommerce;
-
         $order = wc_get_order($order_id);
 
-        $order->payment_complete();
+        if (!$order instanceof WC_Order) {
+            return [
+                'result' => 'failure',
+            ];
+        }
 
-        wc_reduce_stock_levels($order_id);
-
-        $order_status = apply_filters('growtype_wc_process_payment_order_status_gateway_' . $this->gateway->id, 'completed', $order_id, $order);
-
-        $order->update_status($order_status);
-
-        $woocommerce->cart->empty_cart();
-
-        return array (
-            'result' => 'success',
-            'redirect' => Growtype_Wc_Payment_Gateway::success_url($order_id, Growtype_Wc_Payment_Gateway_Paypal::PROVIDER_ID)
+        // This gateway uses its dedicated PayPal Orders/Subscriptions checkout
+        // endpoints. Reaching WooCommerce's generic process_payment() method does
+        // not prove that PayPal received or captured any money, so it must never
+        // complete the order here.
+        $order->add_order_note(
+            __('PayPal payment was not completed because provider verification was missing.', 'growtype-wc')
         );
+        $order->save();
+
+        if (function_exists('wc_add_notice')) {
+            wc_add_notice(
+                __('PayPal could not verify this payment. Please restart checkout.', 'growtype-wc'),
+                'error'
+            );
+        }
+
+        return [
+            'result' => 'failure',
+        ];
     }
 }

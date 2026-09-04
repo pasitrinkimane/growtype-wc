@@ -20,9 +20,22 @@
 defined('ABSPATH') || exit;
 
 $notes = $order->get_customer_order_notes();
+
+$order_intro_details = sprintf(
+    esc_html__('Order #%s', 'growtype-wc'),
+    esc_html($order->get_order_number())
+) . ' <div class="e-subtitle">' . esc_html__('Purchase details', 'growtype-wc') . '</div>';
+
+echo growtype_wc_include_view(
+    'woocommerce.myaccount.sections.info-header',
+    [
+        'back_url' => wc_get_account_endpoint_url('orders'),
+        'intro_details' => $order_intro_details,
+    ]
+);
 ?>
 
-<div class="{{get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : ''}}">
+<div class="<?php echo esc_attr(get_theme_mod('woocommerce_thankyou_page_style') === 'centered' ? 'thankyou-centered' : ''); ?>">
     <div class="b-intro-content">
         <p>
             <?php

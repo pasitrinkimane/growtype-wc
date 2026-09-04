@@ -13,6 +13,28 @@
  */
 class Growtype_Wc_Payment_Gateway_Paypal_Card_Form
 {
+    public const DEV_HELPER_ENV_KEY = 'GROWTYPE_WC_PAYPAL_DEV_HELPER_ENABLED';
+
+    /**
+     * The helper is available only in PayPal test mode. The environment flag
+     * can explicitly hide it without changing the gateway's sandbox mode.
+     */
+    public static function should_show_dev_helper($gateway): bool
+    {
+        if (!$gateway || !method_exists($gateway, 'is_test_mode') || !$gateway->is_test_mode()) {
+            return false;
+        }
+
+        $configured = getenv(self::DEV_HELPER_ENV_KEY);
+
+        // Preserve the historical sandbox behavior when the flag is omitted.
+        if ($configured === false || trim((string) $configured) === '') {
+            return true;
+        }
+
+        return filter_var($configured, FILTER_VALIDATE_BOOLEAN);
+    }
+
     /**
      * Render the card form markup.
      *

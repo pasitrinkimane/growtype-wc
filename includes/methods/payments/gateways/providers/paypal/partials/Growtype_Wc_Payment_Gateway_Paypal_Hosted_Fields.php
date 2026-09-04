@@ -330,6 +330,27 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             );
         }
 
+        // Hosted Fields can create a recurring-card agreement when its initial
+        // customer-authorized payment is vaulted explicitly for recurring use.
+        // Wallet sources remain unavailable for subscriptions until each has its
+        // own verified recurring contract.
+        $checkout_flow = $this->gateway->resolve_checkout_flow($product_id, $vault_source);
+        if (
+            $checkout_flow !== Growtype_Wc_Payment_Gateway_Paypal::CHECKOUT_FLOW_ORDERS_API_ONE_TIME
+            && !$this->gateway->is_orders_api_recurring_flow($checkout_flow)
+        ) {
+            wp_send_json_error(
+                [
+                    "message" => __(
+                        "This payment method does not support this subscription checkout.",
+                        "growtype-wc",
+                    ),
+                    "code" => "subscription_checkout_required",
+                ],
+                409,
+            );
+        }
+
         // Build the WooCommerce order
         $order = wc_create_order();
         $order->add_product($product, 1);
@@ -418,6 +439,8 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             "_paypal_hosted_order_id",
             sanitize_text_field($paypal_order["id"]),
         );
+        $order->update_meta_data('_paypal_vault_source', $vault_source);
+        $order->update_meta_data('_growtype_wc_checkout_flow', $checkout_flow);
         $order->save();
 
         wp_send_json_success([
@@ -473,6 +496,58 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
             wp_send_json_error(
                 ["message" => __("Order not found.", "growtype-wc")],
                 404,
+            );
+        }
+
+        if (
+            $order->get_payment_method() !== $this->gateway->id
+            || !empty($order->get_meta('parent_order_id'))
+        ) {
+            wp_send_json_error(
+                ["message" => __("Payment verification failed.", "growtype-wc")],
+                403,
+            );
+        }
+
+        if (
+            is_user_logged_in()
+            && (int) $order->get_customer_id() > 0
+            && (int) $order->get_customer_id() !== get_current_user_id()
+        ) {
+            wp_send_json_error(
+                ["message" => __("Payment verification failed.", "growtype-wc")],
+                403,
+            );
+        }
+
+        // Also validate orders created before capture. Only explicit one-time or
+        // verified recurring-vault flows may reach the Orders API capture boundary.
+        $order_product_id = 0;
+        foreach ($order->get_items() as $item) {
+            $order_product_id = (int) $item->get_product_id();
+            if ($order_product_id > 0) {
+                break;
+            }
+        }
+        $vault_source = sanitize_key((string) $order->get_meta('_paypal_vault_source'));
+        $vault_source = $vault_source !== '' ? $vault_source : 'card';
+        $checkout_flow = $order_product_id > 0
+            ? $this->gateway->resolve_checkout_flow($order_product_id, $vault_source)
+            : Growtype_Wc_Payment_Gateway_Paypal::CHECKOUT_FLOW_UNAVAILABLE;
+
+        if (
+            $checkout_flow !== Growtype_Wc_Payment_Gateway_Paypal::CHECKOUT_FLOW_ORDERS_API_ONE_TIME
+            && !$this->gateway->is_orders_api_recurring_flow($checkout_flow)
+        ) {
+            wp_send_json_error(
+                [
+                    "message" => __(
+                        "This payment method does not support this subscription checkout.",
+                        "growtype-wc",
+                    ),
+                    "code" => "subscription_checkout_required",
+                ],
+                409,
             );
         }
 
@@ -545,6 +620,14 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 throw new \Exception($detail);
             }
 
+            if (
+                sanitize_text_field((string) ($capture_result['id'] ?? '')) !== $paypal_order_id
+            ) {
+                throw new \Exception(
+                    __("PayPal returned an unexpected order reference.", "growtype-wc"),
+                );
+            }
+
             // PayPal can return order status=COMPLETED even when the individual capture
             // inside is DECLINED (e.g. prepaid card, failed 3DS, fraud block, response_code=9500).
             // We MUST check the inner capture status — not just the outer order status.
@@ -552,7 +635,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 $capture_result["purchase_units"][0]["payments"]["captures"][0][
                     "status"
                 ] ?? "";
-            if (!empty($capture_status) && $capture_status !== "COMPLETED") {
+            if ($capture_status !== "COMPLETED") {
                 $proc_code =
                     $capture_result["purchase_units"][0]["payments"][
                         "captures"
@@ -591,6 +674,15 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     "id"
                 ] ?? "";
 
+            if (
+                empty($capture_id)
+                || !$this->capture_matches_order($capture_result, $order)
+            ) {
+                throw new \Exception(
+                    __("PayPal payment details did not match this order.", "growtype-wc"),
+                );
+            }
+
             // Debug-only: log payment_source type (never log full response — may contain card/vault data)
             if (defined("WP_DEBUG") && WP_DEBUG) {
                 error_log(
@@ -602,58 +694,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 );
             }
 
-            $vault_id =
-                $capture_result["payment_source"]["card"]["attributes"][
-                    "vault"
-                ]["id"] ?? "";
-            $pp_customer_id =
-                $capture_result["payment_source"]["card"]["attributes"][
-                    "vault"
-                ]["customer"]["id"] ?? "";
-            $vault_type = "card";
-
-            // Google Pay embeds a card token under payment_source.google_pay.card
-            if (empty($vault_id)) {
-                $vault_id =
-                    $capture_result["payment_source"]["google_pay"]["card"][
-                        "attributes"
-                    ]["vault"]["id"] ?? "";
-                $pp_customer_id =
-                    $capture_result["payment_source"]["google_pay"]["card"][
-                        "attributes"
-                    ]["vault"]["customer"]["id"] ?? "";
-                if (!empty($vault_id)) {
-                    $vault_type = "card";
-                } // google_pay still vaults as card
-            }
-            // Apple Pay embeds a card token under payment_source.apple_pay.card
-            if (empty($vault_id)) {
-                $vault_id =
-                    $capture_result["payment_source"]["apple_pay"]["card"][
-                        "attributes"
-                    ]["vault"]["id"] ?? "";
-                $pp_customer_id =
-                    $capture_result["payment_source"]["apple_pay"]["card"][
-                        "attributes"
-                    ]["vault"]["customer"]["id"] ?? "";
-                if (!empty($vault_id)) {
-                    $vault_type = "card";
-                } // apple_pay still vaults as card
-            }
-            // PayPal account vault
-            if (empty($vault_id)) {
-                $vault_id =
-                    $capture_result["payment_source"]["paypal"]["attributes"][
-                        "vault"
-                    ]["id"] ?? "";
-                $pp_customer_id =
-                    $capture_result["payment_source"]["paypal"]["attributes"][
-                        "vault"
-                    ]["customer"]["id"] ?? "";
-                if (!empty($vault_id)) {
-                    $vault_type = "paypal";
-                }
-            }
+            $vault_details = $this->extract_vault_details($capture_result, $vault_source);
+            $vault_id = $vault_details['id'];
+            $vault_status = $vault_details['status'];
+            $pp_customer_id = $vault_details['customer_id'];
+            $vault_type = $vault_details['type'];
 
             error_log(
                 "[GWC Vault] Hosted Fields capture complete: order=" .
@@ -681,6 +726,29 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     "paypal_customer_id",
                     sanitize_text_field($pp_customer_id),
                 );
+            }
+
+            if ($this->gateway->is_orders_api_recurring_flow($checkout_flow)) {
+                $expected_vault_type = $checkout_flow === Growtype_Wc_Payment_Gateway_Paypal::CHECKOUT_FLOW_ORDERS_API_RECURRING_APPLE_PAY
+                    ? 'apple_pay'
+                    : 'card';
+                if (
+                    $vault_type !== $expected_vault_type
+                    || empty($vault_id)
+                    || empty($pp_customer_id)
+                    || $vault_status !== 'VAULTED'
+                ) {
+                    $order->update_meta_data('_paypal_recurring_capture_requires_review', 'yes');
+                    $order->update_meta_data('_paypal_recurring_vault_status', $vault_status);
+                    $order->save();
+                    throw new \Exception(
+                        __('The initial payment completed, but PayPal did not verify a reusable recurring payment token.', 'growtype-wc')
+                    );
+                }
+
+                $order->update_meta_data('_paypal_recurring_vault_verified', 'yes');
+                $order->update_meta_data('_paypal_recurring_vault_status', 'VAULTED');
+                $order->update_meta_data('_paypal_recurring_verified_at', gmdate('Y-m-d H:i:s'));
             }
 
             $order->save();
@@ -722,7 +790,11 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                 WC()->cart->empty_cart();
             }
         } catch (\Exception $e) {
-            $order->update_status("failed", $e->getMessage());
+            if ($order->get_meta('_paypal_recurring_capture_requires_review') === 'yes') {
+                $order->update_status("on-hold", $e->getMessage());
+            } else {
+                $order->update_status("failed", $e->getMessage());
+            }
             error_log(
                 "GWC PayPal Hosted Fields - capture_order error: " .
                     $e->getMessage(),
@@ -754,6 +826,57 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    protected function extract_vault_details(array $provider_data, string $vault_source): array
+    {
+        $vault = [];
+        $type = '';
+
+        if ($vault_source === 'card') {
+            $vault = $provider_data['payment_source']['card']['attributes']['vault'] ?? [];
+            $type = 'card';
+        } elseif ($vault_source === 'applepay') {
+            $vault = $provider_data['payment_source']['apple_pay']['attributes']['vault']
+                ?? $provider_data['payment_source']['apple_pay']['card']['attributes']['vault']
+                ?? [];
+            $type = 'apple_pay';
+        } elseif ($vault_source === 'googlepay') {
+            $vault = $provider_data['payment_source']['google_pay']['card']['attributes']['vault'] ?? [];
+            $type = 'card';
+        } elseif ($vault_source === 'paypal') {
+            $vault = $provider_data['payment_source']['paypal']['attributes']['vault'] ?? [];
+            $type = 'paypal';
+        }
+
+        return [
+            'id' => sanitize_text_field((string) ($vault['id'] ?? '')),
+            'customer_id' => sanitize_text_field((string) ($vault['customer']['id'] ?? '')),
+            'status' => strtoupper(sanitize_text_field((string) ($vault['status'] ?? ''))),
+            'type' => $type,
+        ];
+    }
+
+    protected function capture_matches_order(array $capture_result, $order): bool
+    {
+        if (!$order instanceof WC_Order) {
+            return false;
+        }
+
+        $purchase_unit = is_array($capture_result['purchase_units'][0] ?? null)
+            ? $capture_result['purchase_units'][0]
+            : [];
+        $capture = is_array($purchase_unit['payments']['captures'][0] ?? null)
+            ? $purchase_unit['payments']['captures'][0]
+            : [];
+        $invoice_id = trim((string) ($purchase_unit['invoice_id'] ?? ''));
+        $amount = $capture['amount']['value'] ?? null;
+        $currency = strtoupper(trim((string) ($capture['amount']['currency_code'] ?? '')));
+
+        return $invoice_id === (string) $order->get_id()
+            && $amount !== null
+            && abs((float) $amount - (float) $order->get_total()) < 0.00001
+            && $currency === strtoupper((string) $order->get_currency());
+    }
 
     /**
      * Fetch a PayPal REST API access token using the configured credentials.
@@ -906,7 +1029,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_loader(); ?>
 
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Card_Form::render([
-                                "show_dev_helper" => $gateway ? (bool) $gateway->is_test_mode() : false,
+                                "show_dev_helper" => Growtype_Wc_Payment_Gateway_Paypal_Card_Form::should_show_dev_helper($gateway),
                             ]); ?>
 
                             <?php Growtype_Wc_Payment_Gateway_Paypal_Payment_Form::render_badge(); ?>
@@ -1238,7 +1361,10 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                     // Case 2 — inline express form is on the page: wait for the unified SDK event.
                     //          If no express form exists, skip straight to standalone loading to avoid
                     //          hanging forever (gwc_paypal_sdk_ready will never fire in modal-only pages).
-                    var hasExpressForm = document.querySelector('.gwc-payment-form') !== null;
+                    // A subscription card modal contains .gwc-payment-form but no
+                    // express mount. Only a real express placeholder can cause the
+                    // unified provider to load and emit gwc_paypal_sdk_ready.
+                    var hasExpressForm = document.querySelector('.gwc-payment-form__express') !== null;
                     console.log('[GWC HF] hasExpressForm:', hasExpressForm, '| gwcPaypalSdkReady:', !!window.gwcPaypalSdkReady);
 
                     if (!window.gwcPaypalSdkReady && hasExpressForm) {
@@ -1610,7 +1736,7 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
                             setSubmitButtonText($approvalBtn, '<?php echo esc_js(
                                 Growtype_Wc_Payment_Gateway_Paypal_Card_Form::get_default_submit_label(),
                             ); ?>');
-                            showError(err.message || '<?php echo esc_js(
+                            showError(err?.responseJSON?.data?.message || err.message || '<?php echo esc_js(
                                 sprintf(
                                     __(
                                         "Payment capture failed. Please try again or contact our support %s",
@@ -1873,6 +1999,12 @@ class Growtype_Wc_Payment_Gateway_Paypal_Hosted_Fields
 
         // Map specific response codes to clear, actionable messages
         $map = [
+            // Security/risk decline. Keep the customer-facing explanation neutral,
+            // but follow PayPal's guidance not to retry the same card.
+            "9500" => __(
+                "Your payment was declined for security reasons. Please use a different card or another payment method. Do not retry the same card.",
+                "growtype-wc",
+            ),
             // Do Not Honor — generic bank block
             "9100" => __(
                 "Your card was declined by your bank. Please try a different card or contact your card issuer.",
